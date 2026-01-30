@@ -1,0 +1,4 @@
+title,video_url,image_path,content
+"Bài viết mẫu 1","https://youtube.com/watch?v=example1","C:/path/to/image1.jpg","Nội dung tùy chỉnh cho bài 1 (có thể bỏ trống)"
+"Bài viết mẫu 2","https://youtube.com/watch?v=example2","C:/path/to/image2.jpg",""
+"Bài viết mẫu 3","","C:/path/to/image3.jpg","Bài viết không có video"

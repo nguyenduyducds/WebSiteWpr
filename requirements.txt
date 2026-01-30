@@ -1,0 +1,13 @@
+requests==2.31.0
+python-dotenv==1.0.0
+customtkinter==5.2.2
+packaging
+selenium
+webdriver-manager
+beautifulsoup4
+Pillow
+opencv-python
+undetected-chromedriver
+pyperclip
+playwright
+PyVimeo

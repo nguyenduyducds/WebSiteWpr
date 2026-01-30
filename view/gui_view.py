@@ -1,0 +1,2129 @@
+import customtkinter as ctk
+from tkinter import ttk
+import tkinter as tk
+import time
+import threading
+import os
+import webbrowser
+from tkinter import messagebox, filedialog
+from PIL import ImageGrab, Image
+import io
+
+# Giả lập AppData nếu chưa có module model
+class AppData:
+    """Helper to store current input values."""
+    def __init__(self):
+        self.site_url = ""
+        self.username = ""
+        self.password = ""
+        self.title = ""
+        self.video_url = ""
+        self.image_url = ""
+        self.content_image = ""  # New: Image to insert in middle of content
+        self.content = ""
+
+class GUIView(ctk.CTk):
+    def __init__(self, controller, initial_config=None):
+        super().__init__()
+        self.controller = controller
+        self.initial_config = initial_config or {}
+        
+        # --- Cấu hình màu sắc hiện đại ---
+        self.colors = {
+            'primary': '#2563eb',       # Blue
+            'success': '#10b981',       # Green
+            'warning': '#f59e0b',       # Orange
+            'danger': '#ef4444',        # Red
+            'bg_light': '#ffffff',
+            'bg_dark': '#1f2937'
+        }
+        
+        # --- Cấu hình cửa sổ ---
+        self.title("🚀 Auto Web WordPress Tool - Modern Edition")
+        self.geometry("1100x750")
+        self.minsize(900, 600)
+        
+        # Theme
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("blue")
+        
+        # Biến dữ liệu
+        self.login_frame = None
+        self.main_frame = None
+        self.post_queue = [] 
+        self.content_pool = []
+        self.batch_data = None
+        self.published_links = []
+        self.current_link = ""
+
+        # Khởi tạo màn hình
+        self.create_login_screen()
+
+    # =========================================================================
+    # PHẦN 1: LOGIN SCREEN (Giữ nguyên vì đã ổn)
+    # =========================================================================
+    def create_login_screen(self):
+        self.login_frame = ctk.CTkFrame(self, corner_radius=0)
+        self.login_frame.pack(fill="both", expand=True)
+
+        center_box = ctk.CTkFrame(self.login_frame, corner_radius=20, fg_color=("#ffffff", "#2b2b2b"))
+        center_box.place(relx=0.5, rely=0.5, anchor="center")
+
+        # Header
+        ctk.CTkLabel(center_box, text="🌐", font=("Arial", 48)).pack(pady=(30, 10))
+        ctk.CTkLabel(center_box, text="WordPress Automation", font=("Segoe UI", 24, "bold"), text_color=self.colors['primary']).pack()
+        ctk.CTkLabel(center_box, text="Đăng nhập hệ thống", font=("Segoe UI", 12), text_color="gray").pack(pady=(5, 20))
+
+        # Inputs
+        self.entry_site = self.create_modern_input(center_box, "🌍 Site URL", "https://yoursite.com/wp-admin", self.initial_config.get("site_url", ""))
+        self.entry_user = self.create_modern_input(center_box, "👤 Username", "admin", self.initial_config.get("username", ""))
+        self.entry_pass = self.create_modern_input(center_box, "🔒 Password", "••••••••", self.initial_config.get("password", ""), show="*")
+
+        # Checkbox
+        self.chk_headless = ctk.CTkCheckBox(center_box, text="Chạy ẩn (Headless Mode)", font=("Segoe UI", 12))
+        self.chk_headless.pack(pady=10, padx=30, anchor="w")
+
+        # Button
+        self.btn_login = ctk.CTkButton(center_box, text="🚀 ĐĂNG NHẬP", height=45, width=300, font=("Segoe UI", 14, "bold"), command=self.on_login_click)
+        self.btn_login.pack(pady=20, padx=30)
+
+        self.lbl_status = ctk.CTkLabel(center_box, text="", font=("Segoe UI", 11), text_color=self.colors['danger'])
+        self.lbl_status.pack(pady=(0, 20))
+
+    def create_modern_input(self, parent, label_text, placeholder, initial_value="", show=None):
+        ctk.CTkLabel(parent, text=label_text, font=("Segoe UI", 12, "bold"), anchor="w").pack(fill="x", padx=30, pady=(10, 0))
+        entry = ctk.CTkEntry(parent, placeholder_text=placeholder, height=40, width=300, show=show)
+        entry.pack(padx=30, pady=(5, 0))
+        if initial_value: 
+            try:
+                # Use after() to insert value asynchronously to avoid blocking
+                self.after(10, lambda e=entry, v=initial_value: self._safe_insert(e, v))
+            except Exception as e:
+                print(f"[GUI] Error inserting initial value: {e}")
+        return entry
+    
+    def _safe_insert(self, entry, value):
+        """Safely insert value into entry without blocking"""
+        try:
+            entry.delete(0, "end")
+            entry.insert(0, value)
+        except Exception as e:
+            print(f"[GUI] Error in safe insert: {e}")
+    
+    def _handle_title_paste(self, event=None):
+        """Handle title paste asynchronously to prevent freeze with Unicode"""
+        try:
+            # Get clipboard content
+            clipboard_text = self.clipboard_get()
+            
+            # Clear current content
+            self.entry_title.delete(0, "end")
+            
+            # Insert asynchronously to prevent blocking
+            self.after(10, lambda: self._safe_insert(self.entry_title, clipboard_text))
+            
+            # Prevent default paste behavior
+            return "break"
+        except Exception as e:
+            print(f"[GUI] Error handling title paste: {e}")
+            # Allow default behavior if our handler fails
+            return None
+
+    def on_login_click(self):
+        site = self.entry_site.get().strip()
+        user = self.entry_user.get().strip()
+        pwd = self.entry_pass.get().strip()
+        if not all([site, user, pwd]):
+            self.lbl_status.configure(text="⚠️ Vui lòng nhập đủ thông tin!")
+            return
+        
+        self.btn_login.configure(state="disabled", text="🔄 Đang kết nối...")
+        # Gọi controller (Giả lập)
+        if self.controller:
+            self.controller.handle_login(site, user, pwd, headless=bool(self.chk_headless.get()))
+        else:
+            self.after(1000, self.login_success) # Test only
+
+    def login_success(self):
+        self.lbl_status.configure(text="✅ Đăng nhập thành công!", text_color=self.colors['success'])
+        self.after(500, self.switch_to_main_screen)
+
+    def login_failed(self, message):
+        self.lbl_status.configure(text=f"❌ Lỗi: {message}", text_color=self.colors['danger'])
+        self.btn_login.configure(state="normal", text="🚀 ĐĂNG NHẬP")
+
+    def switch_to_main_screen(self):
+        self.login_frame.destroy()
+        self.create_main_screen()
+
+    # =========================================================================
+    # PHẦN 2: MAIN SCREEN (Layout đã được làm sạch)
+    # =========================================================================
+    def create_main_screen(self):
+        # Container chính
+        self.main_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent")
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # 1. Header (Thanh trên cùng)
+        self.create_header()
+
+        # 2. Nội dung Tab (Trung tâm)
+        self.create_tabs()
+
+        # 3. Status Bar (Thanh trạng thái dưới cùng)
+        self.create_status_bar()
+
+    def create_header(self):
+        header = ctk.CTkFrame(self.main_frame, height=70, corner_radius=10, fg_color=("white", "#2b2b2b"))
+        header.pack(fill="x", pady=(0, 10))
+        
+        # Logo & Title
+        title_frame = ctk.CTkFrame(header, fg_color="transparent")
+        title_frame.pack(side="left", padx=20, pady=10)
+        ctk.CTkLabel(title_frame, text="🚀 WP Auto Tool", font=("Segoe UI", 20, "bold"), text_color=self.colors['primary']).pack(anchor="w")
+        ctk.CTkLabel(title_frame, text="Automation Dashboard", font=("Segoe UI", 11), text_color="gray").pack(anchor="w")
+
+        # User Info & Logout
+        user_frame = ctk.CTkFrame(header, fg_color="transparent")
+        user_frame.pack(side="right", padx=20, pady=10)
+        username = self.controller.username if hasattr(self.controller, 'username') else "Admin"
+        ctk.CTkLabel(user_frame, text=f"👤 {username}", font=("Segoe UI", 12, "bold")).pack(side="left", padx=15)
+        ctk.CTkButton(user_frame, text="🚪 Logout", width=80, height=30, fg_color=self.colors['danger'], command=self.logout).pack(side="left")
+
+    def create_tabs(self):
+        self.tabview = ctk.CTkTabview(self.main_frame, corner_radius=10)
+        self.tabview.pack(fill="both", expand=True)
+
+        # Định nghĩa các Tab
+        self.tab_post = self.tabview.add("📝 Đăng Bài Lẻ")
+        self.tab_batch = self.tabview.add("📦 Batch & Hàng Chờ") # Gộp Queue vào đây
+        self.tab_upload = self.tabview.add("☁️ Upload Video")
+        self.tab_vimeo = self.tabview.add("🎥 Vimeo Tools")
+        self.tab_data = self.tabview.add("📜 Logs & Lịch Sử") # Tab mới cho Logs
+        self.tab_settings = self.tabview.add("⚙️ Cài Đặt")
+
+        # Xây dựng nội dung từng Tab
+        self.create_post_tab_content()
+        self.create_batch_tab_content()
+        self.create_upload_tab_content()
+        self.create_vimeo_tab_content()
+        self.create_data_tab_content()
+        self.create_settings_tab_content()
+
+    def create_status_bar(self):
+        self.status_frame = ctk.CTkFrame(self.main_frame, height=30, corner_radius=5)
+        self.status_frame.pack(fill="x", pady=(10, 0))
+        
+        self.status_label = ctk.CTkLabel(self.status_frame, text="✅ Sẵn sàng", font=("Segoe UI", 11), text_color=self.colors['success'])
+        self.status_label.pack(side="left", padx=15)
+        
+        ctk.CTkLabel(self.status_frame, text="🟢 Connected", font=("Segoe UI", 11), text_color="gray").pack(side="right", padx=15)
+
+    # =========================================================================
+    # TAB 1: ĐĂNG BÀI LẺ (Post Form)
+    # =========================================================================
+    def create_post_tab_content(self):
+        container = ctk.CTkScrollableFrame(self.tab_post, fg_color="transparent")
+        container.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Form Group - Single Post
+        frm = ctk.CTkFrame(container)
+        frm.pack(fill="x", pady=5)
+        
+        ctk.CTkLabel(frm, text="📝 Đăng Bài Lẻ", font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=30, pady=(10, 5))
+        
+        self.entry_title = self.create_modern_input(frm, "Tiêu đề bài viết", "Nhập tiêu đề...")
+        # Add paste handler to prevent freeze with Unicode characters
+        self.entry_title.bind('<Control-v>', self._handle_title_paste)
+        self.entry_title.bind('<Control-V>', self._handle_title_paste)
+        self.entry_video = self.create_modern_input(frm, "Video URL (Youtube/Vimeo/Facebook/Embed)", "https://...")
+        # Custom Image Input with Browse Button
+        ctk.CTkLabel(frm, text="Link Ảnh Thumbnail", font=("Segoe UI", 12, "bold"), anchor="w").pack(fill="x", padx=30, pady=(10, 0))
+        
+        # Hint label
+        hint_frame = ctk.CTkFrame(frm, fg_color="transparent")
+        hint_frame.pack(fill="x", padx=30, pady=(0, 0))
+        ctk.CTkLabel(hint_frame, text="💡 Tip: Chụp màn hình rồi nhấn Ctrl+V vào ô này để paste ảnh trực tiếp!", 
+                    font=("Segoe UI", 10), text_color="#10b981", anchor="w").pack(side="left")
+        
+        img_row = ctk.CTkFrame(frm, fg_color="transparent")
+        img_row.pack(fill="x", padx=30, pady=(5, 0))
+        
+        self.entry_image = ctk.CTkEntry(img_row, placeholder_text="Đường dẫn file hoặc URL... (hoặc nhấn Ctrl+V để paste ảnh)", height=40)
+        self.entry_image.pack(side="left", fill="x", expand=True)
+        
+        # Bind Ctrl+V to paste image from clipboard
+        self.entry_image.bind('<Control-v>', self.paste_image_from_clipboard)
+        
+        ctk.CTkButton(img_row, text="📂 Chọn Ảnh", width=100, height=40, command=self.browse_thumbnail).pack(side="left", padx=(5, 0))
+        
+        # Content Images (Insert in middle of post)
+        ctk.CTkLabel(frm, text="Link Ảnh Content (Chèn vào giữa bài)", font=("Segoe UI", 12, "bold"), anchor="w").pack(fill="x", padx=30, pady=(15, 0))
+        
+        # Hint label for content images
+        hint_frame2 = ctk.CTkFrame(frm, fg_color="transparent")
+        hint_frame2.pack(fill="x", padx=30, pady=(0, 0))
+        ctk.CTkLabel(hint_frame2, text="💡 Các ảnh này sẽ được chèn vào giữa nội dung bài viết (tùy chọn, tối đa 3 ảnh) - Hỗ trợ Ctrl+V", 
+                    font=("Segoe UI", 10), text_color="#10b981", anchor="w").pack(side="left")
+        
+        # Auto-fetch car images checkbox
+        self.chk_auto_fetch_images = ctk.CTkCheckBox(frm, text="🚗 Tự động lấy ảnh xe từ API (nếu để trống)", font=("Segoe UI", 11))
+        self.chk_auto_fetch_images.pack(anchor="w", padx=30, pady=(5, 0))
+        
+        # Content Image 1
+        content_img_row = ctk.CTkFrame(frm, fg_color="transparent")
+        content_img_row.pack(fill="x", padx=30, pady=(5, 0))
+        
+        self.entry_content_image = ctk.CTkEntry(content_img_row, placeholder_text="Ảnh content 1 (tùy chọn) - Ctrl+V để paste...", height=40)
+        self.entry_content_image.pack(side="left", fill="x", expand=True)
+        # Bind Ctrl+V for content image 1
+        self.entry_content_image.bind('<Control-v>', lambda e: self.paste_image_from_clipboard_to_field(e, self.entry_content_image, "content1"))
+        
+        ctk.CTkButton(content_img_row, text="📂 Chọn", width=80, height=40, command=self.browse_content_image).pack(side="left", padx=(5, 0))
+        
+        # Content Image 2
+        content_img_row2 = ctk.CTkFrame(frm, fg_color="transparent")
+        content_img_row2.pack(fill="x", padx=30, pady=(5, 0))
+        
+        self.entry_content_image2 = ctk.CTkEntry(content_img_row2, placeholder_text="Ảnh content 2 (tùy chọn) - Ctrl+V để paste...", height=40)
+        self.entry_content_image2.pack(side="left", fill="x", expand=True)
+        # Bind Ctrl+V for content image 2
+        self.entry_content_image2.bind('<Control-v>', lambda e: self.paste_image_from_clipboard_to_field(e, self.entry_content_image2, "content2"))
+        
+        ctk.CTkButton(content_img_row2, text="📂 Chọn", width=80, height=40, command=self.browse_content_image2).pack(side="left", padx=(5, 0))
+        
+        # Content Image 3
+        content_img_row3 = ctk.CTkFrame(frm, fg_color="transparent")
+        content_img_row3.pack(fill="x", padx=30, pady=(5, 0))
+        
+        self.entry_content_image3 = ctk.CTkEntry(content_img_row3, placeholder_text="Ảnh content 3 (tùy chọn) - Ctrl+V để paste...", height=40)
+        self.entry_content_image3.pack(side="left", fill="x", expand=True)
+        # Bind Ctrl+V for content image 3
+        self.entry_content_image3.bind('<Control-v>', lambda e: self.paste_image_from_clipboard_to_field(e, self.entry_content_image3, "content3"))
+        
+        ctk.CTkButton(content_img_row3, text="📂 Chọn", width=80, height=40, command=self.browse_content_image3).pack(side="left", padx=(5, 0))
+        
+        # Content
+        ctk.CTkLabel(frm, text="Nội dung bài viết (HTML)", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=30, pady=(15, 5))
+        self.textbox_content = ctk.CTkTextbox(frm, height=150)
+        self.textbox_content.pack(fill="x", padx=30, pady=(0, 15))
+
+        # Actions Row
+        action_row = ctk.CTkFrame(container, fg_color="transparent")
+        action_row.pack(fill="x", pady=10)
+        
+        ctk.CTkButton(action_row, text="➕ Thêm vào Hàng Chờ", fg_color=self.colors['warning'], width=150, command=self.add_to_queue).pack(side="left", padx=5)
+        self.btn_post = ctk.CTkButton(action_row, text="🚀 ĐĂNG NGAY", fg_color=self.colors['primary'], width=150, command=self.on_post_click)
+        self.btn_post.pack(side="right", padx=5)
+
+        # Separator
+        ctk.CTkLabel(container, text="", height=20).pack()
+        separator = ctk.CTkFrame(container, height=2, fg_color="gray")
+        separator.pack(fill="x", padx=30, pady=10)
+
+        # Bulk Facebook Import Section
+        bulk_frm = ctk.CTkFrame(container)
+        bulk_frm.pack(fill="both", expand=True, pady=10)
+        
+        ctk.CTkLabel(bulk_frm, text="📱 Nhập Nhiều Link Facebook", font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=30, pady=(10, 5))
+        ctk.CTkLabel(bulk_frm, text="Nhập mỗi link Facebook một dòng (video hoặc post)", font=("Segoe UI", 11), text_color="gray").pack(anchor="w", padx=30)
+        
+        # Textarea for multiple FB links
+        self.textbox_fb_links = ctk.CTkTextbox(bulk_frm, height=200, font=("Consolas", 11))
+        self.textbox_fb_links.pack(fill="both", expand=True, padx=30, pady=10)
+        self.textbox_fb_links.insert("1.0", "# Ví dụ:\n# https://www.facebook.com/watch/?v=123456789\n# https://fb.watch/abc123/\n# https://www.facebook.com/username/videos/123456789/\n cái này update sau hihi :>>")
+        
+        # Bulk import options
+        bulk_options = ctk.CTkFrame(bulk_frm, fg_color="transparent")
+        bulk_options.pack(fill="x", padx=30, pady=5)
+        
+        self.chk_auto_title_fb = ctk.CTkCheckBox(bulk_options, text="Tự động tạo tiêu đề từ link", font=("Segoe UI", 11))
+        self.chk_auto_title_fb.pack(side="left", padx=5)
+        self.chk_auto_title_fb.select()
+        
+        # Bulk import button
+        self.btn_import_fb = ctk.CTkButton(bulk_frm, text="📥 Thêm Tất Cả Vào Hàng Chờ", 
+                                          height=45, 
+                                          fg_color="#1877F2",
+                                          font=("Segoe UI", 13, "bold"),
+                                          command=self.import_fb_bulk)
+        self.btn_import_fb.pack(fill="x", padx=30, pady=10)
+
+    # =========================================================================
+    # TAB 2: BATCH & QUEUE (Hợp nhất Logic Hàng chờ vào đây)
+    # =========================================================================
+    def create_batch_tab_content(self):
+        # Chia làm 2 cột: Trái (Công cụ Import) - Phải (Danh sách Hàng Chờ)
+        grid = ctk.CTkFrame(self.tab_batch, fg_color="transparent")
+        grid.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # --- LEFT COLUMN: TOOLS ---
+        left_col = ctk.CTkFrame(grid, width=350)
+        left_col.pack(side="left", fill="both", padx=5, expand=False)
+        
+        ctk.CTkLabel(left_col, text="📂 Nhập Dữ Liệu", font=("Segoe UI", 14, "bold")).pack(pady=10)
+        
+        # CSV Section
+        ctk.CTkLabel(left_col, text="Nhập từ CSV:", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10)
+        self.entry_csv = ctk.CTkEntry(left_col, placeholder_text="Chưa chọn file CSV...")
+        self.entry_csv.pack(fill="x", padx=10, pady=5)
+        
+        btn_row_csv = ctk.CTkFrame(left_col, fg_color="transparent")
+        btn_row_csv.pack(fill="x", padx=10)
+        ctk.CTkButton(btn_row_csv, text="Chọn File", width=80, command=self.browse_csv).pack(side="left", padx=2)
+        ctk.CTkButton(btn_row_csv, text="Tải Mẫu", width=80, fg_color="gray", command=self.create_example_csv).pack(side="right", padx=2)
+
+        # TXT Folder Section
+        ctk.CTkLabel(left_col, text="Nhập từ Folder TXT:", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10, pady=(20, 0))
+        ctk.CTkButton(left_col, text="📂 Chọn Folder TXT", command=self.import_txt_folder).pack(fill="x", padx=10, pady=5)
+
+        # Facebook Tools Section
+        ctk.CTkLabel(left_col, text="Công cụ Facebook:", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10, pady=(20, 0))
+        ctk.CTkLabel(left_col, text="💡 Nhập nhiều link FB trong tab 'Đăng Bài Lẻ'", 
+                    font=("Segoe UI", 10), 
+                    text_color="gray",
+                    wraplength=300).pack(anchor="w", padx=10, pady=(5, 0))
+        ctk.CTkButton(left_col, text="📱 Mở Tab Facebook Import", 
+                     fg_color="#1877F2", 
+                     command=lambda: self.tabview.set("📝 Đăng Bài Lẻ")).pack(fill="x", padx=10, pady=5)
+
+        # --- RIGHT COLUMN: QUEUE LIST ---
+        right_col = ctk.CTkFrame(grid)
+        right_col.pack(side="right", fill="both", expand=True, padx=5)
+
+        # Queue Header
+        q_header = ctk.CTkFrame(right_col, height=40, fg_color="transparent")
+        q_header.pack(fill="x", padx=10, pady=5)
+        ctk.CTkLabel(q_header, text="📋 Danh sách Hàng Chờ", font=("Segoe UI", 14, "bold")).pack(side="left")
+        self.lbl_queue_count = ctk.CTkLabel(q_header, text="(0 bài)", text_color="gray")
+        self.lbl_queue_count.pack(side="left", padx=5)
+        
+        ctk.CTkButton(q_header, text="🗑️ Xóa All", width=60, fg_color=self.colors['danger'], command=self.clear_queue).pack(side="right")
+
+        # Listbox
+        self.queue_listbox = ctk.CTkTextbox(right_col, font=("Consolas", 12))
+        self.queue_listbox.pack(fill="both", expand=True, padx=10, pady=5)
+        self.queue_listbox.configure(state="disabled")
+
+        # Action Button (Run Batch)
+        self.btn_batch_post = ctk.CTkButton(right_col, text="▶️ CHẠY AUTO POST (HÀNG CHỜ)", height=50, 
+                                            fg_color=self.colors['success'], 
+                                            font=("Segoe UI", 13, "bold"),
+                                            state="disabled",
+                                            command=self.on_queue_post_click)
+        self.btn_batch_post.pack(fill="x", padx=10, pady=10)
+
+    # =========================================================================
+    # TAB 3: UPLOAD VIDEO
+    # =========================================================================
+    def create_upload_tab_content(self):
+        container = ctk.CTkFrame(self.tab_upload, fg_color="transparent")
+        container.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Upload Options
+        options_frame = ctk.CTkFrame(container)
+        options_frame.pack(fill="x", pady=5)
+        
+        ctk.CTkLabel(options_frame, text="Tùy chọn Upload:", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10, pady=5)
+        
+        self.chk_headless_upload = ctk.CTkCheckBox(options_frame, text="🚀 Chạy ẩn (Nhanh hơn)", font=("Segoe UI", 11))
+        self.chk_headless_upload.pack(anchor="w", padx=20, pady=2)
+        self.chk_headless_upload.select()  # Default to headless for speed
+        
+        self.chk_auto_add_queue = ctk.CTkCheckBox(options_frame, text="📝 Tự động thêm vào hàng chờ đăng bài", font=("Segoe UI", 11))
+        self.chk_auto_add_queue.pack(anchor="w", padx=20, pady=2)
+        self.chk_auto_add_queue.select()  # Default to auto-add
+        
+        # Input Area
+        input_frame = ctk.CTkFrame(container)
+        input_frame.pack(fill="x", pady=5)
+        
+        ctk.CTkLabel(input_frame, text="Chọn Video Upload:", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10, pady=5)
+        
+        row = ctk.CTkFrame(input_frame, fg_color="transparent")
+        row.pack(fill="x", padx=10, pady=5)
+        
+        self.entry_upload_path = ctk.CTkEntry(row, placeholder_text="Đường dẫn file video...")
+        self.entry_upload_path.pack(side="left", fill="x", expand=True)
+        ctk.CTkButton(row, text="📂 Chọn File", width=100, command=self.browse_video_upload).pack(side="left", padx=5)
+        
+        self.btn_upload = ctk.CTkButton(input_frame, text="⬆️ Bắt đầu Upload", fg_color=self.colors['primary'], command=self.on_upload_click)
+        self.btn_upload.pack(fill="x", padx=10, pady=10)
+
+        # Upload Log/Result Area
+        ctk.CTkLabel(container, text="Kết quả Upload (Link nhúng sẽ hiện ở đây):", font=("Segoe UI", 12, "bold")).pack(anchor="w", pady=(10,0))
+        self.txt_upload_list = ctk.CTkTextbox(container, font=("Consolas", 11))
+        self.txt_upload_list.pack(fill="both", expand=True, pady=5)
+
+    # =========================================================================
+    # TAB 4: VIMEO TOOLS
+    # =========================================================================
+    def create_vimeo_tab_content(self):
+        frm = ctk.CTkFrame(self.tab_vimeo)
+        frm.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        ctk.CTkLabel(frm, text="🎥 Công cụ Vimeo", font=("Segoe UI", 16, "bold")).pack(pady=10)
+        
+        # Cookie Login Test Section
+        login_frame = ctk.CTkFrame(frm)
+        login_frame.pack(fill="x", pady=10)
+        
+        ctk.CTkLabel(login_frame, text="🔐 Test Cookie Login", font=("Segoe UI", 14, "bold")).pack(pady=5)
+        
+        self.chk_headless_test = ctk.CTkCheckBox(login_frame, text="🚀 Chạy ẩn (Nhanh hơn)", font=("Segoe UI", 11))
+        self.chk_headless_test.pack(anchor="w", padx=20, pady=2)
+        self.chk_headless_test.select()  # Default to headless
+        
+        self.btn_test_cookie = ctk.CTkButton(login_frame, text="🍪 Test Cookie Login", 
+                                           height=40, fg_color=self.colors['success'], 
+                                           command=self.test_vimeo_cookie_login)
+        self.btn_test_cookie.pack(fill="x", padx=20, pady=5)
+        
+        # Account Creation Section
+        reg_frame = ctk.CTkFrame(frm)
+        reg_frame.pack(fill="x", pady=10)
+        
+        ctk.CTkLabel(reg_frame, text="📝 Tạo Tài Khoản Vimeo Hàng Loạt", font=("Segoe UI", 14, "bold")).pack(pady=5)
+        
+        self.entry_vm_count = self.create_modern_input(reg_frame, "Số lượng tài khoản cần tạo:", "10")
+        
+        # Vimeo Options
+        self.chk_headless_vimeo = ctk.CTkCheckBox(reg_frame, text="🚀 Chạy ẩn (Nhanh hơn)", font=("Segoe UI", 11))
+        self.chk_headless_vimeo.pack(anchor="w", padx=30, pady=5)
+        self.chk_headless_vimeo.select()  # Default to headless
+        
+        self.btn_vm_reg = ctk.CTkButton(reg_frame, text="🚀 Bắt đầu Tạo", height=50, 
+                                      fg_color=self.colors['warning'], 
+                                      command=self.on_vimeo_reg_click)
+        self.btn_vm_reg.pack(fill="x", padx=30, pady=20)
+
+        # Log Section
+        ctk.CTkLabel(frm, text="📜 Nhật ký chạy:", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=30, pady=(10,0))
+        self.txt_vimeo_log = ctk.CTkTextbox(frm, font=("Consolas", 10), height=300)
+        self.txt_vimeo_log.pack(fill="both", expand=True, padx=30, pady=10)
+        self.txt_vimeo_log.configure(state="disabled")
+
+    # =========================================================================
+    # TAB 5: DATA & LOGS (Thay thế cho Bottom UI cũ)
+    # =========================================================================
+    def create_data_tab_content(self):
+        tabview_logs = ctk.CTkTabview(self.tab_data)
+        tabview_logs.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        tab_sys_log = tabview_logs.add("🖥️ System Log")
+        tab_history = tabview_logs.add("✅ Lịch sử Link")
+        
+        # System Log
+        self.textbox_log = ctk.CTkTextbox(tab_sys_log, font=("Consolas", 11))
+        self.textbox_log.pack(fill="both", expand=True)
+        self.textbox_log.configure(state="disabled")
+        
+        # History
+        hist_toolbar = ctk.CTkFrame(tab_history, height=40)
+        hist_toolbar.pack(fill="x", pady=5)
+        ctk.CTkButton(hist_toolbar, text="📋 Copy Tất Cả Link", command=self.copy_history_links).pack(side="right", padx=10)
+        ctk.CTkButton(hist_toolbar, text="🗑️ Xóa Lịch Sử", command=self.clear_history, fg_color="red").pack(side="right", padx=10)
+        
+        # Use tkinter Text widget instead of CTkTextbox for better link handling
+        import tkinter as tk
+        history_frame = ctk.CTkFrame(tab_history)
+        history_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        self.history_textbox = tk.Text(
+            history_frame, 
+            font=("Segoe UI", 11),
+            bg="#2b2b2b",
+            fg="white",
+            insertbackground="white",
+            wrap="word",
+            cursor="arrow"
+        )
+        self.history_textbox.pack(fill="both", expand=True)
+        self.history_textbox.configure(state="disabled")
+        
+        # Configure tag for clickable links
+        self.history_textbox.tag_config("link", foreground="#3b82f6", underline=True)
+        self.history_textbox.tag_bind("link", "<Button-1>", self._on_link_click)
+        self.history_textbox.tag_bind("link", "<Enter>", lambda e: self.history_textbox.config(cursor="hand2"))
+        self.history_textbox.tag_bind("link", "<Leave>", lambda e: self.history_textbox.config(cursor="arrow"))
+
+    def clear_history(self):
+        """Clear all history in the textbox"""
+        if hasattr(self, 'history_textbox'):
+            self.history_textbox.configure(state="normal")
+            self.history_textbox.delete("1.0", "end")
+            self.history_textbox.configure(state="disabled")
+        self.log("🗑️ Đã xóa sạch lịch sử link.")
+
+    # =========================================================================
+    # TAB 6: SETTINGS
+    # =========================================================================
+    def create_settings_tab_content(self):
+        frm = ctk.CTkFrame(self.tab_settings)
+        frm.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        ctk.CTkLabel(frm, text="Cài đặt giao diện", font=("Segoe UI", 14, "bold")).pack(anchor="w", padx=20, pady=10)
+        
+        ctk.CTkOptionMenu(frm, values=["Dark", "Light", "System"], command=lambda v: ctk.set_appearance_mode(v)).pack(padx=20, anchor="w")
+        
+        ctk.CTkLabel(frm, text="Thông tin phiên bản: v2.0 Refactored", text_color="gray").pack(side="bottom", pady=20)
+
+    # =========================================================================
+    # LOGIC HELPERS & EVENT HANDLERS
+    # =========================================================================
+
+    def log(self, message):
+        """Unified logging method"""
+        # 1. Update Log tab
+        if hasattr(self, 'textbox_log'):
+            self.textbox_log.configure(state="normal")
+            timestamp = time.strftime("[%H:%M:%S] ")
+            self.textbox_log.insert("end", timestamp + str(message) + "\n")
+            self.textbox_log.see("end")
+            self.textbox_log.configure(state="disabled")
+        
+        # 2. Update Status Bar (short msg)
+        if hasattr(self, 'status_label'):
+            short_msg = str(message).split('\n')[0][:50]
+            self.status_label.configure(text=short_msg)
+            
+        print(message) # Console fallback
+
+    def browse_csv(self):
+        path = filedialog.askopenfilename(filetypes=[("CSV", "*.csv")])
+        if path:
+            self.entry_csv.delete(0, "end")
+            self.entry_csv.insert(0, path)
+            # Load data logic here
+            try:
+                from model.batch_helper import BatchPostData
+                self.batch_data = BatchPostData(path)
+                self.log(f"Đã load {self.batch_data.total_posts()} bài từ CSV.")
+                self.btn_batch_post.configure(state="normal")
+            except:
+                self.log("Lỗi load CSV (Giả lập: File OK)")
+                self.btn_batch_post.configure(state="normal")
+
+    def create_example_csv(self):
+        path = filedialog.asksaveasfilename(defaultextension=".csv", initialfile="mau_bai_viet.csv")
+        if path:
+            with open(path, "w", encoding="utf-8-sig") as f:
+                f.write("title,video_url,image_url,content\nBai 1,http://video,,Noi dung 1")
+            self.log(f"Đã tạo file mẫu: {path}")
+
+    def import_txt_folder(self):
+        """Import content from TXT files to be used as body content for video posts"""
+        folder = filedialog.askdirectory(title="Chọn folder chứa file TXT (nội dung body)")
+        if not folder: 
+            return
+        
+        try:
+            # Get all .txt files
+            files = [f for f in os.listdir(folder) if f.endswith(".txt")]
+            
+            if not files:
+                self.log("❌ Không tìm thấy file .txt nào trong folder!")
+                return
+            
+            # Store content in a pool for later use
+            if not hasattr(self, 'content_pool'):
+                self.content_pool = []
+            
+            imported_count = 0
+            for filename in files:
+                try:
+                    file_path = os.path.join(folder, filename)
+                    
+                    # Read file content
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read().strip()
+                    
+                    # Skip empty files
+                    if not content:
+                        self.log(f"⚠️ Bỏ qua file trống: {filename}")
+                        continue
+                    
+                    # Add to content pool WITH file path for later deletion
+                    self.content_pool.append({
+                        'filename': filename,
+                        'filepath': file_path,  # Store full path for deletion
+                        'content': content
+                    })
+                    
+                    imported_count += 1
+                    self.log(f"✅ Đã đọc: {filename} ({len(content)} ký tự)")
+                    
+                except Exception as e:
+                    self.log(f"❌ Lỗi đọc file {filename}: {e}")
+                    continue
+            
+            self.log(f"🎉 Đã load {imported_count} file nội dung vào bộ nhớ.")
+            self.log(f"💡 Tip: Upload video để tự động ghép với nội dung này!")
+            
+        except Exception as e:
+            self.log(f"❌ Lỗi import folder: {e}")
+
+    def import_fb_bulk(self):
+        """Import multiple Facebook video links and add to queue"""
+        try:
+            # Get text from textbox
+            fb_text = self.textbox_fb_links.get("1.0", "end").strip()
+            
+            if not fb_text:
+                self.log("❌ Chưa nhập link Facebook nào!")
+                return
+            
+            # Split by lines and filter out comments and empty lines
+            lines = fb_text.split('\n')
+            video_links = []
+            
+            for line in lines:
+                line = line.strip()
+                # Skip empty lines and comments
+                if not line or line.startswith('#'):
+                    continue
+                # Check if it's a valid URL for supported platforms
+                if any(domain in line for domain in ['facebook.com', 'fb.watch', 'vimeo.com', 'youtube.com', 'youtu.be']):
+                    video_links.append(line)
+            
+            if not video_links:
+                self.log("❌ Không tìm thấy link Video hợp lệ (Facebook/Vimeo/Youtube)!")
+                return
+            
+            self.log(f"📱 Bắt đầu import {len(video_links)} link Video...")
+            self.btn_import_fb.configure(state="disabled", text="⏳ Đang xử lý...")
+            
+            # Process in thread to avoid blocking UI
+            import threading
+            import requests 
+            from bs4 import BeautifulSoup
+
+            def _get_generic_title(url):
+                try:
+                    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+                    resp = requests.get(url, headers=headers, timeout=5)
+                    if resp.status_code == 200:
+                        soup = BeautifulSoup(resp.text, 'html.parser')
+                        # Try og:title first
+                        og = soup.find("meta", property="og:title")
+                        if og and og.get("content"):
+                            return og.get("content").split(" | ")[0]
+                        # Try title tag
+                        if soup.title:
+                            return soup.title.string.split(" | ")[0]
+                except:
+                    pass
+                return None
+            
+            def _process_links():
+                imported_count = 0
+                for idx, link in enumerate(video_links):
+                    try:
+                        title = None
+                        video_url_final = link
+                        platform = "Video"
+
+                        # 1. FACEBOOK
+                        if 'facebook.com' in link or 'fb.watch' in link:
+                            platform = "Facebook"
+                            self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] FB: Đang lấy tiêu đề..."))
+                            title = self.get_facebook_title(link)
+                            if not title or title == "Facebook Video":
+                                if self.chk_auto_title_fb.get():
+                                    title = f"Facebook Video {idx + 1} - {time.strftime('%H:%M:%S')}"
+                            # Convert to embed
+                            use_sdk = self.initial_config.get('facebook_use_sdk', False)
+                            video_url_final = self.create_facebook_embed(link, use_sdk=use_sdk)
+                        
+                        # 2. VIMEO
+                        elif 'vimeo.com' in link:
+                            platform = "Vimeo"
+                            self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] Vimeo: Đang lấy tiêu đề..."))
+                            title = _get_generic_title(link)
+                            if not title:
+                                title = f"Vimeo Video {idx + 1}"
+                            # Keep raw URL, wp_model handles embed
+                            video_url_final = link 
+
+                        # 3. YOUTUBE
+                        elif 'youtube.com' in link or 'youtu.be' in link:
+                            platform = "YouTube"
+                            self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] YouTube: Đang lấy tiêu đề..."))
+                            title = _get_generic_title(link)
+                            if not title:
+                                title = f"YouTube Video {idx + 1}"
+                             # Keep raw URL
+                            video_url_final = link
+
+                        # Create post data
+                        post_data = {
+                            'title': title,
+                            'video_url': video_url_final,
+                            'image_url': '',
+                            'content': '',
+                            'needs_body_content': True
+                        }
+                        
+                        self.post_queue.append(post_data)
+                        imported_count += 1
+                        self.after(0, lambda i=idx, t=title, p=platform: self.log(f"   ✅ [{i+1}] [{p}] {t[:50]}..."))
+                        
+                    except Exception as e:
+                        self.after(0, lambda i=idx, err=e: self.log(f"   ❌ Lỗi link {i+1}: {err}"))
+                        continue
+                
+                # Update display
+                self.after(0, self.update_queue_display)
+                self.after(0, lambda c=imported_count, t=len(video_links): self.log(f"🎉 Đã thêm {c}/{t} link Facebook vào hàng chờ!"))
+                self.after(0, lambda: self.log(f"   📝 Tất cả link đã được chuyển thành mã nhúng"))
+                
+                # Show content pool status
+                if hasattr(self, 'content_pool') and self.content_pool:
+                    remaining = len(self.content_pool)
+                    self.after(0, lambda r=remaining: self.log(f"💾 Có {r} nội dung sẵn sàng để ghép khi đăng bài"))
+                
+                # Clear textbox after import
+                if imported_count > 0:
+                    self.after(0, lambda: self.textbox_fb_links.delete("1.0", "end"))
+                    self.after(0, lambda: self.textbox_fb_links.insert("1.0", "# Nhập link Facebook tiếp theo...\n"))
+                
+                self.after(0, lambda: self.btn_import_fb.configure(state="normal", text="📥 Thêm Tất Cả Vào Hàng Chờ"))
+            
+            threading.Thread(target=_process_links, daemon=True).start()
+            
+        except Exception as e:
+            self.log(f"❌ Lỗi import Facebook: {e}")
+            self.btn_import_fb.configure(state="normal", text="📥 Thêm Tất Cả Vào Hàng Chờ")
+            import traceback
+            traceback.print_exc()
+
+        return fetched_title or "Facebook Video"
+
+    def get_facebook_title(self, fb_url):
+        """Get title from Facebook video page using requests first, then Selenium fallback"""
+        fetched_title = None
+        
+        # --- Method 1: Requests (Fast) ---
+        try:
+            import requests
+            from bs4 import BeautifulSoup
+            
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5'
+            }
+            
+            # Switch to m.facebook.com for easier scraping sometimes
+            req_url = fb_url.replace("www.facebook.com", "m.facebook.com")
+            
+            response = requests.get(req_url, headers=headers, timeout=5)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                
+                # Strategy: title tag
+                title_tag = soup.find('title')
+                if title_tag:
+                    t = title_tag.text.replace(' | Facebook', '').strip()
+                    if t and t.lower() not in ['facebook', 'log into facebook', 'video', 'watch']:
+                        fetched_title = t
+                
+                # Strategy: og:title
+                if not fetched_title or fetched_title == "Facebook":
+                    og_title = soup.find('meta', property='og:title')
+                    if og_title and og_title.get('content'):
+                        t = og_title.get('content').strip()
+                        if t and t.lower() not in ['facebook', 'watch', 'video', 'log into facebook']:
+                            fetched_title = t
+                            
+        except Exception as e:
+            print(f"[FB] Requests error: {e}")
+
+        # --- Method 2: Selenium (Fallback - Slower but Reliable) ---
+        # Only use if Requests failed or returned generic title
+        if not fetched_title or fetched_title in ["Facebook Video", "Facebook", "Log into Facebook"]:
+            print("[FB] Switching to Selenium for title extraction...")
+            try:
+                from selenium import webdriver
+                from selenium.webdriver.chrome.options import Options
+                from selenium.webdriver.chrome.service import Service
+                from webdriver_manager.chrome import ChromeDriverManager
+                
+                options = Options()
+                options.add_argument("--headless=new") # Run in background
+                options.add_argument("--disable-gpu")
+                options.add_argument("--no-sandbox")
+                options.add_argument("--mute-audio")
+                options.add_argument("--log-level=3")
+                
+                if os.name == 'nt':
+                     options.add_argument("--disable-logging")
+                
+                service = Service(ChromeDriverManager().install())
+                driver = webdriver.Chrome(service=service, options=options)
+                
+                try:
+                    driver.get(fb_url)
+                    time.sleep(4) # Wait a bit longer
+                    
+                    # 1. Try Page Title again
+                    page_title = driver.title
+                    if page_title:
+                        page_title = page_title.replace(' | Facebook', '')
+                        # Remove notification count e.g. "(1) "
+                        import re
+                        page_title = re.sub(r'^\(\d+\)\s*', '', page_title)
+                        
+                        if page_title.lower() not in ["facebook", "facebook - log in or sign up"]:
+                             fetched_title = page_title.strip()
+                    
+                    # 2. Try looking for the post caption/content
+                    if not fetched_title or fetched_title.lower() == "facebook":
+                        # Try multiple selectors for post text
+                        selectors = [
+                            "//div[@data-ad-preview='message']",
+                            "//div[contains(@class, 'ecm0bbzt')]", # Common obfuscated class
+                            "//h3", # Sometimes headings
+                            "//span[contains(@class, 'x193iq5w')]", # Another common class text
+                            "//div[@dir='auto']"
+                        ]
+                        
+                        for xpath in selectors:
+                            try:
+                                elems = driver.find_elements("xpath", xpath)
+                                for elem in elems:
+                                    text = elem.text.strip()
+                                    if text and len(text) > 5 and len(text) < 150: # Reasonable length for title
+                                        fetched_title = text.split('\n')[0] # Take first line
+                                        break
+                                if fetched_title and fetched_title.lower() != "facebook":
+                                    break
+                            except:
+                                pass
+                                
+                finally:
+                    driver.quit()
+                    
+            except Exception as e:
+                print(f"[FB] Selenium error: {e}")
+ 
+        return fetched_title or "Facebook Video"
+
+    def create_facebook_embed(self, fb_url, use_sdk=False):
+        """Convert Facebook URL to embed code (267x591 - 9:16 ratio for portrait video)
+        
+        Args:
+            fb_url: Facebook video URL
+            use_sdk: If True, use Facebook SDK method (bypass security). If False, use iframe method.
+        """
+        import re
+        from urllib.parse import quote
+        
+        # Clean URL
+        clean_url = fb_url.strip()
+        clean_url = clean_url.replace("m.facebook.com", "www.facebook.com")
+        clean_url = clean_url.replace("web.facebook.com", "www.facebook.com")
+        
+        if use_sdk:
+            # Method 2: Facebook SDK (bypass security if iframe is blocked)
+            # Format: <div class="fb-video" data-href="URL" data-width="267"></div>
+            embed_code = (
+                f'<!-- Facebook SDK Script -->\n'
+                f'<script async defer crossorigin="anonymous" '
+                f'src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v12.0"></script>\n'
+                f'<!-- Facebook Video Embed -->\n'
+                f'<div class="fb-video" data-href="{clean_url}" data-width="267" data-show-text="false"></div>'
+            )
+        else:
+            # Method 1: Direct iframe (default, faster)
+            # URL encode for Facebook embed
+            encoded_url = quote(clean_url, safe='')
+            
+            # Create fixed-size Facebook iframe (267x591 - 9:16 ratio for portrait video)
+            # CRITICAL: NO SPACES between attributes - Facebook blocks if there are spaces!
+            embed_code = (
+                f'<iframe src="https://www.facebook.com/plugins/video.php?height=476&href={encoded_url}&show_text=true&width=267&t=0"'
+                f'width="267"'
+                f'height="591"'
+                f'style="border:none;overflow:hidden"'
+                f'scrolling="no"'
+                f'frameborder="0"'
+                f'allowfullscreen="true"'
+                f'allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"'
+                f'allowFullScreen="true">'
+                f'</iframe>'
+            )
+        
+        return embed_code
+
+    def add_to_queue(self):
+        data = self.get_post_data()
+        if not data.title and not data.video_url:
+            messagebox.showwarning("Thiếu thông tin", "Nhập ít nhất tiêu đề hoặc video URL!")
+            return
+        
+        # --- Facebook Processing for Single Post ---
+        if data.video_url and ('facebook.com' in data.video_url or 'fb.watch' in data.video_url):
+            # Only process if it looks like a URL, not already an embed code
+            if not data.video_url.strip().startswith('<'):
+                # Check if should use oEmbed (let WordPress handle it)
+                use_oembed = self.initial_config.get('facebook_use_oembed', False)
+                
+                if use_oembed:
+                    self.log("🔍 Đang xử lý link Facebook (lấy tiêu đề, giữ URL cho WordPress oEmbed)...")
+                    
+                    # Only fetch title, keep URL as-is for WordPress oEmbed
+                    if not data.title:
+                        try:
+                            self.update_idletasks() 
+                            fetched_title = self.get_facebook_title(data.video_url)
+                            if fetched_title and fetched_title != "Facebook Video":
+                                data.title = fetched_title
+                                self.entry_title.delete(0, "end")
+                                self.entry_title.insert(0, fetched_title)
+                        except Exception as e:
+                            print(f"Lỗi lấy tiêu đề FB: {e}")
+                    
+                    # Keep URL as-is - WordPress will handle oEmbed
+                    self.log("✅ Giữ URL Facebook cho WordPress tự xử lý (oEmbed)")
+                else:
+                    self.log("🔍 Đang xử lý link Facebook (lấy tiêu đề & mã nhúng)...")
+                    
+                    # 1. Fetch Title if missing
+                    if not data.title:
+                        try:
+                            # Force UI update
+                            self.update_idletasks() 
+                            fetched_title = self.get_facebook_title(data.video_url)
+                            if fetched_title and fetched_title != "Facebook Video":
+                                data.title = fetched_title
+                                self.entry_title.delete(0, "end")
+                                self.entry_title.insert(0, fetched_title)
+                        except Exception as e:
+                            print(f"Lỗi lấy tiêu đề FB: {e}")
+
+                    # 2. Generate Embed Code
+                    try:
+                        use_sdk = self.initial_config.get('facebook_use_sdk', False)
+                        embed_code = self.create_facebook_embed(data.video_url, use_sdk=use_sdk)
+                        if embed_code:
+                            data.video_url = embed_code
+                            # Optional: Update UI to show it's now an embed code? 
+                            # self.entry_video.delete(0, "end")
+                            # self.entry_video.insert(0, "[Converted to Embed Code]")
+                    except Exception as e:
+                        self.log(f"⚠️ Lỗi tạo embed FB: {e}")
+
+        # Auto-generate title if missing but has video
+        if not data.title and data.video_url:
+            if "youtube" in data.video_url.lower():
+                data.title = f"Video YouTube - {time.strftime('%H:%M:%S')}"
+            elif "vimeo" in data.video_url.lower():
+                data.title = f"Video Vimeo - {time.strftime('%H:%M:%S')}"
+            elif "facebook" in data.video_url.lower() or "fb.watch" in data.video_url.lower():
+                data.title = f"Video Facebook - {time.strftime('%H:%M:%S')}"
+            else:
+                data.title = f"Video Embed - {time.strftime('%H:%M:%S')}"
+        
+        # Prepare queue item
+        queue_item = data.__dict__
+        
+        # Check if content is empty -> AUTO ENABLE CONTENT MATCHING FROM POOL
+        if not data.content.strip():
+            queue_item['needs_body_content'] = True
+            if hasattr(self, 'content_pool') and self.content_pool:
+                self.log(f"   ℹ️ Bài viết trống nội dung -> Sẽ tự động ghép từ pool ({len(self.content_pool)} bài sẵn có)")
+        
+        self.post_queue.append(queue_item)
+        self.update_queue_display()
+        self.log(f"✅ Đã thêm vào hàng chờ: {data.title}")
+        
+        # Clear inputs
+        self.entry_title.delete(0, "end")
+        self.entry_video.delete(0, "end")
+        self.entry_image.delete(0, "end")
+        self.entry_content_image.delete(0, "end")  # Clear content image 1
+        self.entry_content_image2.delete(0, "end")  # Clear content image 2
+        self.entry_content_image3.delete(0, "end")  # Clear content image 3
+        self.textbox_content.delete("1.0", "end")
+
+    def update_queue_display(self):
+        self.queue_listbox.configure(state="normal")
+        self.queue_listbox.delete("1.0", "end")
+        self.lbl_queue_count.configure(text=f"({len(self.post_queue)} bài)")
+        
+        if not self.post_queue:
+            self.queue_listbox.insert("end", "Hàng chờ trống. Thêm bài viết để bắt đầu.\n")
+            self.btn_batch_post.configure(state="disabled", text="▶️ CHẠY AUTO POST (HÀNG CHỜ)")
+        else:
+            self.btn_batch_post.configure(state="normal", text="🚀 CHAY AUTO")
+            for idx, item in enumerate(self.post_queue):
+                title = item.get('title', 'Không có tiêu đề')
+                video_url = item.get('video_url', '')
+                content = item.get('content', '')
+                
+                # Detect post type
+                post_type = ""
+                preview = ""
+                
+                if video_url and 'vimeo.com' in video_url:
+                    # Vimeo video post
+                    post_type = "[Vimeo] "
+                    preview = f"🔗 {video_url[:40]}..."
+                elif video_url and ('youtube' in video_url.lower() or 'youtu.be' in video_url.lower()):
+                    # YouTube video post
+                    post_type = "[YouTube] "
+                    preview = f"🔗 {video_url[:40]}..."
+                elif video_url and 'facebook' in video_url.lower():
+                    # Facebook video post
+                    post_type = "[Facebook] "
+                    preview = f"🔗 {video_url[:40]}..."
+                elif content and not video_url:
+                    # Text content post (from TXT file)
+                    post_type = "[TXT] "
+                    content_preview = content[:50].replace('\n', ' ')
+                    preview = f"📄 {content_preview}..."
+                else:
+                    # Unknown type
+                    post_type = ""
+                    preview = "❓ Không rõ loại"
+                
+                display_line = f"{idx+1}. {post_type}{title}\n"
+                if preview:
+                    display_line += f"    {preview}\n"
+                display_line += "-"*50 + "\n"
+                
+                self.queue_listbox.insert("end", display_line)
+        
+        self.queue_listbox.configure(state="disabled")
+
+    def clear_queue(self):
+        self.post_queue = []
+        self.update_queue_display()
+
+    def get_post_data(self):
+        data = AppData()
+        data.title = self.entry_title.get()
+        
+        # Extract video URL from iframe if user pasted full iframe code
+        video_input = self.entry_video.get().strip()
+        data.video_url = self._extract_video_url(video_input)
+        
+        data.image_url = self.entry_image.get()
+        data.content_image = self.entry_content_image.get()  # Content image 1
+        data.content_image2 = self.entry_content_image2.get()  # Content image 2
+        data.content_image3 = self.entry_content_image3.get()  # Content image 3
+        data.auto_fetch_images = self.chk_auto_fetch_images.get()  # Auto-fetch flag
+        data.content = self.textbox_content.get("1.0", "end")
+        return data
+    
+    def _extract_video_url(self, input_text):
+        """
+        Extract video URL or full embed code from various input formats:
+        - Full Vimeo embed with div wrapper: Use entire code
+        - Facebook video URL: Convert to fixed-size iframe (267x591)
+        - Iframe code: Extract src URL
+        - Direct URL: Use as-is
+        - Vimeo share link: Convert to player URL
+        """
+        if not input_text:
+            return ""
+        
+        import re
+        from urllib.parse import quote
+        
+        # Case 1: Full Vimeo embed code with <div> wrapper and <script>
+        # This is the BEST format - use it entirely
+        if '<div style="padding:' in input_text and '<script src="https://player.vimeo.com/api/player.js">' in input_text:
+            print(f"[GUI] Detected full Vimeo embed code with wrapper")
+            # Return the entire embed code - WordPress will handle it
+            return input_text
+        
+        # Case 2: Facebook video URL - Convert to responsive iframe
+        if 'facebook.com' in input_text or 'fb.watch' in input_text or 'fb.com' in input_text:
+            print(f"[GUI] Detected Facebook video URL")
+            
+            # Extract the actual Facebook URL if it's in iframe already
+            if '<iframe' in input_text:
+                match = re.search(r'href=([^&\s]+)', input_text)
+                if match:
+                    fb_url = match.group(1)
+                    # URL decode if needed
+                    fb_url = fb_url.replace('%3A', ':').replace('%2F', '/')
+                else:
+                    # Try to extract from src
+                    match = re.search(r'src=["\']([^"\']+)["\']', input_text)
+                    if match:
+                        fb_url = match.group(1)
+                    else:
+                        fb_url = input_text
+            else:
+                fb_url = input_text.strip()
+            
+            # Ensure it's a full URL
+            if not fb_url.startswith('http'):
+                fb_url = 'https://' + fb_url
+            
+            # URL encode for Facebook embed
+            encoded_url = quote(fb_url, safe='')
+            
+            # Create Facebook iframe (267x591 - 9:16 ratio for portrait video)
+            # Check if should use SDK method
+            use_sdk = self.initial_config.get('facebook_use_sdk', False)
+            
+            if use_sdk:
+                # Method 2: Facebook SDK (bypass security)
+                # Format: <div class="fb-video" data-href="URL" data-width="267"></div>
+                fb_iframe = (
+                    f'<!-- Facebook SDK Script -->'
+                    f'<script>window.fbAsyncInit = function() {{'
+                    f'FB.init({{appId: "YOUR_APP_ID",xfbml: true,version: "v12.0"}});'
+                    f'}};'
+                    f'(function(d, s, id){{'
+                    f'var js, fjs = d.getElementsByTagName(s)[0];'
+                    f'if (d.getElementById(id)) {{return;}}'
+                    f'js = d.createElement(s); js.id = id;'
+                    f'js.src = "https://connect.facebook.net/en_US/sdk.js";'
+                    f'fjs.parentNode.insertBefore(js, fjs);'
+                    f'}}(document, "script", "facebook-jssdk"));</script>'
+                    f'<!-- Facebook Video Embed -->'
+                    f'<div class="fb-video" data-href="{fb_url}" data-width="267"></div>'
+                )
+            else:
+                # Method 1: Direct iframe (default) - CRITICAL: NO SPACES between attributes!
+                fb_iframe = (
+                    f'<iframe src="https://www.facebook.com/plugins/video.php?height=476&href={encoded_url}&show_text=true&width=267&t=0"'
+                    f'width="267"'
+                    f'height="591"'
+                    f'style="border:none;overflow:hidden"'
+                    f'scrolling="no"'
+                    f'frameborder="0"'
+                    f'allowfullscreen="true"'
+                    f'allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"'
+                    f'allowFullScreen="true">'
+                    f'</iframe>'
+                )
+            
+            print(f"[GUI] Created Facebook iframe: {fb_iframe[:100]}...")
+            return fb_iframe
+        
+        # Case 3: Already a clean player URL
+        if 'player.vimeo.com/video/' in input_text and '<' not in input_text:
+            return input_text
+        
+        # Case 4: Iframe code - extract src attribute
+        if '<iframe' in input_text.lower():
+            # Match src="..." or src='...'
+            match = re.search(r'src=["\']([^"\']+)["\']', input_text)
+            if match:
+                url = match.group(1)
+                print(f"[GUI] Extracted URL from iframe: {url}")
+                return url
+        
+        # Case 5: Regular vimeo.com link - convert to player URL
+        if 'vimeo.com/' in input_text and 'player.vimeo.com' not in input_text:
+            # Extract video ID
+            match = re.search(r'vimeo\.com/(\d+)', input_text)
+            if match:
+                video_id = match.group(1)
+                player_url = f"https://player.vimeo.com/video/{video_id}"
+                print(f"[GUI] Converted vimeo.com link to player URL: {player_url}")
+                return player_url
+        
+        # Case 6: Just return as-is (might be other video platform)
+        return input_text
+
+    def on_post_click(self):
+        data = self.get_post_data()
+        self.log("Đang đăng bài lẻ...")
+        self.controller.handle_post_request(data)
+
+    def on_queue_post_click(self):
+        if not self.post_queue: 
+            self.log("❌ Hàng chờ trống!")
+            return
+        
+        self.log(f"🚀 Bắt đầu chạy AUTO - {len(self.post_queue)} bài trong hàng chờ")
+        self.btn_batch_post.configure(state="disabled", text="⏳ Đang chạy AUTO...")
+        
+        # Start processing queue
+        self.process_next_queue_post()
+
+    def process_next_queue_post(self):
+        if not self.post_queue:
+            self.log("✅ Hoàn thành AUTO! Tất cả bài đã được xử lý.")
+            self.btn_batch_post.configure(state="normal", text="🚀 CHAY AUTO")
+            return
+        
+        item = self.post_queue[0]
+        self.log(f"📝 Đang xử lý bài {len(self.post_queue)} còn lại: {item.get('title', 'Không có tiêu đề')}")
+        
+        # Check if this post needs body content from pool
+        if item.get('needs_body_content', False) and hasattr(self, 'content_pool') and self.content_pool:
+            # Get content from pool NOW (when posting)
+            content_item = self.content_pool.pop(0)
+            body_content = content_item['content']
+            content_filename = content_item['filename']
+            content_filepath = content_item.get('filepath', '')  # Get filepath for deletion
+            
+            # DON'T combine here - let wp_model.py handle video placement
+            # Just update the raw_content with body text only
+            item['content'] = body_content  # Only body content, no embed code
+            item['needs_body_content'] = False
+            item['content_source'] = content_filename
+            item['txt_filepath'] = content_filepath  # Store filepath for deletion after post
+            
+            self.log(f"   📄 Ghép nội dung từ: {content_filename}")
+            self.log(f"   🗑️ Đã xóa khỏi pool để tránh trùng lặp")
+            self.log(f"   ✅ Nội dung body: {len(body_content)} ký tự")
+            
+            # Show remaining
+            remaining = len(self.content_pool)
+            if remaining > 0:
+                self.log(f"   💾 Còn {remaining} nội dung trong pool")
+            else:
+                self.log(f"   ℹ️ Pool đã hết nội dung")
+        
+        # Convert dict to AppData
+        data = AppData()
+        data.title = item.get('title', '')
+        data.video_url = item.get('video_url', '')  # This will be used to generate embed in wp_model.py
+        data.image_url = item.get('image_url', '')
+        data.content_image = item.get('content_image', '')  # Content image 1
+        data.content_image2 = item.get('content_image2', '')  # Content image 2
+        data.content_image3 = item.get('content_image3', '')  # Content image 3
+        data.auto_fetch_images = True  # Always auto-fetch for batch posting
+        data.content = item.get('content', '')
+        
+        # LƯU TITLE VÀO BIẾN TẠM để dùng trong on_post_finished
+        self.current_posting_title = data.title
+        print(f"[DEBUG] Saved current_posting_title: '{self.current_posting_title}'")  # Terminal only
+        
+        # Call controller to handle the post
+        if self.controller:
+            self.controller.handle_post_request(data, is_batch=True)
+        else:
+            # Mock success for testing
+            self.after(2000, lambda: self.on_post_finished(True, f"https://test.com/{data.title.replace(' ','-')}", True))
+
+    def on_post_finished(self, success, message, is_batch=False, post_title=None):
+        if success:
+            self.log(f"✅ THÀNH CÔNG: {message}")
+            
+            # Use the passed post_title if available logic
+            final_title = "Unknown"
+            
+            if post_title:
+                final_title = post_title
+                print(f"[DEBUG] Got clean title passed from controller: '{final_title}'")  # Terminal only
+            elif is_batch:
+                # Fallback (should rarely happen now)
+                if self.post_queue:
+                    final_title = self.post_queue[0].get('title', 'Unknown')
+            else:
+                # Đăng bài lẻ - lấy từ input fields
+                if hasattr(self, 'entry_title'):
+                    try:
+                        final_title = self.entry_title.get().strip()
+                    except:
+                        pass
+            
+            if not final_title or final_title == "Unknown":
+                 final_title = f"Post {len(self.published_links) + 1}"
+
+            # Add to history with title
+            try:
+                print(f"[DEBUG] Adding to history: '{final_title}' -> {message}")  # Terminal only
+                self.add_to_history(message, final_title)
+                print(f"[DEBUG] Successfully added to history")  # Terminal only
+                
+                # AUTO-CHECK LINK sau 5 giây (tăng từ 2s để WordPress kịp xử lý)
+                self.after(5000, lambda: self.check_published_link(message, final_title))
+                
+            except Exception as e:
+                self.log(f"❌ Lỗi khi thêm vào lịch sử: {e}")
+                import traceback
+                traceback.print_exc()
+            
+            # Auto-delete files after successful post
+            if is_batch and self.post_queue:
+                completed_item = self.post_queue[0]
+                
+                # Delete thumbnail file if it exists
+                thumbnail_path = completed_item.get('image_url', '')
+                if thumbnail_path and os.path.exists(thumbnail_path):
+                    try:
+                        os.remove(thumbnail_path)
+                        self.log(f"🗑️ Đã xóa thumbnail: {os.path.basename(thumbnail_path)}")
+                    except Exception as e:
+                        self.log(f"⚠️ Không thể xóa thumbnail: {e}")
+                
+                # Delete txt content file if it exists
+                txt_filepath = completed_item.get('txt_filepath', '')
+                if txt_filepath and os.path.exists(txt_filepath):
+                    try:
+                        os.remove(txt_filepath)
+                        self.log(f"🗑️ Đã xóa file nội dung: {os.path.basename(txt_filepath)}")
+                    except Exception as e:
+                        self.log(f"⚠️ Không thể xóa file txt: {e}")
+                
+                # Remove completed item from queue
+                self.post_queue.pop(0)
+                self.log(f"✅ Hoàn thành: {completed_item.get('title', 'Không có tiêu đề')}")
+                self.update_queue_display()
+                # Continue with next item after 2 seconds
+                self.after(2000, self.process_next_queue_post)
+        else:
+            self.log(f"❌ THẤT BẠI: {message}")
+            if is_batch:
+                # On failure, still remove item and continue (or you can choose to stop)
+                failed_item = self.post_queue.pop(0) if self.post_queue else None
+                if failed_item:
+                    self.log(f"❌ Bỏ qua bài lỗi: {failed_item.get('title', 'Không có tiêu đề')}")
+                    
+                    # Also delete files on failure to avoid accumulation
+                    thumbnail_path = failed_item.get('image_url', '')
+                    if thumbnail_path and os.path.exists(thumbnail_path):
+                        try:
+                            os.remove(thumbnail_path)
+                            self.log(f"🗑️ Đã xóa thumbnail của bài lỗi: {os.path.basename(thumbnail_path)}")
+                        except:
+                            pass
+                    
+                    # Delete txt file on failure too
+                    txt_filepath = failed_item.get('txt_filepath', '')
+                    if txt_filepath and os.path.exists(txt_filepath):
+                        try:
+                            os.remove(txt_filepath)
+                            self.log(f"🗑️ Đã xóa file txt của bài lỗi: {os.path.basename(txt_filepath)}")
+                        except:
+                            pass
+                
+                self.update_queue_display()
+                # Continue with next item after 3 seconds
+                self.after(3000, self.process_next_queue_post)
+
+    def _on_link_click(self, event):
+        """Handle click on link in history"""
+        try:
+            # Get the index of the click
+            index = self.history_textbox.index(f"@{event.x},{event.y}")
+            
+            # Get the range of the clicked tag
+            tag_ranges = self.history_textbox.tag_ranges("link")
+            
+            # Find which link was clicked
+            for i in range(0, len(tag_ranges), 2):
+                start = tag_ranges[i]
+                end = tag_ranges[i + 1]
+                
+                if self.history_textbox.compare(start, "<=", index) and self.history_textbox.compare(index, "<", end):
+                    # Get the URL text
+                    url = self.history_textbox.get(start, end)
+                    
+                    # Open in browser
+                    import webbrowser
+                    webbrowser.open(url)
+                    self.log(f"🌐 Đã mở link: {url}")
+                    break
+        except Exception as e:
+            print(f"[ERROR] Failed to open link: {e}")
+    
+    def add_to_history(self, link, title="", status="pending"):
+        """Add published post to history with title, link and status"""
+        try:
+            # Store in list with both title and link
+            self.published_links.append({
+                'title': title,
+                'link': link,
+                'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'status': status  # pending, success, error
+            })
+            
+            # Display in history textbox with nice formatting
+            # Phải dùng after() vì có thể được gọi từ background thread
+            def update_ui():
+                if hasattr(self, 'history_textbox'):
+                    self.history_textbox.configure(state="normal")
+                    
+                    # Format: [Index] Title
+                    #         🔗 Link (clickable)
+                    #         📅 Timestamp
+                    #         ─────────────
+                    index = len(self.published_links)
+                    
+                    # Status icon
+                    status_icon = "⏳"  # Default pending
+                    if status == "success":
+                        status_icon = "✅"
+                    elif status == "error":
+                        status_icon = "❌"
+                    
+                    # Insert title
+                    self.history_textbox.insert("end", f"[{index}] {status_icon} {title}\n")
+                    
+                    # Insert link icon
+                    self.history_textbox.insert("end", "🔗 ")
+                    
+                    # Insert clickable link
+                    link_start = self.history_textbox.index("end-1c")
+                    self.history_textbox.insert("end", link)
+                    link_end = self.history_textbox.index("end-1c")
+                    self.history_textbox.tag_add("link", link_start, link_end)
+                    
+                    # Insert timestamp and separator
+                    self.history_textbox.insert("end", f"\n📅 {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                    self.history_textbox.insert("end", "─" * 60 + "\n\n")
+                    
+                    self.history_textbox.see("end")
+                    self.history_textbox.configure(state="disabled")
+                else:
+                    print(f"[WARNING] history_textbox not found, but saved to list: {title}")
+            
+            # Schedule UI update on main thread
+            self.after(0, update_ui)
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to add to history: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def update_history_status(self, index, status):
+        """Update status of a history item (for async link checking)"""
+        try:
+            if 0 <= index - 1 < len(self.published_links):
+                self.published_links[index - 1]['status'] = status
+                
+                # Rebuild entire history display
+                def rebuild_ui():
+                    if hasattr(self, 'history_textbox'):
+                        self.history_textbox.configure(state="normal")
+                        self.history_textbox.delete("1.0", "end")
+                        
+                        for i, item in enumerate(self.published_links, 1):
+                            status_icon = "⏳"
+                            if item['status'] == "success":
+                                status_icon = "✅"
+                            elif item['status'] == "error":
+                                status_icon = "❌"
+                            
+                            # Insert title
+                            self.history_textbox.insert("end", f"[{i}] {status_icon} {item['title']}\n")
+                            
+                            # Insert link icon
+                            self.history_textbox.insert("end", "🔗 ")
+                            
+                            # Insert clickable link
+                            link_start = self.history_textbox.index("end-1c")
+                            self.history_textbox.insert("end", item['link'])
+                            link_end = self.history_textbox.index("end-1c")
+                            self.history_textbox.tag_add("link", link_start, link_end)
+                            
+                            # Insert timestamp and separator
+                            self.history_textbox.insert("end", f"\n📅 {item['timestamp']}\n")
+                            self.history_textbox.insert("end", "─" * 60 + "\n\n")
+                        
+                        self.history_textbox.see("end")
+                        self.history_textbox.configure(state="disabled")
+                
+                self.after(0, rebuild_ui)
+        except Exception as e:
+            print(f"[ERROR] Failed to update history status: {e}")
+    
+    def check_published_link(self, url, title):
+        """
+        Tự động check xem link đã đăng có accessible không
+        Retry 3 lần với delay để WordPress kịp xử lý
+        """
+        def _check():
+            try:
+                import requests
+                import time
+                import re
+                self.log(f"🔍 Đang kiểm tra link: {title}")
+                
+                # Find index of this link in history
+                link_index = len(self.published_links)
+                
+                # Extract post ID from URL for alternative check
+                post_id_match = re.search(r'[?&]p=(\d+)', url)
+                post_id = post_id_match.group(1) if post_id_match else None
+                
+                # Retry up to 3 times with increasing delay
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        response = requests.get(url, timeout=10, allow_redirects=True)
+                        status_code = response.status_code
+                        
+                        if status_code == 200:
+                            self.log(f"   ✅ Link OK - Status 200")
+                            self.update_history_status(link_index, "success")
+                            return
+                        elif status_code == 404:
+                            if attempt < max_retries - 1:
+                                # Retry after delay (WordPress might still be processing)
+                                wait_time = (attempt + 1) * 3  # 3s, 6s, 9s
+                                print(f"[LINK_CHECK] 404 on attempt {attempt+1}, retrying in {wait_time}s...")
+                                time.sleep(wait_time)
+                                continue
+                            else:
+                                # Final attempt failed - provide helpful message
+                                if post_id:
+                                    self.log(f"   ❌ Link lỗi 404 - Post ID {post_id} tồn tại nhưng URL không accessible")
+                                    self.log(f"   💡 Có thể cần flush permalinks: WP Admin → Settings → Permalinks → Save")
+                                else:
+                                    self.log(f"   ❌ Link lỗi 404 (Not Found)")
+                                self.update_history_status(link_index, "error")
+                                return
+                        elif status_code == 403:
+                            self.log(f"   ❌ Link lỗi 403 (Forbidden) - Có thể bị security plugin block")
+                            self.update_history_status(link_index, "error")
+                            return
+                        elif status_code == 500:
+                            self.log(f"   ❌ Link lỗi 500 (Server Error)")
+                            self.update_history_status(link_index, "error")
+                            return
+                        else:
+                            self.log(f"   ⚠️ Link trả về status {status_code}")
+                            self.update_history_status(link_index, "error")
+                            return
+                    except requests.exceptions.Timeout:
+                        if attempt < max_retries - 1:
+                            time.sleep(3)
+                            continue
+                        else:
+                            self.log(f"   ⏱️ Timeout khi check link")
+                            self.update_history_status(link_index, "error")
+                            return
+                    except requests.exceptions.ConnectionError:
+                        if attempt < max_retries - 1:
+                            time.sleep(3)
+                            continue
+                        else:
+                            self.log(f"   🔌 Lỗi kết nối khi check link")
+                            self.update_history_status(link_index, "error")
+                            return
+                    
+            except Exception as e:
+                self.log(f"   ❌ Lỗi check link: {e}")
+                link_index = len(self.published_links)
+                self.update_history_status(link_index, "error")
+        
+        # Run check in background thread
+        import threading
+        threading.Thread(target=_check, daemon=True).start()
+
+    def copy_history_links(self):
+        """Copy all links to clipboard"""
+        self.clipboard_clear()
+        
+        # Create formatted text with titles and links
+        text_lines = []
+        for item in self.published_links:
+            if isinstance(item, dict):
+                text_lines.append(f"{item['title']}: {item['link']}")
+            else:
+                # Old format (just string)
+                text_lines.append(str(item))
+        
+        self.clipboard_append("\n".join(text_lines))
+        self.log("📋 Đã copy tất cả link vào clipboard.")
+
+    def browse_video_upload(self):
+        filenames = filedialog.askopenfilenames(
+            title="Chọn Video Upload",
+            filetypes=[("Video Files", "*.mp4 *.mkv *.avi *.mov *.wmv"), ("All Files", "*.*")]
+        )
+        if filenames:
+            paths_str = "; ".join(filenames)
+            self.entry_upload_path.delete(0, "end")
+            self.entry_upload_path.insert(0, paths_str)
+            self.log(f"Đã chọn {len(filenames)} file video.")
+
+    def browse_thumbnail(self):
+        """Open file dialog to select a thumbnail image"""
+        filename = filedialog.askopenfilename(
+            title="Chọn Ảnh Thumbnail",
+            filetypes=[("Image Files", "*.jpg *.jpeg *.png *.webp"), ("All Files", "*.*")]
+        )
+        if filename:
+            self.entry_image.delete(0, "end")
+            self.entry_image.insert(0, filename)
+            self.log(f"🖼️ Đã chọn ảnh thumbnail: {os.path.basename(filename)}")
+
+    def browse_content_image(self):
+        """Open file dialog to select a content image"""
+        filename = filedialog.askopenfilename(
+            title="Chọn Ảnh Content 1",
+            filetypes=[("Image Files", "*.jpg *.jpeg *.png *.webp"), ("All Files", "*.*")]
+        )
+        if filename:
+            self.entry_content_image.delete(0, "end")
+            self.entry_content_image.insert(0, filename)
+            self.log(f"🖼️ Đã chọn ảnh content 1: {os.path.basename(filename)}")
+    
+    def browse_content_image2(self):
+        """Open file dialog to select content image 2"""
+        filename = filedialog.askopenfilename(
+            title="Chọn Ảnh Content 2",
+            filetypes=[("Image Files", "*.jpg *.jpeg *.png *.webp"), ("All Files", "*.*")]
+        )
+        if filename:
+            self.entry_content_image2.delete(0, "end")
+            self.entry_content_image2.insert(0, filename)
+            self.log(f"🖼️ Đã chọn ảnh content 2: {os.path.basename(filename)}")
+    
+    def browse_content_image3(self):
+        """Open file dialog to select content image 3"""
+        filename = filedialog.askopenfilename(
+            title="Chọn Ảnh Content 3",
+            filetypes=[("Image Files", "*.jpg *.jpeg *.png *.webp"), ("All Files", "*.*")]
+        )
+        if filename:
+            self.entry_content_image3.delete(0, "end")
+            self.entry_content_image3.insert(0, filename)
+            self.log(f"🖼️ Đã chọn ảnh content 3: {os.path.basename(filename)}")
+
+    def paste_image_from_clipboard(self, event=None):
+        """Paste image from clipboard and save to thumbnails folder (for thumbnail field)"""
+        return self.paste_image_from_clipboard_to_field(event, self.entry_image, "thumb")
+    
+    def paste_image_from_clipboard_to_field(self, event, target_field, field_name):
+        """Paste image from clipboard and save to thumbnails folder (generic method)"""
+        try:
+            # Try to get image from clipboard
+            img = ImageGrab.grabclipboard()
+            
+            if img is None:
+                self.log("⚠️ Clipboard không chứa ảnh. Hãy chụp màn hình (PrtScn) hoặc copy ảnh trước.")
+                return "break"
+            
+            # Create thumbnails folder if not exists
+            if not os.path.exists("thumbnails"):
+                os.makedirs("thumbnails")
+            
+            # Generate filename with timestamp
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            filename = f"thumbnails/pasted_{field_name}_{timestamp}.png"
+            
+            # Save image
+            img.save(filename, "PNG")
+            
+            # Update the target field
+            target_field.delete(0, "end")
+            target_field.insert(0, filename)
+            
+            self.log(f"✅ Đã paste ảnh từ clipboard: {filename}")
+            
+            # Prevent default paste behavior
+            return "break"
+            
+        except Exception as e:
+            self.log(f"❌ Lỗi khi paste ảnh: {e}")
+            return "break"
+
+
+    def add_uploaded_video_link(self, title, embed_code, thumb=None):
+        if hasattr(self, 'txt_upload_list'):
+            self.txt_upload_list.configure(state="normal")
+            display_text = f"✅ [UPLOADED] {title}\n"
+            display_text += f"🔗 Embed Code:\n{embed_code}\n"
+            if thumb:
+                display_text += f"🖼 Thumbnail: {thumb}\n"
+            display_text += "-"*50 + "\n"
+            
+            self.txt_upload_list.insert("end", display_text)
+            self.txt_upload_list.see("end")
+            self.txt_upload_list.configure(state="disabled")
+
+    def on_upload_click(self):
+        files_str = self.entry_upload_path.get().strip()
+        if not files_str:
+            self.log("❌ Chưa chọn file video!")
+            return
+
+        files = files_str.split("; ")
+        self.log(f"Bắt đầu upload {len(files)} video...")
+        self.btn_upload.configure(state="disabled", text="⏳ Đang tải lên...")
+        
+        import threading
+        from model.vimeo_helper import VimeoHelper
+        import queue
+        
+        # Create a queue for results
+        result_queue = queue.Queue()
+        completed_count = [0]  # Use list to allow modification in nested function
+        total_files = len(files)
+
+        def _upload_single_video(file_path, file_index, account_index):
+            """Upload a single video with its own browser instance"""
+            helper = VimeoHelper()
+            try:
+                # Load all available accounts first (important for rotation)
+                helper.load_all_available_accounts()
+                
+                # Check headless option
+                use_headless = bool(self.chk_headless_upload.get())
+                mode_text = "Headless - Ẩn" if use_headless else "Visible - Hiện"
+                self.after(0, lambda idx=file_index: self.log(f"[Luồng {account_index+1}] --- Upload File {idx+1}/{total_files}: {os.path.basename(file_path)} ---"))
+                
+                helper.init_driver(headless=use_headless)
+                
+                # Log callback for helper
+                def _log(m): 
+                    self.after(0, lambda msg=m, idx=file_index: self.log(f"[File {idx+1}] {msg}"))
+
+                # Upload
+                success, msg, data, quota = helper.upload_video(file_path, log_callback=_log)
+                
+                result_queue.put({
+                    'index': file_index,
+                    'success': success,
+                    'msg': msg,
+                    'data': data,
+                    'quota': quota,
+                    'file_path': file_path
+                })
+                
+            except Exception as e:
+                self.after(0, lambda err=e, idx=file_index: self.log(f"[File {idx+1}] Lỗi Thread: {err}"))
+                result_queue.put({
+                    'index': file_index,
+                    'success': False,
+                    'msg': str(e),
+                    'data': None,
+                    'quota': False,
+                    'file_path': file_path
+                })
+            finally:
+                helper.close()
+
+        def _process_results():
+            """Process upload results from queue"""
+            try:
+                result = result_queue.get_nowait()
+                
+                file_path = result['file_path']
+                success = result['success']
+                msg = result['msg']
+                data = result['data']
+                quota = result['quota']
+                idx = result['index']
+                
+                if success:
+                    # Check if we have data
+                    if data:
+                        title = data.get("title", "Video")
+                        embed = data.get("embed_code", "No Embed Code")
+                        thumb = data.get("thumbnail", None)
+                        video_link = data.get("video_link", "")
+                    else:
+                        # No data but success - create basic info from filename
+                        title = os.path.basename(file_path)
+                        embed = f"<!-- Video đang xử lý: {title} -->"
+                        thumb = None
+                        video_link = ""
+                        self.log("⚠️ Video đang xử lý, chưa có embed code đầy đủ")
+                    
+                    self.log(f"✅ {msg}")
+                    self.add_uploaded_video_link(title, embed, thumb)
+                    
+                    # Auto add to queue if option is checked
+                    if self.chk_auto_add_queue.get():
+                        self.add_video_to_queue(title, embed, video_link, thumb)
+                else:
+                    self.log(f"❌ Lỗi: {msg}")
+                    if quota:
+                        self.log("⚠️ Quota Full!")
+                
+                completed_count[0] += 1
+                
+                # Check if all done
+                if completed_count[0] >= total_files:
+                    self.log(f"=== Hoàn thành upload {completed_count[0]}/{total_files} video ===")
+                    self.btn_upload.configure(state="normal", text="⬆️ Bắt đầu Upload")
+                else:
+                    # Continue checking for more results
+                    self.after(500, _process_results)
+                    
+            except queue.Empty:
+                # No result yet, check again later
+                if completed_count[0] < total_files:
+                    self.after(500, _process_results)
+                else:
+                    self.btn_upload.configure(state="normal", text="⬆️ Bắt đầu Upload")
+
+        # Determine number of available accounts
+        total_accounts = 1
+        try:
+            if os.path.exists("vimeo_accounts.txt"):
+                with open("vimeo_accounts.txt", "r", encoding="utf-8") as f:
+                    acc_lines = [l for l in f.readlines() if l.strip()]
+                    if acc_lines:
+                        total_accounts = len(acc_lines)
+            elif os.path.exists("vimeo_cookies.txt"):
+                with open("vimeo_cookies.txt", "r", encoding="utf-8") as f:
+                    c_lines = [l for l in f.readlines() if l.strip()]
+                    if c_lines:
+                        total_accounts = len(c_lines)
+        except:
+            pass
+            
+        self.log(f"🔎 Tìm thấy {total_accounts} tài khoản Vimeo để xoay vòng.")
+
+        # Start parallel uploads with limited workers (2-3 threads max)
+        max_parallel = 3  # Giới hạn 3 luồng song song
+        self.log(f"🚀 Chạy song song tối đa {max_parallel} luồng upload...")
+        
+        # Use ThreadPoolExecutor to limit concurrent uploads
+        from concurrent.futures import ThreadPoolExecutor
+        
+        def submit_upload(idx, file_path):
+            """Submit a single upload task"""
+            file_path = file_path.strip()
+            if not file_path:
+                completed_count[0] += 1
+                return
+            
+            # Assign account index (rotate through ALL accounts)
+            account_index = idx % total_accounts
+            
+            # Execute upload
+            _upload_single_video(file_path, idx, account_index)
+        
+        # Create thread pool and submit all tasks
+        executor = ThreadPoolExecutor(max_workers=max_parallel)
+        
+        for idx, file_path in enumerate(files):
+            executor.submit(submit_upload, idx, file_path)
+        
+        # Don't wait for completion here - let them run in background
+        executor.shutdown(wait=False)
+        
+        # Start result processor
+        self.after(1000, _process_results)
+
+    def add_video_to_queue(self, title, embed_code, video_link, thumbnail_path=None):
+        """Add uploaded video to post queue automatically with thumbnail (content will be added when posting)"""
+        try:
+            # Clean title (remove file extension if present)
+            clean_title = title.replace('.mp4', '').replace('.avi', '').replace('.mov', '').replace('.mkv', '')
+            clean_title = clean_title.replace('_', ' ').strip()
+            
+            # DON'T store embed code in content - store in video_url so wp_model.py can place it correctly
+            # The video_url will be used by generate_seo_content to create video block
+            
+            # Create post data with thumbnail (NO content yet)
+            post_data = {
+                'title': clean_title,  # Use video name as title
+                'video_url': embed_code if embed_code else video_link,  # Store embed code as video_url
+                'image_url': thumbnail_path if thumbnail_path else '',  # Thumbnail as featured image
+                'content': '',  # Empty for now - will be filled with body content when posting
+                'needs_body_content': True  # Flag to indicate we need to add body content when posting
+            }
+            
+            self.post_queue.append(post_data)
+            self.update_queue_display()
+            self.log(f"📝 Đã thêm vào hàng chờ: {clean_title}")
+            self.log(f"   🔗 Video: {video_link if video_link else 'Processing...'}")
+            if thumbnail_path:
+                self.log(f"   🖼️ Thumbnail: {os.path.basename(thumbnail_path)}")
+            
+            # Show content pool status
+            if hasattr(self, 'content_pool'):
+                remaining = len(self.content_pool)
+                if remaining > 0:
+                    self.log(f"   💾 Có {remaining} nội dung sẵn sàng để ghép khi đăng bài")
+                else:
+                    self.log(f"   ℹ️ Chưa có nội dung body (chỉ có video embed)")
+            
+        except Exception as e:
+            self.log(f"❌ Lỗi thêm vào hàng chờ: {e}")
+
+    def log_vimeo(self, message):
+        """Log specifically to Vimeo tab"""
+        # Update Main Log
+        self.log(f"[VIMEO] {message}")
+        
+        # Update Vimeo Tab Log
+        if hasattr(self, 'txt_vimeo_log'):
+            self.txt_vimeo_log.configure(state="normal")
+            self.txt_vimeo_log.insert("end", f"[{time.strftime('%H:%M:%S')}] {message}\n")
+            self.txt_vimeo_log.see("end")
+            self.txt_vimeo_log.configure(state="disabled")
+
+    def test_vimeo_cookie_login(self):
+        """Test Vimeo cookie login functionality"""
+        self.log_vimeo("🍪 Bắt đầu test cookie login...")
+        self.btn_test_cookie.configure(state="disabled", text="⏳ Đang test...")
+        
+        import threading
+        from model.vimeo_helper import VimeoHelper
+        
+        def _test_login():
+            helper = VimeoHelper()
+            try:
+                # Check headless option
+                use_headless = bool(self.chk_headless_test.get())
+                helper.init_driver(headless=use_headless)
+                
+                # Log callback
+                def _log(msg): 
+                    self.after(0, lambda m=msg: self.log_vimeo(m))
+                
+                # Test cookie login
+                success = helper.auto_login(log_callback=_log)
+                
+                if success:
+                    self.after(0, lambda: self.log_vimeo("✅ Cookie login thành công!"))
+                    
+                    # Test upload page access
+                    self.after(0, lambda: self.log_vimeo("🔍 Kiểm tra quyền truy cập upload..."))
+                    helper.driver.get("https://vimeo.com/upload")
+                    time.sleep(3)
+                    
+                    if "upload" in helper.driver.current_url.lower():
+                        self.after(0, lambda: self.log_vimeo("✅ Có thể truy cập trang upload!"))
+                    else:
+                        self.after(0, lambda: self.log_vimeo("❌ Không thể truy cập trang upload."))
+                        
+                else:
+                    self.after(0, lambda: self.log_vimeo("❌ Cookie login thất bại!"))
+                    
+            except Exception as e:
+                self.after(0, lambda err=e: self.log_vimeo(f"❌ Lỗi test: {err}"))
+            finally:
+                helper.close()
+                self.after(0, lambda: self.btn_test_cookie.configure(state="normal", text="🍪 Test Cookie Login"))
+        
+        threading.Thread(target=_test_login, daemon=True).start()
+
+    def on_vimeo_reg_click(self):
+        try:
+            count = int(self.entry_vm_count.get())
+        except:
+            self.log("❌ Số lượng không hợp lệ (nhập số nguyên).")
+            return
+
+        self.log_vimeo(f"Bắt đầu quy trình tạo {count} tài khoản Vimeo...")
+        self.btn_vm_reg.configure(state="disabled", text="⏳ Đang chạy...")
+        
+        import threading
+        import random
+        import string
+        from model.vimeo_helper import VimeoHelper
+
+        def _generate_identity():
+            name = f"User{random.randint(10000, 99999)}"
+            random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+            email = f"nguyenduyduc{random_str}@gmail.com" # Updated pattern
+            p_upper = random.choice(string.ascii_uppercase)
+            p_lower = random.choice(string.ascii_lowercase)
+            p_digits = ''.join(random.choices(string.digits, k=3))
+            pwd = f"{p_upper}{p_lower}@{p_digits}xyz"
+            return name, email, pwd
+
+        def _run_batch():
+            created = 0
+            consecutive_failures = 0
+            ip_blocked = False
+            
+            for i in range(count):
+                self.after(0, lambda idx=i: self.log_vimeo(f"--- TÀI KHOẢN {idx+1}/{count} ---"))
+                
+                # 1. Gen Info
+                name, email, pwd = _generate_identity()
+                self.after(0, lambda n=name, e=email, p=pwd: self.log_vimeo(f"DATA: {e} | {p}"))
+                
+                # 2. Run Helper
+                helper = VimeoHelper()
+                try:
+                    # Check headless option
+                    use_headless = bool(self.chk_headless_vimeo.get())
+                    helper.init_driver(headless=use_headless) # Use selected mode
+                    
+                    # Log callback wrapper
+                    def _cb(msg): 
+                        self.after(0, lambda m=msg: self.log_vimeo(m))
+
+                    success, msg = helper.fill_registration_form(name, email, pwd, log_callback=_cb)
+                    
+                    if success:
+                        self.after(0, lambda: self.log_vimeo("✅ Tạo thành công!"))
+                        created += 1
+                        consecutive_failures = 0  # Reset counter on success
+                    else:
+                        self.after(0, lambda m=msg: self.log_vimeo(f"❌ Thất bại: {m}"))
+                        
+                        # Check if it's an IP block error
+                        if msg in ["IP_BLOCKED", "RATE_LIMITED", "ACCOUNT_LIMIT", "NETWORK_ERROR"]:
+                            consecutive_failures += 1
+                            self.after(0, lambda: self.log_vimeo(f"⚠️ Phát hiện vấn đề IP/Network (Lần {consecutive_failures})"))
+                            
+                            # If 2 consecutive IP blocks, stop and warn user
+                            if consecutive_failures >= 2:
+                                ip_blocked = True
+                                self.after(0, lambda: self.log_vimeo("🛑 DỪNG: IP bị chặn liên tiếp!"))
+                                
+                                # Show popup warning
+                                self.after(0, lambda: self.show_ip_block_warning())
+                                break
+                        else:
+                            consecutive_failures = 0  # Reset if it's a different error
+                        
+                except Exception as e:
+                    self.after(0, lambda err=e: self.log_vimeo(f"Lỗi: {err}"))
+                finally:
+                    helper.close()
+            
+            # Final summary
+            if ip_blocked:
+                self.after(0, lambda: self.log_vimeo(f"⚠️ KẾT THÚC SỚM: Tạo được {created}/{count} TK (IP bị chặn)"))
+            else:
+                self.after(0, lambda: self.log_vimeo(f"=== KẾT THÚC: Tạo được {created}/{count} TK ==="))
+            
+            self.after(0, lambda: self.btn_vm_reg.configure(state="normal", text="🚀 Bắt đầu Tạo"))
+
+        threading.Thread(target=_run_batch, daemon=True).start()
+
+    def show_ip_block_warning(self):
+        """Show popup warning when IP is blocked"""
+        try:
+            messagebox.showwarning(
+                "⚠️ IP Bị Chặn",
+                "🚫 Vimeo đã chặn IP của bạn!\n\n"
+                "📌 Nguyên nhân:\n"
+                "• Tạo quá nhiều tài khoản từ cùng 1 IP\n"
+                "• IP bị đánh dấu spam/bot\n"
+                "• Rate limit (quá nhiều request)\n\n"
+                "✅ Giải pháp:\n"
+                "1. Đổi IP/VPN khác\n"
+                "2. Đợi 30-60 phút rồi thử lại\n"
+                "3. Sử dụng proxy xoay (rotating proxy)\n\n"
+                "💡 Khuyến nghị: Đổi VPN/Proxy ngay!"
+            )
+        except Exception as e:
+            print(f"[GUI] Error showing popup: {e}")
+
+    def logout(self):
+        self.destroy()
+        # Logic restart app...
+
+# Mock Controller để test giao diện
+class MockController:
+    username = "AdminUser"
+    def handle_login(self, s, u, p, headless):
+        print(f"Login: {s}, {u}, Headless={headless}")
+        # Giả lập login thành công sau 1s
+        app.after(1000, app.login_success)
+        
+    def handle_post_request(self, data, is_batch=False):
+        print(f"Posting: {data.title}")
+        # Giả lập post thành công
+        app.after(1500, lambda: app.on_post_finished(True, f"https://site.com/{data.title.replace(' ','-')}", is_batch))
+
+if __name__ == "__main__":
+    controller = MockController()
+    app = GUIView(controller)
+    app.mainloop()

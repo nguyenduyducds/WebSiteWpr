@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+env/
+.env
+
+# Build
+build/
+dist/
+*.spec
+
+# Browser / Drivers
+chrome_portable/
+driver/
+chromedriver.exe
+
+# Sensitive Data / Configuration
+*.pkl
+vimeo_accounts.txt
+vimeo_cookies.txt
+vimeo_api_accounts.json
+vimeo_api_config.json
+cookies_*.pkl
+
+# Logs / Temp
+*.log
+tmp/
+thumbnails/
