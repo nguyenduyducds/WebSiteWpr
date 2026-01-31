@@ -18,6 +18,59 @@ class ImageAPI:
         self.used_images = set()
         self.image_pool = []  # Pool of available images
     
+    def optimize_image_for_upload(self, image_path, max_width=1200, quality=85):
+        """
+        Optimize image before upload to reduce size and speed up upload
+        
+        Args:
+            image_path: Path to original image
+            max_width: Maximum width (default 1200px)
+            quality: JPEG quality (default 85)
+            
+        Returns:
+            str: Path to optimized image
+        """
+        try:
+            from PIL import Image
+            
+            # Open image
+            img = Image.open(image_path)
+            
+            # Get original size
+            original_size = os.path.getsize(image_path)
+            width, height = img.size
+            
+            # Check if optimization needed
+            if width <= max_width and original_size < 200 * 1024:  # < 200KB
+                print(f"[IMAGE_API] Image already optimized: {width}x{height}, {original_size // 1024}KB")
+                return image_path
+            
+            # Resize if too large
+            if width > max_width:
+                ratio = max_width / width
+                new_height = int(height * ratio)
+                img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
+                print(f"[IMAGE_API] Resized: {width}x{height} → {max_width}x{new_height}")
+            
+            # Convert to RGB if needed (for JPEG)
+            if img.mode in ('RGBA', 'P'):
+                img = img.convert('RGB')
+            
+            # Save optimized version
+            optimized_path = image_path.replace('.jpg', '_optimized.jpg').replace('.png', '_optimized.jpg')
+            img.save(optimized_path, 'JPEG', quality=quality, optimize=True)
+            
+            optimized_size = os.path.getsize(optimized_path)
+            reduction = ((original_size - optimized_size) / original_size) * 100
+            
+            print(f"[IMAGE_API] ✅ Optimized: {original_size // 1024}KB → {optimized_size // 1024}KB (giảm {reduction:.1f}%)")
+            
+            return optimized_path
+            
+        except Exception as e:
+            print(f"[IMAGE_API] ⚠️ Optimization failed: {e}, using original")
+            return image_path
+    
     def extract_car_brand(self, title):
         """Extract car brand from title"""
         # Common car brands
@@ -211,6 +264,282 @@ class ImageAPI:
                 return False
         
         return False
+    
+    def save_image_to_library(self, source_path, custom_name=None):
+        """
+        Save image from thumbnails to saved_car_images library
+        
+        Args:
+            source_path: Path to source image (e.g., thumbnails/car_api_xxx.jpg)
+            custom_name: Optional custom name for saved image
+            
+        Returns:
+            tuple: (success: bool, saved_path: str or None)
+        """
+        try:
+            # Create saved_car_images folder if not exists
+            save_folder = "saved_car_images"
+            if not os.path.exists(save_folder):
+                os.makedirs(save_folder)
+                print(f"[IMAGE_API] 📁 Created folder: {save_folder}")
+            
+            # Check if source exists
+            if not os.path.exists(source_path):
+                print(f"[IMAGE_API] ❌ Source image not found: {source_path}")
+                return False, None
+            
+            # Generate save filename
+            if custom_name:
+                filename = custom_name
+                if not filename.endswith(('.jpg', '.jpeg', '.png')):
+                    filename += '.jpg'
+            else:
+                # Use original filename
+                filename = os.path.basename(source_path)
+            
+            save_path = os.path.join(save_folder, filename)
+            
+            # Check if file already exists
+            if os.path.exists(save_path):
+                # Add timestamp to avoid overwrite
+                import time
+                timestamp = int(time.time())
+                name, ext = os.path.splitext(filename)
+                filename = f"{name}_{timestamp}{ext}"
+                save_path = os.path.join(save_folder, filename)
+            
+            # Copy file
+            import shutil
+            shutil.copy2(source_path, save_path)
+            
+            file_size = os.path.getsize(save_path)
+            print(f"[IMAGE_API] 💾 Saved image to library: {save_path} ({file_size} bytes)")
+            
+            return True, save_path
+            
+        except Exception as e:
+            print(f"[IMAGE_API] ❌ Error saving image: {e}")
+            import traceback
+            traceback.print_exc()
+            return False, None
+    
+    def delete_image(self, image_path):
+        """
+        Delete image file
+        
+        Args:
+            image_path: Path to image file
+            
+        Returns:
+            bool: True if deleted successfully
+        """
+        try:
+            if not os.path.exists(image_path):
+                print(f"[IMAGE_API] ⚠️ Image not found: {image_path}")
+                return False
+            
+            os.remove(image_path)
+            print(f"[IMAGE_API] 🗑️ Deleted image: {image_path}")
+            return True
+            
+        except Exception as e:
+            print(f"[IMAGE_API] ❌ Error deleting image: {e}")
+            return False
+    
+    def get_saved_images(self):
+        """
+        Get list of saved images from library
+        
+        Returns:
+            list: List of image paths
+        """
+        try:
+            save_folder = "saved_car_images"
+            if not os.path.exists(save_folder):
+                return []
+            
+            images = []
+            for filename in os.listdir(save_folder):
+                if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
+                    images.append(os.path.join(save_folder, filename))
+            
+            # Sort by modification time (newest first)
+            images.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+            
+            return images
+            
+        except Exception as e:
+            print(f"[IMAGE_API] ❌ Error getting saved images: {e}")
+            return []
+    
+    def get_thumbnail_images(self):
+        """
+        Get list of images from thumbnails folder
+        
+        Returns:
+            list: List of image paths
+        """
+        try:
+            thumb_folder = "thumbnails"
+            if not os.path.exists(thumb_folder):
+                return []
+            
+            images = []
+            for filename in os.listdir(thumb_folder):
+                if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
+                    # Only include car_api images
+                    if 'car_api' in filename.lower():
+                        images.append(os.path.join(thumb_folder, filename))
+            
+            # Sort by modification time (newest first)
+            images.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+            
+            return images
+            
+        except Exception as e:
+            print(f"[IMAGE_API] ❌ Error getting thumbnail images: {e}")
+            return []
+    
+    def save_uploaded_image_url(self, image_url, post_title="", post_url=""):
+        """
+        Save uploaded image URL to JSON file for later download
+        
+        Args:
+            image_url: URL of uploaded image on WordPress
+            post_title: Title of the post (optional)
+            post_url: URL of the post (optional)
+        """
+        try:
+            import json
+            import time
+            
+            json_file = "uploaded_images.json"
+            
+            # Load existing data
+            if os.path.exists(json_file):
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            else:
+                data = {"images": []}
+            
+            # Add new entry
+            entry = {
+                "url": image_url,
+                "post_title": post_title,
+                "post_url": post_url,
+                "uploaded_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "downloaded": False
+            }
+            
+            # Check if URL already exists
+            existing = [img for img in data["images"] if img["url"] == image_url]
+            if not existing:
+                data["images"].append(entry)
+                
+                # Save to file
+                with open(json_file, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                
+                print(f"[IMAGE_API] 💾 Saved uploaded image URL: {image_url}")
+            
+        except Exception as e:
+            print(f"[IMAGE_API] ❌ Error saving uploaded image URL: {e}")
+    
+    def get_uploaded_images(self):
+        """
+        Get list of uploaded images from JSON file
+        
+        Returns:
+            list: List of image entries (dict with url, post_title, etc.)
+        """
+        try:
+            import json
+            
+            json_file = "uploaded_images.json"
+            
+            if not os.path.exists(json_file):
+                return []
+            
+            with open(json_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            return data.get("images", [])
+            
+        except Exception as e:
+            print(f"[IMAGE_API] ❌ Error getting uploaded images: {e}")
+            return []
+    
+    def download_uploaded_image(self, image_url):
+        """
+        Download image from WordPress URL to saved_car_images folder
+        
+        Args:
+            image_url: URL of image on WordPress
+            
+        Returns:
+            tuple: (success: bool, saved_path: str or None)
+        """
+        try:
+            import json
+            import time
+            from urllib.parse import urlparse
+            
+            # Create saved_car_images folder if not exists
+            save_folder = "saved_car_images"
+            if not os.path.exists(save_folder):
+                os.makedirs(save_folder)
+            
+            # Extract filename from URL
+            parsed = urlparse(image_url)
+            filename = os.path.basename(parsed.path)
+            
+            # If filename is empty or invalid, generate one
+            if not filename or not any(filename.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']):
+                timestamp = int(time.time())
+                filename = f"wordpress_image_{timestamp}.jpg"
+            
+            save_path = os.path.join(save_folder, filename)
+            
+            # Check if file already exists
+            if os.path.exists(save_path):
+                # Add timestamp to avoid overwrite
+                name, ext = os.path.splitext(filename)
+                timestamp = int(time.time())
+                filename = f"{name}_{timestamp}{ext}"
+                save_path = os.path.join(save_folder, filename)
+            
+            # Download image
+            success = self.download_image(image_url, save_path)
+            
+            if success:
+                # Update JSON to mark as downloaded
+                json_file = "uploaded_images.json"
+                if os.path.exists(json_file):
+                    with open(json_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    
+                    # Find and update entry
+                    for img in data["images"]:
+                        if img["url"] == image_url:
+                            img["downloaded"] = True
+                            img["downloaded_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+                            img["local_path"] = save_path
+                            break
+                    
+                    # Save updated data
+                    with open(json_file, 'w', encoding='utf-8') as f:
+                        json.dump(data, f, indent=2, ensure_ascii=False)
+                
+                print(f"[IMAGE_API] 📥 Downloaded from WordPress: {save_path}")
+                return True, save_path
+            else:
+                return False, None
+                
+        except Exception as e:
+            print(f"[IMAGE_API] ❌ Error downloading uploaded image: {e}")
+            import traceback
+            traceback.print_exc()
+            return False, None
 
 
 # Alternative: Pexels API (backup option)

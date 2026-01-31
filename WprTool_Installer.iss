@@ -2,7 +2,7 @@
 ; WordPress Auto Posting Tool with REST API & Chrome Portable
 
 #define MyAppName "WprTool"
-#define MyAppVersion "3.0.0"
+#define MyAppVersion "3.0.1"
 #define MyAppPublisher "NguyenDuyDuc"
 #define MyAppExeName "WprTool.exe"
 #define MyAppURL "https://github.com/yourusername/WprTool"
@@ -50,17 +50,18 @@ Name: "quicklaunchicon"; Description: "Create a &Quick Launch icon"; GroupDescri
 ; Main executable (built with PyInstaller)
 Source: "dist\WprTool.exe"; DestDir: "{app}"; Flags: ignoreversion
 
-; Chrome Portable (if not bundled in exe)
-; Uncomment if Chrome Portable is separate
-; Source: "chrome_portable\*"; DestDir: "{app}\chrome_portable"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Chrome Portable (CRITICAL - Include all files)
+Source: "chrome_portable\*"; DestDir: "{app}\chrome_portable"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; ChromeDriver (if not bundled in exe)
-; Uncomment if driver is separate
-; Source: "driver\*"; DestDir: "{app}\driver"; Flags: ignoreversion recursesubdirs createallsubdirs
+; ChromeDriver (CRITICAL - Include driver)
+Source: "driver\*"; DestDir: "{app}\driver"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Config files
-Source: "config.json"; DestDir: "{app}"; Flags: ignoreversion onlyifdoesntexist
+; Config files (use template to avoid leaking credentials)
+Source: "config_template.json"; DestDir: "{app}"; DestName: "config.json"; Flags: ignoreversion onlyifdoesntexist
 Source: "sample_posts.csv"; DestDir: "{app}"; Flags: ignoreversion
+
+; Cookie template - Empty file for app to use (real cookies excluded for security)
+Source: "cookies_template.pkl"; DestDir: "{app}"; Flags: ignoreversion onlyifdoesntexist
 
 ; Documentation (optional - user can choose to exclude)
 ; Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
@@ -72,6 +73,7 @@ Source: "vimeo_accounts.txt"; DestDir: "{app}"; Flags: ignoreversion onlyifdoesn
 [Dirs]
 ; Create empty folders
 Name: "{app}\thumbnails"
+Name: "{app}\saved_car_images"
 Name: "{app}\logs"
 
 [Icons]

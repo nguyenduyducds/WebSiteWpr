@@ -9,6 +9,8 @@ env/
 build/
 dist/
 *.spec
+*.exe
+*.rar
 
 # Browser / Drivers
 chrome_portable/
@@ -17,13 +19,22 @@ chromedriver.exe
 
 # Sensitive Data / Configuration
 *.pkl
+!cookies_template.pkl
+config.json
 vimeo_accounts.txt
 vimeo_cookies.txt
 vimeo_api_accounts.json
 vimeo_api_config.json
 cookies_*.pkl
 
-# Logs / Temp
+# Documentation (exclude as requested)
+*.md
+!README.md
+
+# Logs / Temp / Generated
 *.log
 tmp/
 thumbnails/
+saved_car_images/
+debug_*.html
+debug_*.png

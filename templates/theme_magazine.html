@@ -1,0 +1,188 @@
+<!-- Theme: Magazine Style - CSS Only -->
+{{VIDEO_EMBED}}
+
+{{FEATURED_IMAGE}}
+
+<h1>{{POST_TITLE}}</h1>
+
+<p class="lead">{{EXCERPT}}</p>
+
+{{MAIN_CONTENT}}
+
+{{CONTENT_IMAGES}}
+
+<style>
+/* Magazine Theme - Editorial Style */
+.entry-content {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 45px 20px;
+    font-family: 'Merriweather', Georgia, serif;
+    color: #1a1a1a;
+    line-height: 1.85;
+}
+
+.entry-content iframe {
+    max-width: 100%;
+    width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 6px;
+    margin: 35px 0;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.entry-content h1 {
+    font-size: 46px;
+    font-weight: 900;
+    line-height: 1.2;
+    color: #000;
+    margin: 35px 0 25px;
+    letter-spacing: -1px;
+    font-family: 'Playfair Display', Georgia, serif;
+    text-align: center;
+}
+
+.entry-content .lead {
+    font-size: 21px;
+    line-height: 1.7;
+    color: #333;
+    font-weight: 400;
+    margin: 30px auto;
+    max-width: 700px;
+    text-align: center;
+    font-style: italic;
+    padding: 0 20px;
+    border-top: 3px double #d4af37;
+    border-bottom: 3px double #d4af37;
+    padding-top: 25px;
+    padding-bottom: 25px;
+}
+
+.entry-content p {
+    font-size: 18px;
+    line-height: 1.85;
+    margin: 22px 0;
+    color: #2a2a2a;
+    text-align: justify;
+}
+
+.entry-content p:first-of-type::first-letter {
+    font-size: 72px;
+    font-weight: 700;
+    line-height: 1;
+    float: left;
+    margin: 5px 12px 0 0;
+    color: #d4af37;
+    font-family: 'Playfair Display', Georgia, serif;
+}
+
+.entry-content h2 {
+    font-size: 34px;
+    font-weight: 700;
+    margin: 50px 0 22px;
+    color: #000;
+    font-family: 'Playfair Display', Georgia, serif;
+    text-align: center;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.entry-content h2::after {
+    content: '◆';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #d4af37;
+    font-size: 14px;
+}
+
+.entry-content h3 {
+    font-size: 26px;
+    font-weight: 600;
+    margin: 38px 0 18px;
+    color: #1a1a1a;
+    font-family: 'Playfair Display', Georgia, serif;
+}
+
+.entry-content img {
+    max-width: 100%;
+    height: auto;
+    margin: 35px 0;
+    display: block;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+}
+
+.entry-content ul,
+.entry-content ol {
+    margin: 25px 0;
+    padding-left: 35px;
+}
+
+.entry-content li {
+    margin: 14px 0;
+    line-height: 1.8;
+}
+
+.entry-content blockquote {
+    border-left: none;
+    padding: 30px 40px;
+    margin: 40px 0;
+    background: #f9f7f4;
+    font-size: 22px;
+    font-style: italic;
+    color: #333;
+    text-align: center;
+    position: relative;
+    border-top: 2px solid #d4af37;
+    border-bottom: 2px solid #d4af37;
+}
+
+.entry-content blockquote::before {
+    content: '"';
+    font-size: 60px;
+    color: #d4af37;
+    position: absolute;
+    top: 10px;
+    left: 15px;
+    font-family: Georgia, serif;
+}
+
+.entry-content a {
+    color: #8b6914;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(139, 105, 20, 0.3);
+    transition: border-color 0.2s;
+}
+
+.entry-content a:hover {
+    border-bottom-color: #8b6914;
+}
+
+@media (max-width: 768px) {
+    .entry-content {
+        padding: 30px 18px;
+    }
+    .entry-content h1 {
+        font-size: 34px;
+    }
+    .entry-content .lead {
+        font-size: 18px;
+        padding: 20px 15px;
+    }
+    .entry-content p {
+        font-size: 17px;
+        text-align: left;
+    }
+    .entry-content p:first-of-type::first-letter {
+        font-size: 52px;
+    }
+    .entry-content h2 {
+        font-size: 28px;
+    }
+    .entry-content blockquote {
+        padding: 25px 30px;
+        font-size: 19px;
+    }
+}
+</style>

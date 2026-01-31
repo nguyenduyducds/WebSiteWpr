@@ -300,6 +300,12 @@ class VimeoHelper:
                     "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
                 })
             
+            # CRITICAL: Validate driver was initialized
+            if not self.driver:
+                error_msg = "[VIMEO] ❌ CRITICAL: Driver initialization failed! Driver is None."
+                print(error_msg)
+                raise Exception(error_msg)
+            
             print("[VIMEO] Browser initialized successfully.")
             if is_mobile:
                 self.driver.set_window_size(390, 844)
@@ -311,6 +317,7 @@ class VimeoHelper:
 
         except Exception as e:
             print(f"[VIMEO] Failed to init driver: {e}")
+            self.driver = None  # Ensure driver is None on failure
             raise e
 
     def fill_registration_form(self, name, email, password, log_callback=None):

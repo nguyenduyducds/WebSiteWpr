@@ -63,8 +63,100 @@ class AppController:
         thread = threading.Thread(target=self._process_post, args=(data, is_batch))
         thread.start()
 
+    def _upload_image_smart(self, image_path):
+        """
+        Smart image upload: Try REST API first (fast), fallback to Selenium
+        Uses cookies AND nonce from Selenium session for REST API authentication
+        
+        Args:
+            image_path: Path to local image file
+            
+        Returns:
+            tuple: (media_id, media_url) or (None, None) if failed
+        """
+        try:
+            # Try REST API first (if available and admin account)
+            if hasattr(self, 'rest_client') and self.rest_client:
+                try:
+                    print(f"[CONTROLLER] Trying REST API upload for: {image_path}")
+                    
+                    # Copy cookies from Selenium to REST API session
+                    if hasattr(self, 'selenium_client') and self.selenium_client.driver:
+                        try:
+                            selenium_cookies = self.selenium_client.driver.get_cookies()
+                            for cookie in selenium_cookies:
+                                self.rest_client.session.cookies.set(
+                                    cookie['name'], 
+                                    cookie['value'],
+                                    domain=cookie.get('domain', '')
+                                )
+                            print(f"[CONTROLLER] Copied {len(selenium_cookies)} cookies from Selenium to REST API")
+                            
+                            # Extract nonce from page
+                            try:
+                                nonce = self.selenium_client.driver.execute_script("""
+                                    // Try multiple methods to get nonce
+                                    if (window.wpApiSettings && window.wpApiSettings.nonce) {
+                                        return window.wpApiSettings.nonce;
+                                    }
+                                    if (window.wp && window.wp.api && window.wp.api.settings && window.wp.api.settings.nonce) {
+                                        return window.wp.api.settings.nonce;
+                                    }
+                                    // Try to find in meta tags
+                                    var meta = document.querySelector('meta[name="wp-rest-nonce"]');
+                                    if (meta) {
+                                        return meta.content;
+                                    }
+                                    return null;
+                                """)
+                                
+                                if nonce:
+                                    self.rest_client.nonce = nonce
+                                    print(f"[CONTROLLER] ✅ Extracted nonce from Selenium: {nonce[:10]}...")
+                                else:
+                                    print(f"[CONTROLLER] ⚠️ Could not extract nonce, trying without it")
+                            except Exception as nonce_err:
+                                print(f"[CONTROLLER] Warning: Could not extract nonce: {nonce_err}")
+                                
+                        except Exception as cookie_err:
+                            print(f"[CONTROLLER] Warning: Could not copy cookies: {cookie_err}")
+                    
+                    success, media_id, media_url = self.rest_client.upload_image(image_path)
+                    
+                    if success and media_url:
+                        print(f"[CONTROLLER] ✅ REST API upload successful: {media_url}")
+                        return media_id, media_url  # Return BOTH media_id and media_url
+                    else:
+                        print(f"[CONTROLLER] ⚠️ REST API upload failed, falling back to Selenium")
+                except Exception as rest_err:
+                    print(f"[CONTROLLER] REST API upload error: {rest_err}")
+            
+            # Fallback to Selenium (no media_id available)
+            print(f"[CONTROLLER] Using Selenium upload for: {image_path}")
+            uploaded_url = self.selenium_client.upload_image_to_media(image_path)
+            
+            if uploaded_url:
+                print(f"[CONTROLLER] ✅ Selenium upload successful: {uploaded_url}")
+                return None, uploaded_url  # No media_id from Selenium
+            else:
+                print(f"[CONTROLLER] ❌ Selenium upload failed")
+                return None, None
+            
+        except Exception as e:
+            print(f"[CONTROLLER] ❌ Image upload error: {e}")
+            return None, None
+
     def _process_post(self, data, is_batch=False):
         try:
+            # Initialize REST API client for fast image uploads (if admin account)
+            if not hasattr(self, 'rest_client'):
+                from model.wp_rest_api import WordPressRESTClient
+                self.rest_client = WordPressRESTClient(self.site_url, self.username, self.password)
+                
+                # Don't login yet - we'll copy cookies from Selenium later
+                print("[CONTROLLER] ✅ REST API client initialized (will use Selenium cookies)")
+                self.view.after(0, lambda: self.view.log(f"⚡ Sẵn sàng upload ảnh nhanh với REST API"))
+            
             from model.wp_model import BlogPost
             
             # 1. Create Post Object (Content Generation)
@@ -75,8 +167,54 @@ class AppController:
             else:
                 raw_content = content  # Dùng content user nhập
             
-            # Get content images (up to 3) and upload them first
-            content_image_urls = []
+            # ========================================
+            # STEP 1: Upload FEATURED IMAGE as FIRST content image
+            # ========================================
+            content_image_urls = []  # Initialize here
+            
+            if data.image_url and data.image_url.strip():
+                # Check if it's a local file path (not a URL)
+                if not data.image_url.startswith('http'):
+                    self.view.after(0, lambda: self.view.log(f"🖼️ Đang upload ảnh đại diện..."))
+                    
+                    # Optimize featured image before upload (SAME as content images)
+                    image_to_upload = data.image_url  # Default to original
+                    try:
+                        from model.image_api import ImageAPI
+                        img_api = ImageAPI()
+                        # Use SAME quality as content images (800px, 70%)
+                        optimized_path = img_api.optimize_image_for_upload(data.image_url, max_width=800, quality=70)
+                        if optimized_path and os.path.exists(optimized_path):
+                            image_to_upload = optimized_path  # Use optimized version
+                            print(f"[CONTROLLER] Using optimized image: {optimized_path}")
+                        else:
+                            print(f"[CONTROLLER] Optimization failed, using original: {data.image_url}")
+                    except Exception as opt_err:
+                        print(f"[CONTROLLER] Warning: Could not optimize featured image: {opt_err}")
+                        print(f"[CONTROLLER] Using original image: {data.image_url}")
+                    
+                    # Upload as FIRST content image
+                    print(f"[CONTROLLER] 📤 Uploading featured image as content image: {image_to_upload}")
+                    media_id, media_url = self._upload_image_smart(image_to_upload)
+                    
+                    if media_url:
+                        content_image_urls.append(media_url)  # Add to content images
+                        print(f"[CONTROLLER] ✅ Featured image uploaded - URL: {media_url}")
+                        self.view.after(0, lambda url=media_url: self.view.log(f"✅ Đã upload ảnh đại diện: {url}"))
+                    else:
+                        print(f"[CONTROLLER] ⚠️ Featured image upload failed!")
+                        self.view.after(0, lambda: self.view.log(f"⚠️ Không thể upload ảnh đại diện"))
+                elif data.image_url.startswith('http'):
+                    # Already a URL, add directly
+                    content_image_urls.append(data.image_url)
+            
+            print(f"[CONTROLLER] 📸 Content images so far: {len(content_image_urls)}")
+            
+            # ========================================
+            # STEP 2: Upload CONTENT IMAGES (after featured image)
+            # ========================================
+            # NOTE: content_image_urls already initialized in STEP 1 with featured image
+            # Get content images (up to 3) and upload them
             
             # Check if we need to auto-fetch car images
             auto_fetch = getattr(data, 'auto_fetch_images', False)
@@ -104,26 +242,84 @@ class AppController:
                         import time
                         os.makedirs("thumbnails", exist_ok=True)
                         
+                        # PARALLEL DOWNLOAD + OPTIMIZE - Download and optimize all images at once
+                        import concurrent.futures
+                        download_tasks = []
+                        
                         for idx, img_url in enumerate(car_image_urls, 1):
-                            try:
-                                timestamp = time.strftime("%Y%m%d_%H%M%S")
-                                import random
-                                random_suffix = random.randint(1000, 9999)
-                                local_path = f"thumbnails/car_api_{timestamp}_{random_suffix}_{idx}.jpg"
+                            timestamp = time.strftime("%Y%m%d_%H%M%S")
+                            import random
+                            random_suffix = random.randint(1000, 9999)
+                            local_path = f"thumbnails/car_api_{timestamp}_{random_suffix}_{idx}.jpg"
+                            download_tasks.append((idx, img_url, local_path))
+                        
+                        # Download all images in parallel
+                        self.view.after(0, lambda: self.view.log(f"📥 Đang tải {len(download_tasks)} ảnh song song..."))
+                        downloaded_images = []
+                        
+                        def download_and_optimize(img_url, local_path):
+                            """Download and immediately optimize image"""
+                            success = image_api.download_image(img_url, local_path)
+                            if success and os.path.exists(local_path):
+                                # Optimize immediately after download
+                                # Use SMALLER size for content images (so featured image is prioritized)
+                                optimized_path = image_api.optimize_image_for_upload(local_path, max_width=800, quality=70)
+                                return optimized_path
+                            return None
+                        
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+                            future_to_task = {
+                                executor.submit(download_and_optimize, task[1], task[2]): task 
+                                for task in download_tasks
+                            }
+                            
+                            for future in concurrent.futures.as_completed(future_to_task):
+                                task = future_to_task[future]
+                                idx, img_url, local_path = task
                                 
-                                # Download with retry
-                                self.view.after(0, lambda i=idx: self.view.log(f"📥 Đang tải ảnh {i}..."))
+                                try:
+                                    optimized_path = future.result()
+                                    if optimized_path and os.path.exists(optimized_path) and os.path.getsize(optimized_path) > 1024:
+                                        downloaded_images.append((idx, optimized_path))
+                                        self.view.after(0, lambda i=idx: self.view.log(f"✅ Đã tải & tối ưu ảnh {i}"))
+                                    else:
+                                        self.view.after(0, lambda i=idx: self.view.log(f"⚠️ Ảnh {i} không hợp lệ"))
+                                        try:
+                                            if local_path and os.path.exists(local_path):
+                                                os.remove(local_path)
+                                        except:
+                                            pass
+                                except Exception as e:
+                                    self.view.after(0, lambda err=str(e), i=idx: self.view.log(f"⚠️ Lỗi tải ảnh {i}: {err}"))
+                        
+                        # PARALLEL UPLOAD - Upload all images at once
+                        if downloaded_images:
+                            self.view.after(0, lambda: self.view.log(f"📤 Đang upload {len(downloaded_images)} ảnh song song lên WordPress..."))
+                            
+                            with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+                                future_to_img = {
+                                    executor.submit(self._upload_image_smart, img[1]): img 
+                                    for img in downloaded_images
+                                }
                                 
-                                if image_api.download_image(img_url, local_path):
-                                    # Verify file exists and has content
-                                    if os.path.exists(local_path) and os.path.getsize(local_path) > 1024:
-                                        # Upload to WordPress
-                                        self.view.after(0, lambda i=idx: self.view.log(f"📤 Đang upload ảnh {i} lên WordPress..."))
-                                        uploaded_url = self.selenium_client.upload_image_to_media(local_path)
+                                for future in concurrent.futures.as_completed(future_to_img):
+                                    img = future_to_img[future]
+                                    idx, local_path = img
+                                    
+                                    try:
+                                        media_id, uploaded_url = future.result()  # Unpack tuple
                                         
                                         if uploaded_url:
                                             content_image_urls.append(uploaded_url)
                                             self.view.after(0, lambda i=idx: self.view.log(f"✅ Đã upload ảnh {i}"))
+                                            
+                                            # Auto-save uploaded image to library
+                                            try:
+                                                success, saved_path = image_api.save_image_to_library(local_path)
+                                                if success:
+                                                    self.view.after(0, lambda: self.view.log(f"💾 Đã lưu ảnh vào thư viện"))
+                                            except Exception as save_err:
+                                                print(f"[CONTROLLER] Warning: Could not save to library: {save_err}")
                                         else:
                                             self.view.after(0, lambda i=idx: self.view.log(f"⚠️ Upload ảnh {i} thất bại"))
                                         
@@ -132,17 +328,11 @@ class AppController:
                                             os.remove(local_path)
                                         except:
                                             pass
-                                    else:
-                                        self.view.after(0, lambda i=idx: self.view.log(f"⚠️ Ảnh {i} không hợp lệ, bỏ qua"))
-                                        try:
-                                            os.remove(local_path)
-                                        except:
-                                            pass
-                                else:
-                                    self.view.after(0, lambda i=idx: self.view.log(f"⚠️ Tải ảnh {i} thất bại"))
-                                    
-                            except Exception as e:
-                                self.view.after(0, lambda err=str(e), i=idx: self.view.log(f"⚠️ Lỗi xử lý ảnh {i}: {err}"))
+                                            
+                                    except Exception as e:
+                                        self.view.after(0, lambda err=str(e), i=idx: self.view.log(f"⚠️ Lỗi upload ảnh {i}: {err}"))
+                        else:
+                            self.view.after(0, lambda: self.view.log(f"⚠️ Không có ảnh hợp lệ để upload"))
                     else:
                         self.view.after(0, lambda: self.view.log(f"⚠️ Không tìm thấy ảnh xe phù hợp"))
                         
@@ -151,26 +341,57 @@ class AppController:
                     import traceback
                     traceback.print_exc()
             
-            # Process manually provided images
+            # Process manually provided content images - OPTIMIZE BEFORE UPLOAD
             for i, attr_name in enumerate(['content_image', 'content_image2', 'content_image3'], 1):
                 content_image = getattr(data, attr_name, '')
                 
                 if content_image and content_image.strip():
                     # Check if it's a local file path (not a URL)
                     if not content_image.startswith('http'):
-                        # Upload to WordPress Media Library
+                        # Optimize image before upload for faster speed
+                        try:
+                            from model.image_api import ImageAPI
+                            img_api = ImageAPI()
+                            # Use SMALLER size for content images (so featured image is prioritized)
+                            optimized_path = img_api.optimize_image_for_upload(content_image, max_width=800, quality=70)
+                            content_image = optimized_path  # Use optimized version
+                        except Exception as opt_err:
+                            print(f"[CONTROLLER] Warning: Could not optimize image: {opt_err}")
+                        
+                        # Upload to WordPress using smart method (REST API → Selenium)
                         self.view.after(0, lambda idx=i: self.view.log(f"📤 Đang upload ảnh content {idx}..."))
-                        uploaded_url = self.selenium_client.upload_image_to_media(content_image)
+                        media_id, uploaded_url = self._upload_image_smart(content_image)  # Unpack tuple
                         if uploaded_url:
                             content_image_urls.append(uploaded_url)
                             self.view.after(0, lambda url=uploaded_url, idx=i: self.view.log(f"✅ Đã upload ảnh content {idx}: {url}"))
+                            
+                            # Auto-save uploaded image to library
+                            try:
+                                from model.image_api import ImageAPI
+                                img_api = ImageAPI()
+                                success, saved_path = img_api.save_image_to_library(content_image)
+                                if success:
+                                    self.view.after(0, lambda: self.view.log(f"💾 Đã lưu ảnh content vào thư viện"))
+                            except Exception as save_err:
+                                print(f"[CONTROLLER] Warning: Could not save to library: {save_err}")
                         else:
                             self.view.after(0, lambda idx=i: self.view.log(f"⚠️ Không thể upload ảnh content {idx}, bỏ qua..."))
                     else:
                         # Already a URL, use directly
                         content_image_urls.append(content_image)
             
-            post = BlogPost(data.title, data.video_url, data.image_url, raw_content, content_images=content_image_urls)
+            # DEBUG: Check content images count
+            print(f"[CONTROLLER] 📸 Total content images for BlogPost: {len(content_image_urls)}")
+            
+            # Create BlogPost WITHOUT featured_image_url and featured_media_id
+            # Featured image is now part of content_images (first image)
+            post = BlogPost(data.title, data.video_url, "", raw_content, content_images=content_image_urls)
+            
+            # Set theme if provided
+            if hasattr(data, 'theme') and data.theme:
+                post.theme = data.theme
+                print(f"[CONTROLLER] Using theme: {data.theme}")
+            
             post.generate_seo_content()
 
             # 2. Use Auto Client (tries REST API first, then Selenium)

@@ -8,27 +8,121 @@ class BlogPost:
     Handles SEO content generation with video embeds.
     """
     
-    def __init__(self, title, video_url="", image_url="", raw_content="", content_images=None):
+    def __init__(self, title, video_url="", image_url="", raw_content="", content_images=None, featured_media_id=None):
         self.title = title
         self.video_url = video_url
         self.image_url = image_url
         self.raw_content = raw_content
         self.content_images = content_images or []
         self.content = ""
+        self.theme = "supercar"  # Default theme
+        self.featured_media_id = featured_media_id  # NEW: Media ID for REST API
     
     def generate_seo_content(self):
         """
-        Generate SEO-optimized content.
+        Generate SEO-optimized content using SEO template.
         If raw_content is provided, use it directly.
-        Otherwise, auto-generate content with video embed.
+        Otherwise, auto-generate content with SEO structure.
         """
         print(f"[WP_MODEL] generate_seo_content called")
         print(f"[WP_MODEL] video_url: {self.video_url}")
         print(f"[WP_MODEL] raw_content length: {len(self.raw_content) if self.raw_content else 0}")
+        print(f"[WP_MODEL] content_images: {len(self.content_images)}")
+        
+        # Get theme
+        theme_id = getattr(self, 'theme', 'supercar')
+        print(f"[WP_MODEL] Using theme: {theme_id}")
+        
+        # If theme is "none", use old raw HTML method
+        if theme_id == 'none':
+            print(f"[WP_MODEL] Theme is 'none', using raw HTML (no CSS)")
+            self._generate_content_fallback()
+            return
+        
+        # Try to use theme manager for styled content
+        try:
+            from model.theme_manager import ThemeManager
+            manager = ThemeManager()
+            
+            # If user provided custom content, use it
+            if self.raw_content and self.raw_content.strip():
+                print(f"[WP_MODEL] Using custom content with theme wrapper")
+                # Use theme manager to wrap custom content
+                self.content = manager.generate_content(
+                    title=self.title,
+                    video_url=self.video_url,
+                    featured_image=self.image_url,
+                    content_images=self.content_images,
+                    custom_content=self.raw_content,
+                    theme_id=theme_id
+                )
+            else:
+                print(f"[WP_MODEL] Auto-generating content with theme")
+                # Auto-generate content using theme
+                self.content = manager.generate_content(
+                    title=self.title,
+                    video_url=self.video_url,
+                    featured_image=self.image_url,
+                    content_images=self.content_images,
+                    theme_id=theme_id
+                )
+            
+            print(f"[WP_MODEL] ✅ Theme content generated: {len(self.content)} chars")
+            return
+            
+        except Exception as e:
+            print(f"[WP_MODEL] ⚠️ Theme manager failed: {e}, using fallback")
+            import traceback
+            traceback.print_exc()
+        
+        # Fallback to old method if theme manager fails
+        self._generate_content_fallback()
+    
+    def _generate_content_fallback(self):
+        """Fallback method using old content generation"""
+        print(f"[WP_MODEL] Using fallback content generation")
         
         # If user provided custom content, use it
         if self.raw_content and self.raw_content.strip():
             print(f"[WP_MODEL] Using raw_content path")
+            
+            # Check if we have content images
+            # First image = featured image (full width at top)
+            # Remaining images = content gallery (small, at bottom)
+            content = self.raw_content
+            
+            if self.content_images and len(self.content_images) > 0:
+                # Extract first image as featured image
+                featured_img_url = self.content_images[0]
+                remaining_images = self.content_images[1:] if len(self.content_images) > 1 else []
+                
+                print(f"[WP_MODEL] Adding featured image (first image) to BEGINNING of content")
+                print(f"[WP_MODEL] Featured image URL: {featured_img_url}")
+                
+                # Add featured image at the beginning (full width)
+                featured_img_html = f'''<!-- wp:html -->
+<div style="margin: 30px auto; text-align: center;">
+    <img src="{featured_img_url}" alt="{self.title}" style="width: 100%; height: auto; max-width: 1200px; border-radius: 8px;" />
+</div>
+<!-- /wp:html -->
+
+<!-- wp:spacer {{"height":"30px"}} -->
+<div style="height:30px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->
+
+'''
+                content = featured_img_html + content
+                
+                # IMPORTANT: Assign to self.content so it's preserved
+                self.content = content
+                
+                # Store remaining images for gallery insertion later
+                self.content_images = remaining_images
+                print(f"[WP_MODEL] Remaining images for gallery: {len(remaining_images)}")
+            else:
+                # No images, just use raw content
+                self.content = content
+            
             # Nếu có content, chèn video sau 2 đoạn văn đầu tiên
             if self.video_url:
                 print(f"[WP_MODEL] Generating video block...")
@@ -36,7 +130,8 @@ class BlogPost:
                 if video_block:
                     print(f"[WP_MODEL] Video block generated: {len(video_block)} chars")
                     # Tách nội dung thành các đoạn
-                    content = self.raw_content
+                    # IMPORTANT: Use self.content (which already has featured image), NOT self.raw_content
+                    content = self.content
                     
                     # Tìm 2 đoạn văn đầu tiên (tìm 2 lần xuất hiện của </p>)
                     first_p_end = content.find('</p>')
@@ -110,54 +205,54 @@ class BlogPost:
             
             # Insert content images if provided (after video insertion)
             if self.content_images and len(self.content_images) > 0:
-                print(f"[WP_MODEL] Inserting {len(self.content_images)} content image(s)...")
+                print(f"[WP_MODEL] Inserting {len(self.content_images)} content image(s) as gallery row...")
                 
-                # Calculate positions to distribute images evenly
-                content_len = len(self.content)
-                positions = []
+                # Create a SINGLE gallery row with all 3 images (small, side by side)
+                gallery_html = '''
+<!-- wp:html -->
+<div style="display: flex; gap: 10px; margin: 30px 0; flex-wrap: wrap; justify-content: center;">
+'''
                 
-                if len(self.content_images) == 1:
-                    positions = [0.75]  # 75% position
-                elif len(self.content_images) == 2:
-                    positions = [0.50, 0.85]  # 50% and 85%
-                elif len(self.content_images) >= 3:
-                    positions = [0.35, 0.60, 0.85]  # 35%, 60%, 85%
+                # Add each image as small thumbnail (max 30% width)
+                for img_url in self.content_images:
+                    if img_url and img_url.strip():
+                        gallery_html += f'''    <div style="flex: 0 1 30%; max-width: 300px;">
+        <img src="{img_url}" alt="" style="width: 100%; height: auto; border-radius: 8px;" />
+    </div>
+'''
                 
-                # Insert images from back to front to maintain positions
-                for idx in range(len(self.content_images) - 1, -1, -1):
-                    img_url = self.content_images[idx]
-                    if not img_url or not img_url.strip():
-                        continue
-                    
-                    # Use simple WordPress image block instead of complex HTML
-                    img_block = f'''
-<!-- wp:image {{"sizeSlug":"large","linkDestination":"none"}} -->
-<figure class="wp-block-image size-large"><img src="{img_url}" alt=""/></figure>
-<!-- /wp:image -->
+                gallery_html += '''</div>
+<!-- /wp:html -->
 
-<!-- wp:spacer {{"height":"20px"}} -->
+<!-- wp:spacer {"height":"20px"} -->
 <div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
 <!-- /wp:spacer -->
 '''
-                    
-                    # Find position to insert
-                    target_position = int(content_len * positions[idx])
-                    
-                    # Try to find a paragraph end near this position
-                    search_start = max(0, target_position - 300)
-                    search_end = min(content_len, target_position + 300)
-                    search_area = self.content[search_start:search_end]
-                    
-                    # Look for </p> tag
-                    p_end_pos = search_area.rfind('</p>')
-                    if p_end_pos != -1:
-                        insert_pos = search_start + p_end_pos + 4
-                        self.content = self.content[:insert_pos] + "\n\n" + img_block + "\n\n" + self.content[insert_pos:]
-                        print(f"[WP_MODEL] Inserted content image {idx+1} at position {insert_pos}")
-                    else:
-                        # Fallback: insert at target position
-                        self.content = self.content[:target_position] + "\n\n" + img_block + "\n\n" + self.content[target_position:]
-                        print(f"[WP_MODEL] Inserted content image {idx+1} at target position {target_position}")
+                
+                # Insert gallery at 70% position (well after featured image and video)
+                content_len = len(self.content)
+                target_position = int(content_len * 0.70)
+                
+                # Ensure minimum position (after featured image ~400 chars)
+                min_position = 400
+                if target_position < min_position:
+                    target_position = min_position
+                
+                # Try to find paragraph end near this position
+                search_start = max(min_position, target_position - 300)
+                search_end = min(content_len, target_position + 300)
+                search_area = self.content[search_start:search_end]
+                
+                # Look for </p> tag to insert gallery after paragraph
+                p_end_pos = search_area.rfind('</p>')
+                if p_end_pos != -1:
+                    insert_pos = search_start + p_end_pos + 4
+                    self.content = self.content[:insert_pos] + "\n\n" + gallery_html + "\n\n" + self.content[insert_pos:]
+                    print(f"[WP_MODEL] Inserted gallery row at position {insert_pos}")
+                else:
+                    # Fallback: insert at target position
+                    self.content = self.content[:target_position] + "\n\n" + gallery_html + "\n\n" + self.content[target_position:]
+                    print(f"[WP_MODEL] Inserted gallery row at target position {target_position}")
             
             print(f"[WP_MODEL] Final content length: {len(self.content)}")
             return self.content
@@ -392,9 +487,17 @@ class BlogPost:
         
         # Otherwise, use simple iframe embed with responsive wrapper (for Vimeo, YouTube, etc.)
         print("[WP_MODEL] Using simple iframe embed with responsive wrapper")
+        
+        # For Vimeo, add background=1 to hide thumbnail (prevent theme from using it as featured image)
+        final_video_url = video_url
+        if 'vimeo.com' in video_url:
+            separator = '&' if '?' in video_url else '?'
+            final_video_url = f"{video_url}{separator}background=1"
+            print(f"[WP_MODEL] Added background=1 to Vimeo URL to hide thumbnail")
+        
         return f"""<!-- wp:html -->
 <div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 30px auto;">
-    <iframe src="{video_url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+    <iframe src="{final_video_url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
 </div>
 <!-- /wp:html -->
 
@@ -448,18 +551,18 @@ class WPAutoClient:
             tuple: (success: bool, result: str)
         """
         try:
-            # METHOD 1: Try REST API first (BEST)
+            # METHOD 1: Try REST API first (BEST) - AGGRESSIVE MODE
             print("[WP_AUTO] ========================================")
-            print("[WP_AUTO] Attempting REST API method...")
+            print("[WP_AUTO] Attempting REST API method (AGGRESSIVE)...")
             print("[WP_AUTO] ========================================")
             
             rest_client = WordPressRESTClient(self.site_url, self.username, self.password)
             
-            # Test if REST API is available
-            is_available, status_code, message = rest_client.test_api_availability()
+            # Test if REST API is available - AGGRESSIVE MODE (always try)
+            is_available, status_code, message = rest_client.test_api_availability(aggressive=True)
             
             if is_available:
-                print("[WP_AUTO] ✅ REST API available, using REST API method")
+                print("[WP_AUTO] ✅ REST API mode enabled (aggressive)")
                 self.method = 'rest_api'
                 self.client = rest_client
                 

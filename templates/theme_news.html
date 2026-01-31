@@ -1,0 +1,174 @@
+<!-- Theme: Breaking News - CSS Only -->
+{{VIDEO_EMBED}}
+
+{{FEATURED_IMAGE}}
+
+<h1>{{POST_TITLE}}</h1>
+
+<p class="lead">{{EXCERPT}}</p>
+
+{{MAIN_CONTENT}}
+
+{{CONTENT_IMAGES}}
+
+<style>
+/* News Theme - Clean CSS Only */
+.entry-content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #1a1a1a;
+    line-height: 1.8;
+}
+
+/* Video Responsive */
+.entry-content iframe,
+.entry-content iframe[src*="vimeo"],
+.entry-content iframe[src*="youtube"],
+.entry-content iframe[src*="facebook"] {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 16/9 !important;
+    border-radius: 8px;
+    margin: 30px 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    display: block !important;
+}
+
+/* Vimeo wrapper fix */
+.entry-content div[style*="padding"] iframe {
+    position: relative !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 16/9 !important;
+}
+
+.entry-content div[style*="padding:"] {
+    padding: 0 !important;
+    height: auto !important;
+}
+
+/* Title */
+.entry-content h1 {
+    font-size: 40px;
+    font-weight: 900;
+    line-height: 1.2;
+    color: #000;
+    margin: 30px 0 20px;
+    letter-spacing: -0.5px;
+    border-left: 5px solid #dc2626;
+    padding-left: 20px;
+}
+
+/* Lead Paragraph */
+.entry-content .lead {
+    font-size: 19px;
+    line-height: 1.7;
+    color: #333;
+    font-weight: 500;
+    margin: 25px 0;
+    padding: 20px;
+    background: #fef2f2;
+    border-left: 4px solid #dc2626;
+}
+
+/* Paragraphs */
+.entry-content p {
+    font-size: 17px;
+    line-height: 1.8;
+    margin: 18px 0;
+    color: #2a2a2a;
+}
+
+/* Headings */
+.entry-content h2 {
+    font-size: 30px;
+    font-weight: 800;
+    margin: 40px 0 18px;
+    color: #000;
+    border-bottom: 3px solid #dc2626;
+    padding-bottom: 8px;
+}
+
+.entry-content h3 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 30px 0 15px;
+    color: #1a1a1a;
+}
+
+/* Images */
+.entry-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 25px 0;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    display: block;
+}
+
+/* Lists */
+.entry-content ul,
+.entry-content ol {
+    margin: 20px 0;
+    padding-left: 30px;
+}
+
+.entry-content li {
+    margin: 10px 0;
+    line-height: 1.7;
+}
+
+/* Blockquotes */
+.entry-content blockquote {
+    border-left: 4px solid #dc2626;
+    padding: 18px 22px;
+    margin: 25px 0;
+    background: #f9fafb;
+    font-size: 18px;
+    font-style: italic;
+    color: #333;
+}
+
+/* Links */
+.entry-content a {
+    color: #dc2626;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.entry-content a:hover {
+    border-bottom-color: #dc2626;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .entry-content {
+        padding: 20px 15px;
+    }
+    
+    .entry-content h1 {
+        font-size: 30px;
+    }
+    
+    .entry-content .lead {
+        font-size: 17px;
+    }
+    
+    .entry-content p {
+        font-size: 16px;
+    }
+    
+    .entry-content h2 {
+        font-size: 24px;
+    }
+    
+    .entry-content h3 {
+        font-size: 19px;
+    }
+}
+</style>

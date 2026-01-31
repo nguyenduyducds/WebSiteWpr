@@ -21,6 +21,7 @@ class AppData:
         self.image_url = ""
         self.content_image = ""  # New: Image to insert in middle of content
         self.content = ""
+        self.theme = "supercar"  # Default theme
 
 class GUIView(ctk.CTk):
     def __init__(self, controller, initial_config=None):
@@ -28,23 +29,29 @@ class GUIView(ctk.CTk):
         self.controller = controller
         self.initial_config = initial_config or {}
         
-        # --- Cấu hình màu sắc hiện đại ---
+        # --- Cấu hình màu sắc cho Light Mode ---
         self.colors = {
-            'primary': '#2563eb',       # Blue
-            'success': '#10b981',       # Green
-            'warning': '#f59e0b',       # Orange
-            'danger': '#ef4444',        # Red
-            'bg_light': '#ffffff',
-            'bg_dark': '#1f2937'
+            'primary': '#2563eb',       # Blue 600
+            'primary_hover': '#1d4ed8', # Blue 700
+            'success': '#059669',       # Green 600
+            'success_hover': '#047857', # Green 700
+            'warning': '#d97706',       # Orange 600
+            'danger': '#dc2626',        # Red 600
+            'bg_light': '#f9fafb',      # Gray 50 - Main background
+            'bg_card': '#ffffff',       # White - Cards
+            'bg_dark': '#f3f4f6',       # Gray 100 - Darker sections
+            'text_primary': '#111827',  # Gray 900 - Main text
+            'text_secondary': '#6b7280', # Gray 500 - Secondary text
+            'border': '#e5e7eb'         # Gray 200 - Borders
         }
         
         # --- Cấu hình cửa sổ ---
-        self.title("🚀 Auto Web WordPress Tool - Modern Edition")
-        self.geometry("1100x750")
-        self.minsize(900, 600)
+        self.title("🚀 WP Auto Tool - Professional Edition")
+        self.geometry("1200x800")
+        self.minsize(1000, 700)
         
-        # Theme
-        ctk.set_appearance_mode("dark")
+        # Theme - LIGHT MODE mặc định
+        ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")
         
         # Biến dữ liệu
@@ -63,37 +70,132 @@ class GUIView(ctk.CTk):
     # PHẦN 1: LOGIN SCREEN (Giữ nguyên vì đã ổn)
     # =========================================================================
     def create_login_screen(self):
-        self.login_frame = ctk.CTkFrame(self, corner_radius=0)
+        self.login_frame = ctk.CTkFrame(self, corner_radius=0, fg_color=self.colors['bg_light'])
         self.login_frame.pack(fill="both", expand=True)
 
-        center_box = ctk.CTkFrame(self.login_frame, corner_radius=20, fg_color=("#ffffff", "#2b2b2b"))
+        # Center container with shadow effect
+        center_box = ctk.CTkFrame(
+            self.login_frame, 
+            corner_radius=24, 
+            fg_color=self.colors['bg_card'],
+            border_width=2,
+            border_color=self.colors['border']
+        )
         center_box.place(relx=0.5, rely=0.5, anchor="center")
 
-        # Header
-        ctk.CTkLabel(center_box, text="🌐", font=("Arial", 48)).pack(pady=(30, 10))
-        ctk.CTkLabel(center_box, text="WordPress Automation", font=("Segoe UI", 24, "bold"), text_color=self.colors['primary']).pack()
-        ctk.CTkLabel(center_box, text="Đăng nhập hệ thống", font=("Segoe UI", 12), text_color="gray").pack(pady=(5, 20))
+        # Header with gradient-like effect
+        header_frame = ctk.CTkFrame(center_box, corner_radius=20, fg_color="transparent")
+        header_frame.pack(pady=(40, 10), padx=40)
+        
+        ctk.CTkLabel(
+            header_frame, 
+            text="🚀", 
+            font=("Segoe UI Emoji", 56)
+        ).pack()
+        
+        ctk.CTkLabel(
+            header_frame, 
+            text="WordPress Automation", 
+            font=("Segoe UI", 28, "bold"), 
+            text_color=self.colors['primary']
+        ).pack(pady=(10, 5))
+        
+        ctk.CTkLabel(
+            header_frame, 
+            text="Đăng nhập để bắt đầu tự động hóa", 
+            font=("Segoe UI", 13), 
+            text_color=self.colors['text_secondary']
+        ).pack()
 
-        # Inputs
-        self.entry_site = self.create_modern_input(center_box, "🌍 Site URL", "https://yoursite.com/wp-admin", self.initial_config.get("site_url", ""))
-        self.entry_user = self.create_modern_input(center_box, "👤 Username", "admin", self.initial_config.get("username", ""))
-        self.entry_pass = self.create_modern_input(center_box, "🔒 Password", "••••••••", self.initial_config.get("password", ""), show="*")
+        # Inputs with better spacing
+        input_frame = ctk.CTkFrame(center_box, fg_color="transparent")
+        input_frame.pack(pady=20, padx=40, fill="x")
+        
+        self.entry_site = self.create_modern_input(
+            input_frame, 
+            "🌍 Site URL", 
+            "https://yoursite.com/wp-admin", 
+            self.initial_config.get("site_url", "")
+        )
+        
+        self.entry_user = self.create_modern_input(
+            input_frame, 
+            "👤 Username", 
+            "admin", 
+            self.initial_config.get("username", "")
+        )
+        
+        self.entry_pass = self.create_modern_input(
+            input_frame, 
+            "🔒 Password", 
+            "••••••••", 
+            self.initial_config.get("password", ""), 
+            show="*"
+        )
 
-        # Checkbox
-        self.chk_headless = ctk.CTkCheckBox(center_box, text="Chạy ẩn (Headless Mode)", font=("Segoe UI", 12))
-        self.chk_headless.pack(pady=10, padx=30, anchor="w")
+        # Checkbox with better styling
+        checkbox_frame = ctk.CTkFrame(center_box, fg_color="transparent")
+        checkbox_frame.pack(pady=15, padx=40, fill="x")
+        
+        self.chk_headless = ctk.CTkCheckBox(
+            checkbox_frame, 
+            text="⚡ Chạy ẩn (Headless Mode - Nhanh hơn)", 
+            font=("Segoe UI", 12),
+            fg_color=self.colors['primary'],
+            hover_color=self.colors['primary_hover']
+        )
+        self.chk_headless.pack(anchor="w")
 
-        # Button
-        self.btn_login = ctk.CTkButton(center_box, text="🚀 ĐĂNG NHẬP", height=45, width=300, font=("Segoe UI", 14, "bold"), command=self.on_login_click)
-        self.btn_login.pack(pady=20, padx=30)
+        # Button with gradient-like effect
+        self.btn_login = ctk.CTkButton(
+            center_box, 
+            text="🚀 ĐĂNG NHẬP", 
+            height=50, 
+            width=340, 
+            font=("Segoe UI", 15, "bold"),
+            fg_color=self.colors['primary'],
+            hover_color=self.colors['primary_hover'],
+            corner_radius=12,
+            command=self.on_login_click
+        )
+        self.btn_login.pack(pady=20, padx=40)
 
-        self.lbl_status = ctk.CTkLabel(center_box, text="", font=("Segoe UI", 11), text_color=self.colors['danger'])
-        self.lbl_status.pack(pady=(0, 20))
+        self.lbl_status = ctk.CTkLabel(
+            center_box, 
+            text="", 
+            font=("Segoe UI", 11), 
+            text_color=self.colors['danger']
+        )
+        self.lbl_status.pack(pady=(0, 30))
 
     def create_modern_input(self, parent, label_text, placeholder, initial_value="", show=None):
-        ctk.CTkLabel(parent, text=label_text, font=("Segoe UI", 12, "bold"), anchor="w").pack(fill="x", padx=30, pady=(10, 0))
-        entry = ctk.CTkEntry(parent, placeholder_text=placeholder, height=40, width=300, show=show)
-        entry.pack(padx=30, pady=(5, 0))
+        # Container for each input
+        input_container = ctk.CTkFrame(parent, fg_color="transparent")
+        input_container.pack(fill="x", pady=8)
+        
+        # Label
+        ctk.CTkLabel(
+            input_container, 
+            text=label_text, 
+            font=("Segoe UI", 13, "bold"), 
+            anchor="w",
+            text_color=self.colors['text_primary']
+        ).pack(fill="x", pady=(0, 6))
+        
+        # Entry with better styling
+        entry = ctk.CTkEntry(
+            input_container, 
+            placeholder_text=placeholder, 
+            height=45, 
+            width=340,
+            font=("Segoe UI", 12),
+            corner_radius=10,
+            border_width=1,
+            border_color=self.colors['border'],
+            show=show
+        )
+        entry.pack(fill="x")
+        
         if initial_value: 
             try:
                 # Use after() to insert value asynchronously to avoid blocking
@@ -101,6 +203,68 @@ class GUIView(ctk.CTk):
             except Exception as e:
                 print(f"[GUI] Error inserting initial value: {e}")
         return entry
+    
+    def create_form_input(self, parent, label_text, placeholder, initial_value="", show=None, height=45):
+        """Create a modern form input with better styling"""
+        # Container
+        input_container = ctk.CTkFrame(parent, fg_color="transparent")
+        input_container.pack(fill="x", pady=10)
+        
+        # Label
+        ctk.CTkLabel(
+            input_container, 
+            text=label_text, 
+            font=("Segoe UI", 13, "bold"), 
+            anchor="w",
+            text_color=self.colors['text_primary']
+        ).pack(fill="x", pady=(0, 8))
+        
+        # Entry
+        entry = ctk.CTkEntry(
+            input_container, 
+            placeholder_text=placeholder, 
+            height=height,
+            font=("Segoe UI", 12),
+            corner_radius=12,
+            border_width=2,
+            border_color=self.colors['border'],
+            fg_color=self.colors['bg_light'],
+            text_color=self.colors['text_primary'],
+            placeholder_text_color=self.colors['text_secondary'],
+            show=show
+        )
+        entry.pack(fill="x")
+        
+        if initial_value:
+            self.after(10, lambda e=entry, v=initial_value: self._safe_insert(e, v))
+        
+        return entry
+    
+    def create_image_input_section(self, parent):
+        """Create image input section with paste support"""
+        section = ctk.CTkFrame(parent, fg_color="transparent")
+        section.pack(fill="x", pady=10)
+        
+        # Label
+        ctk.CTkLabel(
+            section, 
+            text="🖼️ Ảnh Thumbnail", 
+            font=("Segoe UI", 13, "bold"), 
+            anchor="w",
+            text_color=self.colors['text_primary']
+        ).pack(fill="x", pady=(0, 8))
+        
+        # Hint
+        hint_frame = ctk.CTkFrame(section, fg_color="transparent")
+        hint_frame.pack(fill="x", pady=(0, 8))
+        
+        ctk.CTkLabel(
+            hint_frame, 
+            text="💡 Tip: Chụp màn hình rồi nhấn Ctrl+V để paste ảnh trực tiếp!", 
+            font=("Segoe UI", 11), 
+            text_color=self.colors['success'], 
+            anchor="w"
+        ).pack(side="left")
     
     def _safe_insert(self, entry, value):
         """Safely insert value into entry without blocking"""
@@ -129,6 +293,45 @@ class GUIView(ctk.CTk):
             # Allow default behavior if our handler fails
             return None
 
+    def on_theme_changed(self, choice):
+        """Update theme description when user selects a theme"""
+        descriptions = {
+            "⚪ Không dùng theme (Raw HTML)": "💡 Không áp dụng CSS, chỉ post HTML thuần như cũ",
+            "🏎️ Supercar News (Premium)": "💡 Premium automotive design with luxury styling (English content)",
+            "📰 Breaking News": "💡 Modern news layout with breaking badge and trending style",
+            "📝 Classic Blog": "💡 Clean and simple blog layout for general content",
+            "✨ Minimal Clean": "💡 Ultra simple and elegant design with serif fonts",
+            "💻 Tech Modern": "💡 Developer-friendly tech style with code support",
+            "📖 Magazine": "💡 Editorial magazine style with drop cap",
+            "💼 Business Pro": "💡 Professional business layout for corporate content",
+            "🌸 Lifestyle": "💡 Warm and friendly blog style for lifestyle content",
+            "🌙 Dark Mode": "💡 Modern dark theme for night reading"
+        }
+        
+        desc = descriptions.get(choice, "")
+        if hasattr(self, 'theme_desc_label'):
+            self.theme_desc_label.configure(text=desc)
+        
+        print(f"[GUI] Theme changed to: {choice}")
+    
+    def get_selected_theme_id(self):
+        """Convert theme display name to theme ID"""
+        theme_map = {
+            "⚪ Không dùng theme (Raw HTML)": "none",
+            "🏎️ Supercar News (Premium)": "supercar",
+            "📰 Breaking News": "news",
+            "📝 Classic Blog": "default",
+            "✨ Minimal Clean": "minimal",
+            "💻 Tech Modern": "tech",
+            "📖 Magazine": "magazine",
+            "💼 Business Pro": "business",
+            "🌸 Lifestyle": "lifestyle",
+            "🌙 Dark Mode": "dark"
+        }
+        
+        selected = self.theme_var.get() if hasattr(self, 'theme_var') else "🏎️ Supercar News (Premium)"
+        return theme_map.get(selected, "supercar")
+    
     def on_login_click(self):
         site = self.entry_site.get().strip()
         user = self.entry_user.get().strip()
@@ -174,32 +377,94 @@ class GUIView(ctk.CTk):
         self.create_status_bar()
 
     def create_header(self):
-        header = ctk.CTkFrame(self.main_frame, height=70, corner_radius=10, fg_color=("white", "#2b2b2b"))
-        header.pack(fill="x", pady=(0, 10))
+        header = ctk.CTkFrame(
+            self.main_frame, 
+            height=80, 
+            corner_radius=16, 
+            fg_color=self.colors['bg_card'],
+            border_width=2,
+            border_color=self.colors['border']
+        )
+        header.pack(fill="x", pady=(0, 15))
         
-        # Logo & Title
+        # Logo & Title with better spacing
         title_frame = ctk.CTkFrame(header, fg_color="transparent")
-        title_frame.pack(side="left", padx=20, pady=10)
-        ctk.CTkLabel(title_frame, text="🚀 WP Auto Tool", font=("Segoe UI", 20, "bold"), text_color=self.colors['primary']).pack(anchor="w")
-        ctk.CTkLabel(title_frame, text="Automation Dashboard", font=("Segoe UI", 11), text_color="gray").pack(anchor="w")
+        title_frame.pack(side="left", padx=25, pady=15)
+        
+        ctk.CTkLabel(
+            title_frame, 
+            text="� WP Auto Tool", 
+            font=("Segoe UI", 22, "bold"), 
+            text_color=self.colors['primary']
+        ).pack(anchor="w")
+        
+        ctk.CTkLabel(
+            title_frame, 
+            text="Professional Automation Dashboard", 
+            font=("Segoe UI", 12), 
+            text_color=self.colors['text_secondary']
+        ).pack(anchor="w", pady=(2, 0))
 
-        # User Info & Logout
+        # User Info & Logout with better styling
         user_frame = ctk.CTkFrame(header, fg_color="transparent")
-        user_frame.pack(side="right", padx=20, pady=10)
+        user_frame.pack(side="right", padx=25, pady=15)
+        
         username = self.controller.username if hasattr(self.controller, 'username') else "Admin"
-        ctk.CTkLabel(user_frame, text=f"👤 {username}", font=("Segoe UI", 12, "bold")).pack(side="left", padx=15)
-        ctk.CTkButton(user_frame, text="🚪 Logout", width=80, height=30, fg_color=self.colors['danger'], command=self.logout).pack(side="left")
+        
+        # User badge
+        user_badge = ctk.CTkFrame(
+            user_frame, 
+            fg_color=self.colors['bg_dark'],
+            corner_radius=10,
+            border_width=1,
+            border_color=self.colors['border']
+        )
+        user_badge.pack(side="left", padx=(0, 15))
+        
+        ctk.CTkLabel(
+            user_badge, 
+            text=f"👤 {username}", 
+            font=("Segoe UI", 13, "bold"),
+            text_color=self.colors['text_primary']
+        ).pack(padx=15, pady=8)
+        
+        # Logout button
+        ctk.CTkButton(
+            user_frame, 
+            text="� Đăng Xuất", 
+            width=100, 
+            height=36, 
+            font=("Segoe UI", 12, "bold"),
+            fg_color=self.colors['danger'], 
+            hover_color="#dc2626",
+            corner_radius=10,
+            command=self.logout
+        ).pack(side="left")
 
     def create_tabs(self):
-        self.tabview = ctk.CTkTabview(self.main_frame, corner_radius=10)
+        self.tabview = ctk.CTkTabview(
+            self.main_frame, 
+            corner_radius=16,
+            border_width=2,
+            border_color=self.colors['border'],
+            fg_color=self.colors['bg_card'],
+            segmented_button_fg_color=self.colors['bg_dark'],
+            segmented_button_selected_color=self.colors['primary'],
+            segmented_button_selected_hover_color=self.colors['primary_hover'],
+            segmented_button_unselected_color=self.colors['bg_dark'],
+            segmented_button_unselected_hover_color=self.colors['border'],
+            text_color=self.colors['text_primary'],
+            text_color_disabled=self.colors['text_secondary']
+        )
         self.tabview.pack(fill="both", expand=True)
 
-        # Định nghĩa các Tab
-        self.tab_post = self.tabview.add("📝 Đăng Bài Lẻ")
-        self.tab_batch = self.tabview.add("📦 Batch & Hàng Chờ") # Gộp Queue vào đây
-        self.tab_upload = self.tabview.add("☁️ Upload Video")
-        self.tab_vimeo = self.tabview.add("🎥 Vimeo Tools")
-        self.tab_data = self.tabview.add("📜 Logs & Lịch Sử") # Tab mới cho Logs
+        # Định nghĩa các Tab với icons đẹp hơn
+        self.tab_post = self.tabview.add("📝 Đăng Bài")
+        self.tab_batch = self.tabview.add("📦 Hàng Chờ") 
+        self.tab_upload = self.tabview.add("☁️ Upload")
+        self.tab_vimeo = self.tabview.add("🎥 Vimeo")
+        self.tab_images = self.tabview.add("🖼️ Ảnh")
+        self.tab_data = self.tabview.add("📜 Logs")
         self.tab_settings = self.tabview.add("⚙️ Cài Đặt")
 
         # Xây dựng nội dung từng Tab
@@ -207,44 +472,158 @@ class GUIView(ctk.CTk):
         self.create_batch_tab_content()
         self.create_upload_tab_content()
         self.create_vimeo_tab_content()
+        self.create_images_tab_content()
         self.create_data_tab_content()
         self.create_settings_tab_content()
 
     def create_status_bar(self):
-        self.status_frame = ctk.CTkFrame(self.main_frame, height=30, corner_radius=5)
-        self.status_frame.pack(fill="x", pady=(10, 0))
+        self.status_frame = ctk.CTkFrame(
+            self.main_frame, 
+            height=40, 
+            corner_radius=12,
+            fg_color=self.colors['bg_card'],
+            border_width=2,
+            border_color=self.colors['border']
+        )
+        self.status_frame.pack(fill="x", pady=(15, 0))
         
-        self.status_label = ctk.CTkLabel(self.status_frame, text="✅ Sẵn sàng", font=("Segoe UI", 11), text_color=self.colors['success'])
-        self.status_label.pack(side="left", padx=15)
+        self.status_label = ctk.CTkLabel(
+            self.status_frame, 
+            text="✅ Sẵn sàng", 
+            font=("Segoe UI", 12, "bold"), 
+            text_color=self.colors['success']
+        )
+        self.status_label.pack(side="left", padx=20, pady=8)
         
-        ctk.CTkLabel(self.status_frame, text="🟢 Connected", font=("Segoe UI", 11), text_color="gray").pack(side="right", padx=15)
+        # Connection indicator
+        connection_frame = ctk.CTkFrame(self.status_frame, fg_color="transparent")
+        connection_frame.pack(side="right", padx=20, pady=8)
+        
+        ctk.CTkLabel(
+            connection_frame, 
+            text="🟢", 
+            font=("Segoe UI", 14)
+        ).pack(side="left", padx=(0, 5))
+        
+        ctk.CTkLabel(
+            connection_frame, 
+            text="Connected", 
+            font=("Segoe UI", 11), 
+            text_color=self.colors['text_secondary']
+        ).pack(side="left")
 
     # =========================================================================
     # TAB 1: ĐĂNG BÀI LẺ (Post Form)
     # =========================================================================
     def create_post_tab_content(self):
-        container = ctk.CTkScrollableFrame(self.tab_post, fg_color="transparent")
-        container.pack(fill="both", expand=True, padx=10, pady=10)
+        container = ctk.CTkScrollableFrame(
+            self.tab_post, 
+            fg_color="transparent"
+        )
+        container.pack(fill="both", expand=True, padx=15, pady=15)
 
-        # Form Group - Single Post
-        frm = ctk.CTkFrame(container)
-        frm.pack(fill="x", pady=5)
+        # Form Group - Single Post with card design
+        frm = ctk.CTkFrame(
+            container,
+            corner_radius=16,
+            fg_color=self.colors['bg_card'],
+            border_width=2,
+            border_color=self.colors['border']
+        )
+        frm.pack(fill="x", pady=(0, 15))
         
-        ctk.CTkLabel(frm, text="📝 Đăng Bài Lẻ", font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=30, pady=(10, 5))
+        # Header
+        header_frame = ctk.CTkFrame(frm, fg_color="transparent")
+        header_frame.pack(fill="x", padx=25, pady=(20, 15))
         
-        self.entry_title = self.create_modern_input(frm, "Tiêu đề bài viết", "Nhập tiêu đề...")
+        ctk.CTkLabel(
+            header_frame, 
+            text="📝 Đăng Bài Mới", 
+            font=("Segoe UI", 18, "bold"),
+            text_color=self.colors['text_primary']
+        ).pack(side="left")
+        
+        ctk.CTkLabel(
+            header_frame, 
+            text="Tạo và đăng bài viết lên WordPress", 
+            font=("Segoe UI", 11),
+            text_color=self.colors['text_secondary']
+        ).pack(side="left", padx=(10, 0))
+        
+        # Form inputs with better spacing
+        form_container = ctk.CTkFrame(frm, fg_color="transparent")
+        form_container.pack(fill="x", padx=25, pady=(0, 20))
+        
+        # Theme Selector - NEW!
+        theme_section = ctk.CTkFrame(form_container, fg_color="transparent")
+        theme_section.pack(fill="x", pady=10)
+        
+        ctk.CTkLabel(
+            theme_section, 
+            text="🎨 Chọn Theme Giao Diện", 
+            font=("Segoe UI", 13, "bold"), 
+            anchor="w",
+            text_color=self.colors['text_primary']
+        ).pack(fill="x", pady=(0, 8))
+        
+        # Theme dropdown
+        self.theme_var = ctk.StringVar(value="⚪ Không dùng theme (Raw HTML)")
+        theme_dropdown = ctk.CTkOptionMenu(
+            theme_section,
+            values=[
+                "⚪ Không dùng theme (Raw HTML)",
+                "🏎️ Supercar News (Premium)",
+                "📰 Breaking News",
+                "📝 Classic Blog",
+                "✨ Minimal Clean",
+                "💻 Tech Modern",
+                "📖 Magazine",
+                "💼 Business Pro",
+                "🌸 Lifestyle",
+                "🌙 Dark Mode"
+            ],
+            variable=self.theme_var,
+            height=45,
+            font=("Segoe UI", 12),
+            fg_color=self.colors['primary'],
+            button_color=self.colors['primary_hover'],
+            button_hover_color=self.colors['primary'],
+            dropdown_fg_color=self.colors['bg_card'],
+            dropdown_hover_color=self.colors['bg_dark'],
+            corner_radius=12,
+            command=self.on_theme_changed
+        )
+        theme_dropdown.pack(fill="x")
+        
+        # Theme description
+        self.theme_desc_label = ctk.CTkLabel(
+            theme_section,
+            text="💡 Premium automotive design with luxury styling (English content)",
+            font=("Segoe UI", 11),
+            text_color=self.colors['text_secondary'],
+            anchor="w"
+        )
+        self.theme_desc_label.pack(fill="x", pady=(5, 0))
+        
+        self.entry_title = self.create_form_input(
+            form_container, 
+            "📌 Tiêu đề bài viết", 
+            "Nhập tiêu đề hấp dẫn...",
+            height=48
+        )
         # Add paste handler to prevent freeze with Unicode characters
         self.entry_title.bind('<Control-v>', self._handle_title_paste)
         self.entry_title.bind('<Control-V>', self._handle_title_paste)
-        self.entry_video = self.create_modern_input(frm, "Video URL (Youtube/Vimeo/Facebook/Embed)", "https://...")
-        # Custom Image Input with Browse Button
-        ctk.CTkLabel(frm, text="Link Ảnh Thumbnail", font=("Segoe UI", 12, "bold"), anchor="w").pack(fill="x", padx=30, pady=(10, 0))
         
-        # Hint label
-        hint_frame = ctk.CTkFrame(frm, fg_color="transparent")
-        hint_frame.pack(fill="x", padx=30, pady=(0, 0))
-        ctk.CTkLabel(hint_frame, text="💡 Tip: Chụp màn hình rồi nhấn Ctrl+V vào ô này để paste ảnh trực tiếp!", 
-                    font=("Segoe UI", 10), text_color="#10b981", anchor="w").pack(side="left")
+        self.entry_video = self.create_form_input(
+            form_container, 
+            "🎬 Video URL", 
+            "https://youtube.com/... hoặc paste iframe code",
+            height=48
+        )
+        
+        # Custom Image Input with Browse Button
+        self.create_image_input_section(form_container)
         
         img_row = ctk.CTkFrame(frm, fg_color="transparent")
         img_row.pack(fill="x", padx=30, pady=(5, 0))
@@ -502,6 +881,213 @@ class GUIView(ctk.CTk):
         self.txt_vimeo_log = ctk.CTkTextbox(frm, font=("Consolas", 10), height=300)
         self.txt_vimeo_log.pack(fill="both", expand=True, padx=30, pady=10)
         self.txt_vimeo_log.configure(state="disabled")
+
+    # =========================================================================
+    # TAB 4.5: IMAGE MANAGEMENT (Quản lý ảnh API car)
+    # =========================================================================
+    def create_images_tab_content(self):
+        """Tab to manage car API images - save and delete"""
+        container = ctk.CTkScrollableFrame(self.tab_images, fg_color="transparent")
+        container.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Header
+        header_frame = ctk.CTkFrame(container, fg_color="transparent")
+        header_frame.pack(fill="x", pady=(0, 10))
+        
+        ctk.CTkLabel(header_frame, text="Ảnh Đã Up Lên Web", font=("Segoe UI", 18, "bold")).pack(side="left")
+        ctk.CTkButton(header_frame, text="🔄 Làm Mới", width=100, command=self.refresh_image_lists).pack(side="right", padx=5)
+        
+        # Description
+        ctk.CTkLabel(container, 
+                    text="💡 Ảnh xe sẽ tự động lưu vào thư viện sau khi upload lên WordPress thành công",
+                    font=("Segoe UI", 11),
+                    text_color="gray",
+                    wraplength=800).pack(anchor="w", pady=(0, 20))
+        
+        # ===== SECTION: SAVED LIBRARY (Thư viện ảnh xe từ API) =====
+        saved_section = ctk.CTkFrame(container)
+        saved_section.pack(fill="both", expand=True)
+        
+        ctk.CTkLabel(saved_section, text=" Thư Viện Ảnh ", font=("Segoe UI", 14, "bold")).pack(anchor="w", padx=20, pady=(10, 5))
+        ctk.CTkLabel(saved_section, 
+                    text="Ảnh xe đã upload lên WordPress. Tự động lưu sau mỗi lần đăng bài thành công.",
+                    font=("Segoe UI", 10),
+                    text_color="gray").pack(anchor="w", padx=20, pady=(0, 10))
+        
+        # Saved list with scrollbar
+        saved_list_frame = ctk.CTkFrame(saved_section)
+        saved_list_frame.pack(fill="both", expand=True, padx=20, pady=(0, 15))
+        
+        self.saved_listbox = tk.Listbox(
+            saved_list_frame,
+            font=("Consolas", 10),
+            bg="#2b2b2b",
+            fg="white",
+            selectbackground="#10b981",
+            height=8
+        )
+        self.saved_listbox.pack(side="left", fill="both", expand=True)
+        
+        saved_scrollbar = ctk.CTkScrollbar(saved_list_frame, command=self.saved_listbox.yview)
+        saved_scrollbar.pack(side="right", fill="y")
+        self.saved_listbox.configure(yscrollcommand=saved_scrollbar.set)
+        
+        # Saved actions
+        saved_actions = ctk.CTkFrame(saved_section, fg_color="transparent")
+        saved_actions.pack(fill="x", padx=20, pady=(0, 15))
+        
+        ctk.CTkButton(saved_actions, text="📋 Copy Đường Dẫn", 
+                     fg_color=self.colors['primary'], 
+                     width=150,
+                     command=self.copy_saved_image_path).pack(side="left", padx=5)
+        
+        ctk.CTkButton(saved_actions, text="🗑️ Xoá Khỏi Thư Viện", 
+                     fg_color=self.colors['danger'], 
+                     width=150,
+                     command=self.delete_selected_saved).pack(side="left", padx=5)
+        
+        ctk.CTkButton(saved_actions, text="👁️ Xem Ảnh", 
+                     fg_color="gray", 
+                     width=100,
+                     command=self.view_selected_saved).pack(side="left", padx=5)
+        
+        ctk.CTkButton(saved_actions, text="📂 Mở Thư Mục", 
+                     fg_color="gray", 
+                     width=120,
+                     command=lambda: self.open_folder("saved_car_images")).pack(side="left", padx=5)
+        
+        self.lbl_saved_count = ctk.CTkLabel(saved_actions, text="(0 ảnh)", text_color="gray")
+        self.lbl_saved_count.pack(side="right", padx=10)
+        
+        # Load initial data
+        self.refresh_image_lists()
+    
+    def refresh_image_lists(self):
+        """Refresh saved car images from API"""
+        try:
+            from model.image_api import ImageAPI
+            image_api = ImageAPI()
+            
+            # Get saved images
+            saved_images = image_api.get_saved_images()
+            self.saved_listbox.delete(0, tk.END)
+            for img_path in saved_images:
+                filename = os.path.basename(img_path)
+                size_kb = os.path.getsize(img_path) // 1024
+                self.saved_listbox.insert(tk.END, f"{filename} ({size_kb} KB)")
+            
+            self.lbl_saved_count.configure(text=f"({len(saved_images)} ảnh)")
+            
+            self.log(f"🔄 Đã làm mới thư viện: {len(saved_images)} ảnh xe từ API")
+            
+        except Exception as e:
+            self.log(f"❌ Lỗi làm mới danh sách ảnh: {e}")
+    
+    
+    def delete_selected_saved(self):
+        """Delete selected saved image"""
+        try:
+            selection = self.saved_listbox.curselection()
+            if not selection:
+                messagebox.showwarning("Chưa chọn ảnh", "Vui lòng chọn ảnh cần xoá!")
+                return
+            
+            # Confirm deletion
+            if not messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xoá ảnh này khỏi thư viện?"):
+                return
+            
+            from model.image_api import ImageAPI
+            image_api = ImageAPI()
+            
+            # Get selected image path
+            saved_images = image_api.get_saved_images()
+            selected_idx = selection[0]
+            
+            if selected_idx >= len(saved_images):
+                messagebox.showerror("Lỗi", "Không tìm thấy ảnh!")
+                return
+            
+            image_path = saved_images[selected_idx]
+            
+            # Delete image
+            if image_api.delete_image(image_path):
+                self.log(f"🗑️ Đã xoá ảnh khỏi thư viện: {os.path.basename(image_path)}")
+                messagebox.showinfo("Thành công", "Đã xoá ảnh khỏi thư viện!")
+                self.refresh_image_lists()
+            else:
+                messagebox.showerror("Lỗi", "Không thể xoá ảnh!")
+                
+        except Exception as e:
+            self.log(f"❌ Lỗi xoá ảnh: {e}")
+            messagebox.showerror("Lỗi", f"Lỗi xoá ảnh: {e}")
+    
+    
+    def view_selected_saved(self):
+        """Open selected saved image in default image viewer"""
+        try:
+            selection = self.saved_listbox.curselection()
+            if not selection:
+                messagebox.showwarning("Chưa chọn ảnh", "Vui lòng chọn ảnh cần xem!")
+                return
+            
+            from model.image_api import ImageAPI
+            image_api = ImageAPI()
+            
+            saved_images = image_api.get_saved_images()
+            selected_idx = selection[0]
+            
+            if selected_idx >= len(saved_images):
+                return
+            
+            image_path = saved_images[selected_idx]
+            
+            # Open with default viewer
+            import subprocess
+            subprocess.Popen(['start', '', image_path], shell=True)
+            
+        except Exception as e:
+            self.log(f"❌ Lỗi mở ảnh: {e}")
+    
+    def copy_saved_image_path(self):
+        """Copy selected saved image path to clipboard"""
+        try:
+            selection = self.saved_listbox.curselection()
+            if not selection:
+                messagebox.showwarning("Chưa chọn ảnh", "Vui lòng chọn ảnh!")
+                return
+            
+            from model.image_api import ImageAPI
+            image_api = ImageAPI()
+            
+            saved_images = image_api.get_saved_images()
+            selected_idx = selection[0]
+            
+            if selected_idx >= len(saved_images):
+                return
+            
+            image_path = saved_images[selected_idx]
+            
+            # Copy to clipboard
+            self.clipboard_clear()
+            self.clipboard_append(os.path.abspath(image_path))
+            
+            self.log(f"📋 Đã copy đường dẫn: {image_path}")
+            messagebox.showinfo("Thành công", f"Đã copy đường dẫn!\n{os.path.abspath(image_path)}")
+            
+        except Exception as e:
+            self.log(f"❌ Lỗi copy đường dẫn: {e}")
+    
+    def open_folder(self, folder_name):
+        """Open folder in file explorer"""
+        try:
+            if not os.path.exists(folder_name):
+                os.makedirs(folder_name)
+            
+            import subprocess
+            subprocess.Popen(['explorer', os.path.abspath(folder_name)])
+            
+        except Exception as e:
+            self.log(f"❌ Lỗi mở thư mục: {e}")
 
     # =========================================================================
     # TAB 5: DATA & LOGS (Thay thế cho Bottom UI cũ)
@@ -1115,6 +1701,7 @@ class GUIView(ctk.CTk):
         data.content_image3 = self.entry_content_image3.get()  # Content image 3
         data.auto_fetch_images = self.chk_auto_fetch_images.get()  # Auto-fetch flag
         data.content = self.textbox_content.get("1.0", "end")
+        data.theme = self.get_selected_theme_id()  # Get selected theme
         return data
     
     def _extract_video_url(self, input_text):

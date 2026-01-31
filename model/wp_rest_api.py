@@ -49,13 +49,20 @@ class WordPressRESTClient:
         print(f"[REST_API] Initialized for: {self.site_url}")
         print(f"[REST_API] API Base: {self.api_base}")
     
-    def test_api_availability(self):
+    def test_api_availability(self, aggressive=False):
         """
         Test if WordPress REST API is available and not blocked
+        
+        Args:
+            aggressive: If True, skip availability check and try anyway (bypass bot detection)
         
         Returns:
             tuple: (is_available: bool, status_code: int, message: str)
         """
+        if aggressive:
+            print("[REST_API] 🚀 AGGRESSIVE MODE: Skipping availability check, will try anyway")
+            return True, 200, "Aggressive mode - bypassing check"
+        
         try:
             print("[REST_API] Testing API availability...")
             response = self.session.get(self.api_base, timeout=10)
@@ -64,18 +71,20 @@ class WordPressRESTClient:
                 print("[REST_API] ✅ REST API is available!")
                 return True, 200, "REST API available"
             elif response.status_code == 403:
-                print("[REST_API] ❌ REST API blocked (403 Forbidden)")
-                return False, 403, "REST API blocked by security plugin or firewall"
+                print("[REST_API] ⚠️ REST API blocked (403) - will try aggressive mode")
+                # Don't give up - try aggressive mode
+                return True, 403, "REST API blocked but will try anyway"
             elif response.status_code == 404:
-                print("[REST_API] ❌ REST API not found (404)")
-                return False, 404, "REST API not enabled or wrong URL"
+                print("[REST_API] ⚠️ REST API not found (404) - will try alternative endpoints")
+                return True, 404, "REST API not found but will try anyway"
             else:
-                print(f"[REST_API] ⚠️ Unexpected status: {response.status_code}")
-                return False, response.status_code, f"Unexpected status: {response.status_code}"
+                print(f"[REST_API] ⚠️ Unexpected status: {response.status_code} - will try anyway")
+                return True, response.status_code, f"Unexpected status but will try anyway"
                 
         except requests.exceptions.RequestException as e:
-            print(f"[REST_API] ❌ Connection error: {e}")
-            return False, 0, f"Connection error: {str(e)}"
+            print(f"[REST_API] ⚠️ Connection error: {e} - will try anyway")
+            # Don't give up on connection errors - might be temporary
+            return True, 0, f"Connection error but will try anyway"
     
     def login(self):
         """
@@ -233,20 +242,37 @@ class WordPressRESTClient:
             elif filename.lower().endswith('.webp'):
                 mime_type = 'image/webp'
             
-            # Prepare headers
+            # Prepare headers - CRITICAL: Add all authentication headers
             headers = {
                 'Content-Disposition': f'attachment; filename="{filename}"',
+                'Content-Type': mime_type,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             }
             
+            # Add nonce if available (from Selenium)
             if self.nonce:
                 headers['X-WP-Nonce'] = self.nonce
+                print(f"[REST_API] Using nonce: {self.nonce[:20]}...")
             
-            # Upload file
+            # Method 1: Try with cookies + nonce (most reliable for admin)
             with open(image_path, 'rb') as f:
+                file_data = f.read()
+            
+            response = self.session.post(
+                self.media_endpoint,
+                headers=headers,
+                data=file_data,
+                timeout=60
+            )
+            
+            # If 401 error, try with HTTP Basic Auth as fallback
+            if response.status_code == 401 and hasattr(self.session, 'auth') and self.session.auth:
+                print(f"[REST_API] Cookie auth failed, trying HTTP Basic Auth...")
                 response = self.session.post(
                     self.media_endpoint,
                     headers=headers,
-                    data=f.read(),
+                    data=file_data,
+                    auth=self.session.auth,
                     timeout=60
                 )
             
@@ -331,6 +357,51 @@ class WordPressRESTClient:
                 print(f"[REST_API] Post ID: {post_id}")
                 print(f"[REST_API] Post URL: {post_url}")
                 
+                # VERIFY: Check if featured_media was actually set
+                actual_featured_media = data.get('featured_media')
+                if actual_featured_media:
+                    print(f"[REST_API] ✅ VERIFIED: Featured media in response: {actual_featured_media}")
+                    if featured_media_id and actual_featured_media != featured_media_id:
+                        print(f"[REST_API] ⚠️ WARNING: Featured media mismatch!")
+                        print(f"[REST_API]   Expected: {featured_media_id}")
+                        print(f"[REST_API]   Got: {actual_featured_media}")
+                        
+                        # FORCE UPDATE: Update featured_media again
+                        print(f"[REST_API] 🔄 Force updating featured_media to {featured_media_id}...")
+                        try:
+                            update_response = self.session.post(
+                                f"{self.posts_endpoint}/{post_id}",
+                                json={"featured_media": featured_media_id},
+                                headers=headers,
+                                timeout=30
+                            )
+                            if update_response.status_code in [200, 201]:
+                                print(f"[REST_API] ✅ Featured media force updated successfully!")
+                            else:
+                                print(f"[REST_API] ⚠️ Failed to force update featured media: {update_response.status_code}")
+                        except Exception as update_err:
+                            print(f"[REST_API] ⚠️ Error force updating featured media: {update_err}")
+                else:
+                    print(f"[REST_API] ⚠️ WARNING: No featured_media in response!")
+                    if featured_media_id:
+                        print(f"[REST_API]   Expected featured_media: {featured_media_id}")
+                        
+                        # FORCE SET: Set featured_media via update
+                        print(f"[REST_API] 🔄 Force setting featured_media to {featured_media_id}...")
+                        try:
+                            update_response = self.session.post(
+                                f"{self.posts_endpoint}/{post_id}",
+                                json={"featured_media": featured_media_id},
+                                headers=headers,
+                                timeout=30
+                            )
+                            if update_response.status_code in [200, 201]:
+                                print(f"[REST_API] ✅ Featured media force set successfully!")
+                            else:
+                                print(f"[REST_API] ⚠️ Failed to force set featured media: {update_response.status_code}")
+                        except Exception as update_err:
+                            print(f"[REST_API] ⚠️ Error force setting featured media: {update_err}")
+                
                 return True, post_id, post_url
             else:
                 print(f"[REST_API] ❌ Post creation failed: {response.status_code}")
@@ -364,9 +435,16 @@ class WordPressRESTClient:
                 if not self.login():
                     return False, "Login failed"
             
-            # Step 3: Upload featured image (if provided)
+            # Step 3: Get featured media ID
             featured_media_id = None
-            if blog_post.image_url:
+            
+            # CRITICAL FIX: Use featured_media_id from BlogPost if already uploaded
+            if hasattr(blog_post, 'featured_media_id') and blog_post.featured_media_id:
+                featured_media_id = blog_post.featured_media_id
+                print(f"[REST_API] ✅ Using existing featured_media_id: {featured_media_id}")
+            elif blog_post.image_url:
+                # Only upload if we don't have media_id yet
+                print(f"[REST_API] No featured_media_id found, uploading image...")
                 success, media_id, media_url = self.upload_image(blog_post.image_url)
                 if success:
                     featured_media_id = media_id

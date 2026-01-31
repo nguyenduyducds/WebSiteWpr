@@ -16,6 +16,62 @@ class SeleniumWPClient:
         self.password = password
         self.driver = None
 
+    def _check_and_handle_popups(self):
+        """
+        Check for and handle common popups/CAPTCHA that block login
+        """
+        try:
+            # Check for CAPTCHA
+            captcha_selectors = [
+                "iframe[src*='recaptcha']",
+                "iframe[src*='hcaptcha']",
+                ".g-recaptcha",
+                ".h-captcha",
+                "#captcha",
+                "[class*='captcha']"
+            ]
+            
+            for selector in captcha_selectors:
+                if len(self.driver.find_elements(By.CSS_SELECTOR, selector)) > 0:
+                    print("[SELENIUM] ⚠️ CAPTCHA detected! Please solve it manually...")
+                    print("[SELENIUM] Waiting 30 seconds for manual CAPTCHA solve...")
+                    time.sleep(30)
+                    return
+            
+            # Check for common popup close buttons
+            popup_close_selectors = [
+                "button.close",
+                "button[aria-label='Close']",
+                ".modal-close",
+                ".popup-close",
+                "[class*='close-button']",
+                "[class*='dismiss']"
+            ]
+            
+            for selector in popup_close_selectors:
+                elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                if elements:
+                    try:
+                        elements[0].click()
+                        print(f"[SELENIUM] ✅ Closed popup: {selector}")
+                        time.sleep(1)
+                        return
+                    except:
+                        pass
+            
+            # Check for "Remember Me" checkbox and check it
+            try:
+                remember_me = self.driver.find_elements(By.ID, "rememberme")
+                if remember_me and not remember_me[0].is_selected():
+                    remember_me[0].click()
+                    print("[SELENIUM] ✅ Checked 'Remember Me'")
+            except:
+                pass
+                
+        except Exception as e:
+            # Silently ignore errors in popup detection
+            pass
+
     def init_driver(self, headless=False):
         options = uc.ChromeOptions()
         
@@ -28,17 +84,22 @@ class SeleniumWPClient:
         options.add_argument("--disable-infobars")
         options.add_argument("--start-maximized")
         
-        # NOTE: Don't use these with undetected-chromedriver - they cause conflicts
-        # options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        # options.add_experimental_option('useAutomationExtension', False)
-        
-        # Basic stability options
+        # Stability options (IMPORTANT - prevent crashes)
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-notifications")
+        options.add_argument("--disable-popup-blocking")  # NEW: Allow popups
+        options.add_argument("--disable-extensions")  # NEW: Disable extensions
+        options.add_argument("--disable-software-rasterizer")  # NEW: Stability
+        options.add_argument("--disable-web-security")  # NEW: Avoid CORS issues
         options.add_argument("--window-size=1920,1080")
         options.add_argument("--log-level=3")
+        
+        # Memory and performance options (NEW - prevent crashes)
+        options.add_argument("--disable-background-timer-throttling")
+        options.add_argument("--disable-backgrounding-occluded-windows")
+        options.add_argument("--disable-renderer-backgrounding")
         
         # Check for Chrome Portable
         chrome_portable_path = None
@@ -73,7 +134,10 @@ class SeleniumWPClient:
             else:
                 print("[SELENIUM] Using System Chrome...")
                 self.driver = uc.Chrome(options=options, use_subprocess=True, version_main=None)
-                
+            
+            # Set page load timeout to prevent hanging
+            self.driver.set_page_load_timeout(60)
+            
             print("[SELENIUM] Driver initialized successfully")
                 
         except Exception as e:
@@ -108,12 +172,14 @@ class SeleniumWPClient:
                         except: pass
                     
                     self.driver.get(final_dest)
+                    
+                    # Quick check - reduced timeout from 5s to 2s
                     try:
-                        WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.ID, "wpadminbar")))
-                        print("[SELENIUM] Login via Cookies SUCCESSFUL!")
+                        WebDriverWait(self.driver, 2).until(EC.presence_of_element_located((By.ID, "wpadminbar")))
+                        print("[SELENIUM] ✅ Login via Cookies SUCCESSFUL!")
                         return True
                     except:
-                        print("[SELENIUM] Cookies expired.")
+                        print("[SELENIUM] Cookies expired or invalid.")
                 except Exception as e:
                     print(f"[SELENIUM] Cookie error: {e}")
 
@@ -121,70 +187,95 @@ class SeleniumWPClient:
             print(f"[SELENIUM] Navigating to login: {login_url}")
             self.driver.get(login_url)
             
-            print("[SELENIUM] Finding user_login field...")
-            user_field = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "user_login")))
-            print("[SELENIUM] Sending username...")
-            user_field.send_keys(self.username)
+            # Reduced wait time from 10s to 5s
+            print("[SELENIUM] Finding login fields...")
+            user_field = WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.ID, "user_login")))
             
-            print("[SELENIUM] Finding user_pass field...")
+            # Fill both fields quickly without separate waits
+            user_field.send_keys(self.username)
             pass_field = self.driver.find_element(By.ID, "user_pass")
-            print("[SELENIUM] Sending password...")
             pass_field.send_keys(self.password)
             
-            print("[SELENIUM] Clicking submit...")
+            print("[SELENIUM] Submitting login form...")
             try:
-                # Click Submit
+                # Method 1: JavaScript click (most reliable)
                 submit_btn = self.driver.find_element(By.ID, "wp-submit")
                 self.driver.execute_script("arguments[0].click();", submit_btn)
-            except:
-                print("[SELENIUM] Click failed, trying Enter...")
-                self.driver.find_element(By.ID, "user_pass").send_keys(Keys.RETURN)
+                print("[SELENIUM] Clicked via JavaScript")
+            except Exception as click_err:
+                print(f"[SELENIUM] JS click failed: {click_err}, trying Enter key...")
+                try:
+                    self.driver.find_element(By.ID, "user_pass").send_keys(Keys.RETURN)
+                    print("[SELENIUM] Submitted via Enter key")
+                except Exception as enter_err:
+                    print(f"[SELENIUM] Enter key failed: {enter_err}, trying form submit...")
+                    # Method 3: Submit form directly
+                    try:
+                        form = self.driver.find_element(By.ID, "loginform")
+                        self.driver.execute_script("arguments[0].submit();", form)
+                        print("[SELENIUM] Submitted via form.submit()")
+                    except Exception as form_err:
+                        print(f"[SELENIUM] All submit methods failed: {form_err}")
+                        raise Exception("Cannot submit login form")
             
-            print("[SELENIUM] Waiting for dashboard (up to 60s)...")
+            # Wait a bit for page to start loading (reduced from 3s to 1s)
+            print("[SELENIUM] Waiting for page to load...")
+            time.sleep(1)
             
-            # Polling loop for 60 seconds
-            import time
+            # Check if browser is still alive
+            try:
+                current_url = self.driver.current_url
+                print(f"[SELENIUM] Page loaded, current URL: {current_url}")
+            except Exception as browser_err:
+                print(f"[SELENIUM] ❌ Browser crashed or closed: {browser_err}")
+                raise Exception("Browser crashed during login. This might be due to Chrome Portable instability. Try using system Chrome or restart the app.")
+            
+            # Check for CAPTCHA or popup immediately after submit
+            self._check_and_handle_popups()
+            
+            print("[SELENIUM] Waiting for dashboard (up to 30s)...")  # Reduced from 60s to 30s
+            
+            # Polling loop for 30 seconds (reduced from 60s)
             start_time = time.time()
             login_success = False
+            popup_check_count = 0
+            check_interval = 0.5  # Check every 0.5s instead of 1s for faster detection
             
-            while time.time() - start_time < 60:
+            while time.time() - start_time < 30:  # Reduced timeout to 30s
                 current_url = self.driver.current_url
                 elapsed = int(time.time() - start_time)
                 
-                # Debug: Print current URL every 5 seconds
-                if elapsed % 5 == 0:
+                # Debug: Print current URL every 3 seconds (reduced from 5s)
+                if elapsed % 3 == 0 and elapsed > 0:
                     print(f"[SELENIUM] [{elapsed}s] Current URL: {current_url}")
                 
                 try:
-                    # Check 1: Dashboard loaded
+                    # Check 1: Dashboard loaded (FASTEST - check first)
                     if len(self.driver.find_elements(By.ID, "wpadminbar")) > 0:
-                        print("[SELENIUM] Found Admin Bar! Login Complete.")
+                        print("[SELENIUM] ✅ Found Admin Bar! Login Complete.")
                         login_success = True
                         break
                     
-                    # Check 2: Redirected to admin
-                    if "wp-admin" in current_url:
-                        print(f"[SELENIUM] URL contains wp-admin: {current_url}")
-                        # Wait a bit more for page to fully load
-                        time.sleep(2)
+                    # Check 2: Redirected to admin (but NOT login page with redirect param)
+                    if "wp-admin" in current_url and "wp-login.php" not in current_url:
+                        print(f"[SELENIUM] ✅ Redirected to wp-admin: {current_url}")
+                        # Reduced wait time from 2s to 0.5s
+                        time.sleep(0.5)
                         print("[SELENIUM] Login Complete.")
                         login_success = True
                         break
                     
                     # Check 3: Redirected to dashboard (some sites use /dashboard/)
-                    if "dashboard" in current_url.lower():
-                        print(f"[SELENIUM] URL contains dashboard: {current_url}")
+                    if "dashboard" in current_url.lower() and "wp-login.php" not in current_url:
+                        print(f"[SELENIUM] ✅ URL contains dashboard: {current_url}")
                         login_success = True
                         break
 
-                    # Check 4: Login Error
+                    # Check 4: Login Error (check early to fail fast)
                     error_elems = self.driver.find_elements(By.ID, "login_error")
                     if len(error_elems) > 0:
                         error_text = error_elems[0].text
                         print(f"[SELENIUM] ❌ LOGIN ERROR: {error_text}")
-                        # If simple error, fail fast. If cookie error, maybe retry?
-                        if "cookies" in error_text.lower():
-                             print("[SELENIUM] Cookie blocked error detected.")
                         
                         # Capture screenshot for error analysis
                         self.driver.save_screenshot("login_error_caught.png")
@@ -195,18 +286,49 @@ class SeleniumWPClient:
                         # Check if there's a success message
                         if len(self.driver.find_elements(By.CSS_SELECTOR, ".message")) > 0:
                             print("[SELENIUM] Found success message, waiting for redirect...")
+                        
+                        # Check for popup/CAPTCHA every 5 seconds (reduced from 10s)
+                        if popup_check_count % 10 == 0 and popup_check_count > 0:
+                            self._check_and_handle_popups()
+                        popup_check_count += 1
+                        
                 except Exception as e:
                     if "WordPress Login Error" in str(e):
                         raise e
                     # Ignore other transient errors during check
                     pass
                 
-                time.sleep(1)
+                time.sleep(check_interval)  # 0.5s instead of 1s
             
             if not login_success:
-                 print("[SELENIUM] Login Timed Out (60s).")
-                 self.driver.save_screenshot("login_timeout.png")
-                 raise Exception("Login timed out. Site might be slow or captcha blocked.")
+                print("[SELENIUM] Login Timed Out (30s).")  # Updated message
+                
+                # Take screenshot and save HTML for debugging
+                try:
+                    self.driver.save_screenshot("login_timeout.png")
+                    with open("login_timeout.html", "w", encoding="utf-8") as f:
+                        f.write(self.driver.page_source)
+                    print("[SELENIUM] 📸 Saved debug files: login_timeout.png and login_timeout.html")
+                except:
+                    pass
+                
+                # Check if still on login page
+                current_url = self.driver.current_url
+                if "wp-login.php" in current_url:
+                    # Check for specific issues
+                    page_source = self.driver.page_source.lower()
+                    
+                    if "captcha" in page_source or "recaptcha" in page_source:
+                        raise Exception("Login blocked by CAPTCHA. Please disable CAPTCHA for admin login or solve it manually.")
+                    elif "cloudflare" in page_source:
+                        raise Exception("Login blocked by Cloudflare. Please whitelist your IP or disable Cloudflare for wp-login.php")
+                    elif "rate limit" in page_source or "too many" in page_source:
+                        raise Exception("Login blocked by rate limiting. Please wait a few minutes and try again.")
+                    else:
+                        raise Exception("Login timed out after 30s. Site might be slow, blocked, or requires manual verification. Check login_timeout.png for details.")
+                else:
+                    raise Exception(f"Login timed out. Stuck at: {current_url}")
+
 
             print("[SELENIUM] Login Successful!")
             
@@ -487,11 +609,19 @@ class SeleniumWPClient:
                         titleField.value = arguments[0];
                         
                         // Trigger input event (WordPress needs this)
-                        const event = new Event('input', { bubbles: true });
-                        titleField.dispatchEvent(event);
+                        const inputEvent = new Event('input', { bubbles: true });
+                        titleField.dispatchEvent(inputEvent);
+                        
+                        // Trigger change event
+                        const changeEvent = new Event('change', { bubbles: true });
+                        titleField.dispatchEvent(changeEvent);
                         
                         // Force update
                         titleField.setAttribute('data-value', arguments[0]);
+                        
+                        // CRITICAL: Blur and focus to trigger WordPress validation
+                        titleField.blur();
+                        titleField.focus();
                     """, blog_post.title)
                     
                     # Verify
@@ -503,10 +633,74 @@ class SeleniumWPClient:
                     # Fallback to Gutenberg - Use React method
                     print("[SELENIUM] Waiting for Gutenberg title field...")
                     
+                    # CRITICAL FIX: Close block inserter panel if it's open
+                    # Try multiple methods to close the panel
+                    panel_closed = False
+                    
+                    # Method 1: Click X button
+                    try:
+                        print("[SELENIUM] Trying to close block inserter panel (Method 1: X button)...")
+                        x_buttons = self.driver.find_elements(By.CSS_SELECTOR, "button[aria-label='Close block inserter'], button.components-button[aria-label*='Close']")
+                        for btn in x_buttons:
+                            if btn.is_displayed():
+                                btn.click()
+                                time.sleep(0.5)
+                                panel_closed = True
+                                print("[SELENIUM] ✅ Closed panel via X button")
+                                break
+                    except Exception as e:
+                        print(f"[SELENIUM] Method 1 failed: {e}")
+                    
+                    # Method 2: Click inserter toggle button if it's active
+                    if not panel_closed:
+                        try:
+                            print("[SELENIUM] Trying to close block inserter panel (Method 2: Toggle button)...")
+                            toggle_button = self.driver.find_element(By.CSS_SELECTOR, ".edit-post-header-toolbar__inserter-toggle[aria-pressed='true']")
+                            if toggle_button:
+                                toggle_button.click()
+                                time.sleep(0.5)
+                                panel_closed = True
+                                print("[SELENIUM] ✅ Closed panel via toggle button")
+                        except Exception as e:
+                            print(f"[SELENIUM] Method 2 failed: {e}")
+                    
+                    # Method 3: Press Escape key
+                    if not panel_closed:
+                        try:
+                            print("[SELENIUM] Trying to close block inserter panel (Method 3: ESC key)...")
+                            from selenium.webdriver.common.keys import Keys
+                            body = self.driver.find_element(By.TAG_NAME, "body")
+                            body.send_keys(Keys.ESCAPE)
+                            time.sleep(0.5)
+                            panel_closed = True
+                            print("[SELENIUM] ✅ Closed panel via ESC key")
+                        except Exception as e:
+                            print(f"[SELENIUM] Method 3 failed: {e}")
+                    
+                    # Method 4: Click outside the panel (on the editor area)
+                    if not panel_closed:
+                        try:
+                            print("[SELENIUM] Trying to close block inserter panel (Method 4: Click outside)...")
+                            editor_canvas = self.driver.find_element(By.CSS_SELECTOR, ".edit-post-visual-editor, .editor-styles-wrapper")
+                            editor_canvas.click()
+                            time.sleep(0.5)
+                            print("[SELENIUM] ✅ Clicked outside panel")
+                        except Exception as e:
+                            print(f"[SELENIUM] Method 4 failed: {e}")
+                    
+                    # Wait a bit for panel to close
+                    time.sleep(1)
+                    
+                    # Wait for title field to be ready
                     title_field = WebDriverWait(self.driver, 10).until(
                         EC.element_to_be_clickable((By.CSS_SELECTOR, ".editor-post-title__input"))
                     )
-                    time.sleep(1)
+                    time.sleep(0.5)
+                    
+                    # Click on title field to focus (important!)
+                    print("[SELENIUM] Clicking title field to focus...")
+                    title_field.click()
+                    time.sleep(0.5)
                     
                     # Use React's setValue method (most reliable for React components)
                     result = self.driver.execute_script("""
