@@ -1997,7 +1997,7 @@ class GUIView(ctk.CTk):
                                  # Standard standard embed width
                                  width = 560
                                  height = 315
-                                 current_post.video_url = f'<iframe width="{width}" height="{height}" src="https://www.youtube.com/embed/{video_id}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+                                 current_post.video_url = f'<iframe width="{width}" height="{height}" src="https://www.youtube.com/embed/{video_id}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="true"></iframe>'
                                  
                                  # Optional: Fetch title via oEmbed (fast)
                                  if not current_post.title:

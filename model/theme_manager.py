@@ -182,13 +182,29 @@ class ThemeManager:
         import html
         video_url = html.unescape(video_url).strip()
         
-        # Check if raw HTML (iframe, script, div)
-        # We assume if it starts with <tag, it is a raw embed code
-        if video_url.lower().startswith(('<iframe', '<div', '<script', '<blockquote')):
-             # Wrap in container for styling
-             return f'<div class="video-wrapper">{video_url}</div>'
+        # STRATEGY CHANGE: Use WordPress [embed] shortcode for YouTube/Vimeo
+        # This avoids JNews/Theme interfering with raw iframes (causing 404s)
         
-        # Convert URL to embed
+        # 1. Extract URL if it's an iframe
+        target_url = video_url
+        if '<iframe' in video_url.lower():
+            import re
+            src_match = re.search(r'src=["\'](http[^"\']+)["\']', video_url)
+            if src_match:
+                target_url = src_match.group(1)
+        
+        # 2. Check if compatible with Shortcode
+        if 'youtube.com' in target_url or 'youtu.be' in target_url or 'vimeo.com' in target_url:
+            # Return WP shortcode (Cleanest method)
+            # Remove any query params that might break embed if complex, but usually keep them
+            return f'[embed]{target_url}[/embed]'
+
+        # 3. Fallback for others (Facebook, etc) - Return RAW HTML
+        vid_lower = video_url.lower()
+        if '<iframe' in vid_lower or '<div' in vid_lower or '<script' in vid_lower or '<blockquote' in vid_lower:
+             return video_url
+        
+        # 4. Convert URL to embed (Fallback)
         embed_url = self.convert_to_embed_url(video_url)
         if embed_url:
             return f'''<div class="video-wrapper">
@@ -200,6 +216,10 @@ class ThemeManager:
     def convert_to_embed_url(self, url):
         """Convert video URL to embed URL"""
         if not url: return None
+        
+        # Safety: If URL looks like HTML, return None to prevent injection
+        if '<' in url and '>' in url:
+            return None
         
         # YouTube
         if 'youtube.com' in url or 'youtu.be' in url:
