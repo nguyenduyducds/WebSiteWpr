@@ -178,11 +178,15 @@ class ThemeManager:
         if not video_url:
             return ""
         
-        # If already iframe, wrap it
-        if '<iframe' in video_url.lower():
-            iframe_match = re.search(r'<iframe[^>]*>.*?</iframe>', video_url, re.IGNORECASE | re.DOTALL)
-            if iframe_match:
-                return f'<div class="video-wrapper">{iframe_match.group(0)}</div>'
+        # Helper: Clean and unescape
+        import html
+        video_url = html.unescape(video_url).strip()
+        
+        # Check if raw HTML (iframe, script, div)
+        # We assume if it starts with <tag, it is a raw embed code
+        if video_url.lower().startswith(('<iframe', '<div', '<script', '<blockquote')):
+             # Wrap in container for styling
+             return f'<div class="video-wrapper">{video_url}</div>'
         
         # Convert URL to embed
         embed_url = self.convert_to_embed_url(video_url)
@@ -195,13 +199,20 @@ class ThemeManager:
     
     def convert_to_embed_url(self, url):
         """Convert video URL to embed URL"""
+        if not url: return None
+        
         # YouTube
         if 'youtube.com' in url or 'youtu.be' in url:
+            # If already embed URL, return it
+            if '/embed/' in url:
+                return url
+                
             video_id = None
             if 'youtu.be/' in url:
                 video_id = url.split('youtu.be/')[-1].split('?')[0]
             elif 'watch?v=' in url:
                 video_id = url.split('watch?v=')[-1].split('&')[0]
+                
             if video_id:
                 return f"https://www.youtube.com/embed/{video_id}"
         
@@ -210,11 +221,14 @@ class ThemeManager:
             if 'player.vimeo.com' in url:
                 return url
             else:
-                video_id = url.split('vimeo.com/')[-1].split('?')[0]
-                return f"https://player.vimeo.com/video/{video_id}"
+                try:
+                    video_id = url.split('vimeo.com/')[-1].split('?')[0]
+                    if video_id.isdigit():
+                        return f"https://player.vimeo.com/video/{video_id}"
+                except: pass
         
-        # Facebook
-        elif 'facebook.com' in url:
+        # Facebook plugin URL
+        elif 'facebook.com' in url and not url.startswith('<'):
             return f"https://www.facebook.com/plugins/video.php?href={url}&show_text=0&width=560"
         
         return url
