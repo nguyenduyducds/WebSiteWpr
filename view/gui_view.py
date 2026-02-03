@@ -1673,7 +1673,40 @@ class GUIView(ctk.CTk):
                             # Convert to embed (Iframe)
                             video_url_final = self.create_facebook_embed(link, use_sdk=False)
                         
-                        # 2. OTHERS
+                        # 2. YOUTUBE
+                        elif 'youtube.com' in link or 'youtu.be' in link:
+                            platform = "YouTube"
+                            self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] YT: Đang lấy dữ liệu..."))
+                            
+                            # Get ID
+                            import re
+                            vid_id = None
+                            if 'youtu.be' in link:
+                                match = re.search(r'youtu\.be/([\w-]+)', link)
+                                if match: vid_id = match.group(1)
+                            else:
+                                match = re.search(r'v=([\w-]+)', link)
+                                if match: vid_id = match.group(1)
+                            
+                            if vid_id:
+                                # Embed Code
+                                video_url_final = f'<iframe width="560" height="315" src="https://www.youtube.com/embed/{vid_id}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+                                
+                                # Thumbnail (High Quality)
+                                img_remote = f"https://img.youtube.com/vi/{vid_id}/maxresdefault.jpg"
+                                
+                                # Title via oEmbed
+                                try:
+                                    oembed_url = f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={vid_id}&format=json"
+                                    res = requests.get(oembed_url, timeout=3)
+                                    if res.status_code == 200:
+                                        title = res.json().get('title')
+                                except: pass
+                            
+                            if not title:
+                                title, _ = _get_meta(link) # Fallback
+
+                        # 3. OTHERS
                         else:
                             self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] Đang lấy dữ liệu..."))
                             title, img_remote = _get_meta(link)
@@ -1946,6 +1979,36 @@ class GUIView(ctk.CTk):
                              # Generate Embed
                              # use_sdk defaults to False, uses Iframe (robust)
                              current_post.video_url = self.create_facebook_embed(vid_line)
+                    
+                    # --- YouTube Logic ---
+                    elif 'youtube.com' in vid_line or 'youtu.be' in vid_line:
+                        if not vid_line.startswith('<'):
+                             # Extract video ID
+                             import re
+                             video_id = None
+                             if 'youtu.be' in vid_line:
+                                 match = re.search(r'youtu\.be/([\w-]+)', vid_line)
+                                 if match: video_id = match.group(1)
+                             else:
+                                 match = re.search(r'v=([\w-]+)', vid_line)
+                                 if match: video_id = match.group(1)
+                             
+                             if video_id:
+                                 # Standard standard embed width
+                                 width = 560
+                                 height = 315
+                                 current_post.video_url = f'<iframe width="{width}" height="{height}" src="https://www.youtube.com/embed/{video_id}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+                                 
+                                 # Optional: Fetch title via oEmbed (fast)
+                                 if not current_post.title:
+                                     try:
+                                         import requests
+                                         oembed_url = f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={video_id}&format=json"
+                                         res = requests.get(oembed_url, timeout=2)
+                                         if res.status_code == 200:
+                                              yt_data = res.json()
+                                              current_post.title = yt_data.get('title', '')
+                                     except: pass
                     
                     # Add to queue
                     cleaned_data = {
