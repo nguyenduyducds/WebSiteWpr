@@ -4,8 +4,8 @@ from PyInstaller.utils.hooks import collect_all
 datas = [
     ('requirements.txt', '.'),
     ('sample_posts.csv', '.'),
-    ('chrome_portable', 'chrome_portable'),  # Bundle Chrome Portable
-    ('driver', 'driver'),  # Bundle ChromeDriver
+    ('chrome_portable', 'chrome_portable'),
+    ('driver', 'driver'),
 ]
 binaries = []
 hiddenimports = [
@@ -69,20 +69,26 @@ pyz = PYZ(a.pure)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.datas,
     [],
+    exclude_binaries=True,
     name='WprTool',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=False,  # Disabled to avoid WinError 193
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,  # GUI mode
+    upx=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+)
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='WprTool',
 )

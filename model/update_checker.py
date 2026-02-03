@@ -1,4 +1,3 @@
-
 import requests
 import webbrowser
 from packaging import version
@@ -7,6 +6,7 @@ import os
 import sys
 import subprocess
 import time
+import tempfile
 
 class UpdateChecker:
     def __init__(self, current_version, update_url=None):
@@ -16,14 +16,9 @@ class UpdateChecker:
         self.download_url = None
 
     def check_for_updates(self, callback=None):
-        """
-        Checks for updates asynchronously.
-        callback: function(has_update, latest_version_str, download_url)
-        """
         def _check():
             try:
-                # Add cache buster
-                import time
+                # Add cache buster to URL
                 check_url = self.update_url
                 if "?" in check_url:
                     check_url += f"&t={int(time.time())}"
@@ -58,55 +53,35 @@ class UpdateChecker:
 
     def download_and_install(self, download_url, progress_callback=None, completion_callback=None):
         """
-        Downloads the new EXE and seamlessly replaces the current one.
-        progress_callback: function(current_bytes, total_bytes)
-        completion_callback: function(success, error_msg)
+        Downloads a Setup EXE to a temporary folder and runs it.
+        This allows upgrading "Folder-based" apps by running an external installer.
         """
         def _download():
             try:
-                # 1. Download to temp file
-                print(f"[Update] Downloading from: {download_url}")
-                response = requests.get(download_url, stream=True, timeout=10)
+                print(f"[Update] Downloading Installer from: {download_url}")
+                response = requests.get(download_url, stream=True, timeout=15)
                 total_size = int(response.headers.get('content-length', 0))
                 
-                # Determine new filename (e.g., WprTool_new.exe)
-                # Ensure we are saving it in the SAME directory to make moving easier
-                current_exe = sys.executable
-                exe_dir = os.path.dirname(current_exe)
-                new_exe_path = os.path.join(exe_dir, "WprTool_new.exe")
+                # Download to %TEMP% directory
+                temp_dir = tempfile.gettempdir()
+                installer_name = "WprTool_Update_Installer.exe"
+                installer_path = os.path.join(temp_dir, installer_name)
                 
-                block_size = 1024 # 1KB
+                # Use bigger block size for speed
+                block_size = 8192
                 downloaded = 0
                 
-                with open(new_exe_path, 'wb') as f:
+                with open(installer_path, 'wb') as f:
                     for data in response.iter_content(block_size):
                         f.write(data)
                         downloaded += len(data)
                         if progress_callback:
                             progress_callback(downloaded, total_size)
                             
-                print("[Update] Download complete. Preparing to install...")
-                
-                # 2. Create Updater Batch Script
-                # This script: Waits -> Deletes Old EXE -> Renames New EXE -> Restarts -> Deletes Self
-                bat_path = os.path.join(exe_dir, "updater.bat")
-                exe_name = os.path.basename(current_exe)
-                
-                # Use 'timeout' to allow main app to close
-                # Use 'start "" "app.exe"' to restart non-blocking
-                bat_content = f"""
-@echo off
-timeout /t 2 /nobreak > NUL
-del "{exe_name}"
-rename "WprTool_new.exe" "{exe_name}"
-start "" "{exe_name}"
-del "%~f0"
-"""
-                with open(bat_path, "w") as bat:
-                    bat.write(bat_content)
+                print("[Update] Download complete. Executing installer...")
                 
                 if completion_callback:
-                    completion_callback(True, bat_path)
+                    completion_callback(True, installer_path)
                     
             except Exception as e:
                 print(f"[Update] Failed: {e}")
@@ -114,4 +89,3 @@ del "%~f0"
                     completion_callback(False, str(e))
 
         threading.Thread(target=_download, daemon=True).start()
-
