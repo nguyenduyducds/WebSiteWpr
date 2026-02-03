@@ -46,6 +46,20 @@ class WordPressRESTClient:
         self.posts_endpoint = f"{self.api_base}/posts"
         self.media_endpoint = f"{self.api_base}/media"
         
+        # EFFICIENCY & ROBUSTNESS: Add Connection Pooling and Retries
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+        
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["HEAD", "GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
+        
         print(f"[REST_API] Initialized for: {self.site_url}")
         print(f"[REST_API] API Base: {self.api_base}")
     
@@ -425,8 +439,8 @@ class WordPressRESTClient:
             tuple: (success: bool, post_url: str or error_message)
         """
         try:
-            # Step 1: Test API availability
-            is_available, status_code, message = self.test_api_availability()
+            # Step 1: Test API availability (Aggressive mode to avoid false 403 blocks)
+            is_available, status_code, message = self.test_api_availability(aggressive=True)
             if not is_available:
                 return False, f"REST API not available: {message}"
             

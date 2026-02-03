@@ -228,12 +228,13 @@ class VimeoPlaywrightHelper:
             # Smart Thumbnail Generation
             thumbnail_path = None
             try:
-                thumb_dir = os.path.join(os.getcwd(), "thumbnails")
+                # Smart Thumbnail Generation - RE-ENABLED (Saved to separate folder)
+                thumb_dir = os.path.join(os.getcwd(), "video_frames")
                 if not os.path.exists(thumb_dir): os.makedirs(thumb_dir)
                 filename = f"thumb_{video_id}.jpg"
                 save_path = os.path.join(thumb_dir, filename)
                 
-                # Use the existing Smart Extractor logic (duplicated here for independence)
+                # Use the existing Smart Extractor logic
                 extracted_thumb = self.extract_smart_thumbnail(file_path, save_path)
                 if extracted_thumb:
                      thumbnail_path = extracted_thumb

@@ -1,15 +1,10 @@
 <!-- Theme: Business Professional - CSS Only -->
-{{VIDEO_EMBED}}
-
-{{FEATURED_IMAGE}}
-
-<h1>{{POST_TITLE}}</h1>
 
 <p class="lead">{{EXCERPT}}</p>
 
-{{MAIN_CONTENT}}
+{{VIDEO_EMBED}}
 
-{{CONTENT_IMAGES}}
+{{MAIN_CONTENT}}
 
 <style>
 /* Business Professional Theme */
@@ -23,14 +18,43 @@
     background: #ffffff;
 }
 
-.entry-content iframe {
-    max-width: 100%;
-    width: 100%;
-    aspect-ratio: 16/9;
+/* Video Responsive - Full Support */
+.entry-content iframe,
+.entry-content iframe[src*="vimeo"],
+.entry-content iframe[src*="youtube"],
+.entry-content iframe[src*="facebook"] {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 16/9 !important;
     border-radius: 8px;
     margin: 32px 0;
     box-shadow: 0 6px 24px rgba(0,0,0,0.1);
     border: 2px solid #ecf0f1;
+    display: block !important;
+}
+
+/* Vimeo wrapper fix */
+.entry-content div[style*="padding"] iframe,
+.entry-content .video-wrapper iframe {
+    position: relative !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 16/9 !important;
+}
+
+/* Remove Vimeo wrapper padding */
+.entry-content div[style*="padding:"] {
+    padding: 0 !important;
+    height: auto !important;
+    position: relative !important;
+}
+
+.entry-content div[style*="padding:"] iframe {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
 }
 
 .entry-content h1 {

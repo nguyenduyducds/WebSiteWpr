@@ -1,0 +1,1042 @@
+<html class="wp-toolbar" lang="en-US"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Dashboard ‹ spotlight.tfvp.org — WordPress</title>
+<script type="text/javascript">
+addLoadEvent = function(func){if(typeof jQuery!=='undefined')jQuery(function(){func();});else if(typeof wpOnload!=='function'){wpOnload=func;}else{var oldonload=wpOnload;wpOnload=function(){oldonload();func();}}};
+var ajaxurl = '/wp-admin/admin-ajax.php',
+	pagenow = 'dashboard',
+	typenow = '',
+	adminpage = 'index-php',
+	thousandsSeparator = ',',
+	decimalPoint = '.',
+	isRtl = 0;
+</script>
+<link rel="stylesheet" href="https://spotlight.tfvp.org/wp-admin/load-styles.php?c=0&amp;dir=ltr&amp;load%5Bchunk_0%5D=dashicons,admin-bar,site-health,common,forms,admin-menu,dashboard,list-tables,edit,revisions,media,themes,about,nav-menus,wp-poi&amp;load%5Bchunk_1%5D=nter,widgets,site-icon,l10n,buttons,wp-auth-check,wp-components,wp-commands&amp;ver=6.9" type="text/css" media="all">
+<style type="text/css">
+@media print { #wpadminbar { display:none; } }
+/*# sourceURL=css-inline-concat-dashicons%2Cadmin-bar%2Csite-health%2Ccommon%2Cforms%2Cadmin-menu%2Cdashboard%2Clist-tables%2Cedit%2Crevisions%2Cmedia%2Cthemes%2Cabout%2Cnav-menus%2Cwp-pointer%2Cwidgets%2Csite-icon%2Cl10n%2Cbuttons%2Cwp-auth-check%2Cwp-components%2Cwp-commands */
+</style>
+<link rel="stylesheet" id="wpcode-admin-bar-css-css" href="https://spotlight.tfvp.org/wp-content/plugins/insert-headers-and-footers/build/admin-bar.css?ver=c95624a69c80301272a0" media="all">
+<link rel="stylesheet" id="thickbox-css" href="https://spotlight.tfvp.org/wp-includes/js/thickbox/thickbox.css?ver=6.9" media="all">
+<style id="wp-emoji-styles-inline-css">
+
+	img.wp-smiley, img.emoji {
+		display: inline !important;
+		border: none !important;
+		box-shadow: none !important;
+		height: 1em !important;
+		width: 1em !important;
+		margin: 0 0.07em !important;
+		vertical-align: -0.1em !important;
+		background: none !important;
+		padding: 0 !important;
+	}
+</style>
+<link rel="stylesheet" id="yoast-seo-tailwind-css" href="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/css/dist/tailwind-2650.css" media="all">
+<link rel="stylesheet" id="yoast-seo-admin-global-css" href="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/css/dist/admin-global-2650.css" media="all">
+<style id="yoast-seo-admin-global-inline-css">
+ul.wp-submenu span.yoast-premium-badge::after, #wpadminbar span.yoast-premium-badge::after { content:"Premium"}
+ul.wp-submenu span.yoast-ai-plus-badge::after, #wpadminbar span.yoast-ai-plus-badge::after  { content:"AI+"; }
+
+</style>
+<link rel="stylesheet" id="yoast-seo-wp-dashboard-css" href="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/css/dist/dashboard-2650.css" media="all">
+<link rel="stylesheet" id="yoast-seo-monorepo-css" href="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/css/dist/monorepo-2650.css" media="all">
+<link rel="stylesheet" id="yoast-seo-dismissible-css" href="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/css/dist/wpseo-dismissible-2650.css" media="all">
+<link rel="stylesheet" id="litespeed-cache-css" href="https://spotlight.tfvp.org/wp-content/plugins/litespeed-cache/assets/css/litespeed.css?ver=7.6.2" media="all">
+<link rel="stylesheet" id="litespeed-cache-dark-mode-css" href="https://spotlight.tfvp.org/wp-content/plugins/litespeed-cache/assets/css/litespeed-dark-mode.css?ver=7.6.2" media="all">
+<link rel="stylesheet" id="yoast-seo-adminbar-css" href="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/css/dist/adminbar-2650.css" media="all">
+<link rel="stylesheet" id="ai-admin-gen-css" href="https://spotlight.tfvp.org/wp-content/plugins/ad-inserter-pro/css/ai-admin.css?ver=2.7.32" media="all">
+<link rel="stylesheet" id="jnews-admin-css" href="https://spotlight.tfvp.org/wp-content/themes/jnews/assets/css/admin/admin-style.css?ver=9.0.6" media="all">
+<link rel="stylesheet" id="font-awesome-css" href="https://spotlight.tfvp.org/wp-content/themes/jnews/assets/css/font-awesome.min.css?ver=9.0.6" media="all">
+<link rel="stylesheet" id="tooltipster-css" href="https://spotlight.tfvp.org/wp-content/themes/jnews/assets/css/admin/tooltipster.css?ver=9.0.6" media="all">
+<script id="yoast-seo-admin-global-js-extra">
+var wpseoAdminGlobalL10n = {"isRtl":"","variable_warning":"Warning: the variable \u003Ccode\u003E%s\u003C/code\u003E cannot be used in this template. See the HelpScout beacon for more info.","help_video_iframe_title":"Yoast SEO video tutorial","scrollable_table_hint":"Scroll to see the table content.","wincher_is_logged_in":"","links.wincher.login":"https://app.wincher.com/login?utm_medium=plugin&utm_source=yoast&referer=yoast&partner=yoast","links.wincher.about":"https://yoa.st/dashboard-about-wincher?php_version=7.4&platform=wordpress&platform_version=6.9&software=free&software_version=26.5&days_active=53&user_language=en_US","links.wincher.pricing":"https://yoa.st/wincher-popup-pricing?php_version=7.4&platform=wordpress&platform_version=6.9&software=free&software_version=26.5&days_active=53&user_language=en_US","links.wincher.website":"https://yoa.st/wincher-popup?php_version=7.4&platform=wordpress&platform_version=6.9&software=free&software_version=26.5&days_active=53&user_language=en_US","links.wincher.upgrade":"https://yoa.st/wincher-upgrade?php_version=7.4&platform=wordpress&platform_version=6.9&software=free&software_version=26.5&days_active=53&user_language=en_US"};
+</script>
+
+<script type="text/javascript">
+/* <![CDATA[ */
+var userSettings = {"url":"/","uid":"1","time":"1769993605","secure":"1"};
+//# sourceURL=js-inline-concat-jquery-core%2Cjquery-migrate%2Cutils%2Cwp-polyfill
+/* ]]> */
+</script>
+<script type="text/javascript" src="https://spotlight.tfvp.org/wp-admin/load-scripts.php?c=0&amp;load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils,wp-polyfill&amp;ver=6.9"></script>
+<script src="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/js/dist/admin-global.js?ver=735bb3e70213eb378380" id="yoast-seo-admin-global-js"></script>
+<script src="https://spotlight.tfvp.org/wp-content/plugins/litespeed-cache/assets/js/litespeed-cache-admin.js?ver=7.6.2" id="litespeed-cache-js"></script>
+        <script type="text/javascript">
+            var ajaxurl = 'https://spotlight.tfvp.org/wp-admin/admin-ajax.php';
+        </script>
+        <script type="text/javascript">var _wpColorScheme = {"icons":{"base":"#a7aaad","focus":"#72aee6","current":"#fff"}};</script>
+	<link id="wp-admin-canonical" rel="canonical" href="https://spotlight.tfvp.org/wp-admin/">
+	<script>
+		if ( window.history.replaceState ) {
+			window.history.replaceState( null, null, document.getElementById( 'wp-admin-canonical' ).href + window.location.hash );
+		}
+	</script>
+	<meta name="viewport" content="width=device-width,initial-scale=1.0"><style>a.wpcode-sidebar-upgrade-pro { background-color: #59A56D !important; color: #fff !important; font-weight: 600 !important; }</style><script>window.jnews=window.jnews||{},window.jnews.library=window.jnews.library||{},window.jnews.library=function(){"use strict";var t=this;t.win=window,t.doc=document,t.globalBody=t.doc.getElementsByTagName("body")[0],t.globalBody=t.globalBody?t.globalBody:t.doc,t.win.jnewsDataStorage=t.win.jnewsDataStorage||{_storage:new WeakMap,put:function(t,e,n){this._storage.has(t)||this._storage.set(t,new Map),this._storage.get(t).set(e,n)},get:function(t,e){return this._storage.get(t).get(e)},has:function(t,e){return this._storage.has(t)&&this._storage.get(t).has(e)},remove:function(t,e){var n=this._storage.get(t).delete(e);return 0===!this._storage.get(t).size&&this._storage.delete(t),n}},t.windowWidth=function(){return t.win.innerWidth||t.docEl.clientWidth||t.globalBody.clientWidth},t.windowHeight=function(){return t.win.innerHeight||t.docEl.clientHeight||t.globalBody.clientHeight},t.requestAnimationFrame=t.win.requestAnimationFrame||t.win.webkitRequestAnimationFrame||t.win.mozRequestAnimationFrame||t.win.msRequestAnimationFrame||window.oRequestAnimationFrame||function(t){return setTimeout(t,1e3/60)},t.cancelAnimationFrame=t.win.cancelAnimationFrame||t.win.webkitCancelAnimationFrame||t.win.webkitCancelRequestAnimationFrame||t.win.mozCancelAnimationFrame||t.win.msCancelRequestAnimationFrame||t.win.oCancelRequestAnimationFrame||function(t){clearTimeout(t)},t.classListSupport="classList"in document.createElement("_"),t.hasClass=t.classListSupport?function(t,e){return t.classList.contains(e)}:function(t,e){return t.className.indexOf(e)>=0},t.addClass=t.classListSupport?function(e,n){t.hasClass(e,n)||e.classList.add(n)}:function(e,n){t.hasClass(e,n)||(e.className+=" "+n)},t.removeClass=t.classListSupport?function(e,n){t.hasClass(e,n)&&e.classList.remove(n)}:function(e,n){t.hasClass(e,n)&&(e.className=e.className.replace(n,""))},t.objKeys=function(t){var e=[];for(var n in t)Object.prototype.hasOwnProperty.call(t,n)&&e.push(n);return e},t.isObjectSame=function(t,e){var n=!0;return JSON.stringify(t)!==JSON.stringify(e)&&(n=!1),n},t.extend=function(){for(var t,e,n,i=arguments[0]||{},o=1,a=arguments.length;o<a;o++)if(null!==(t=arguments[o]))for(e in t)i!==(n=t[e])&&void 0!==n&&(i[e]=n);return i},t.dataStorage=t.win.jnewsDataStorage,t.isVisible=function(t){return 0!==t.offsetWidth&&0!==t.offsetHeight||t.getBoundingClientRect().length},t.getHeight=function(t){return t.offsetHeight||t.clientHeight||t.getBoundingClientRect().height},t.getWidth=function(t){return t.offsetWidth||t.clientWidth||t.getBoundingClientRect().width},t.supportsPassive=!1;try{var e=Object.defineProperty({},"passive",{get:function(){t.supportsPassive=!0}});"createEvent"in t.doc?t.win.addEventListener("test",null,e):"fireEvent"in t.doc&&t.win.attachEvent("test",null)}catch(t){}t.passiveOption=!!t.supportsPassive&&{passive:!0},t.addEvents=function(e,n,i){for(var o in n){var a=["touchstart","touchmove"].indexOf(o)>=0&&!i&&t.passiveOption;"createEvent"in t.doc?e.addEventListener(o,n[o],a):"fireEvent"in t.doc&&e.attachEvent("on"+o,n[o])}},t.removeEvents=function(e,n){for(var i in n)"createEvent"in t.doc?e.removeEventListener(i,n[i]):"fireEvent"in t.doc&&e.detachEvent("on"+i,n[i])},t.triggerEvents=function(e,n,i){var o;i=i||{detail:null};return"createEvent"in t.doc?(!(o=t.doc.createEvent("CustomEvent")||new CustomEvent(n)).initCustomEvent||o.initCustomEvent(n,!0,!1,i),void e.dispatchEvent(o)):"fireEvent"in t.doc?((o=t.doc.createEventObject()).eventType=n,void e.fireEvent("on"+o.eventType,o)):void 0},t.getParents=function(e,n){void 0===n&&(n=t.doc);for(var i=[],o=e.parentNode,a=!1;!a;)if(o){var s=o;s.querySelectorAll(n).length?a=!0:(i.push(s),o=s.parentNode)}else i=[],a=!0;return i},t.forEach=function(t,e,n){for(var i=0,o=t.length;i<o;i++)e.call(n,t[i],i)},t.getText=function(t){return t.innerText||t.textContent},t.setText=function(t,e){var n="object"==typeof e?e.innerText||e.textContent:e;t.innerText&&(t.innerText=n),t.textContent&&(t.textContent=n)},t.httpBuildQuery=function(e){return t.objKeys(e).reduce(function e(n){var i=arguments.length>1&&void 0!==arguments[1]?arguments[1]:null;return function(o,a){var s=n[a];a=encodeURIComponent(a);var r=i?"".concat(i,"[").concat(a,"]"):a;return null==s||"function"==typeof s?(o.push("".concat(r,"=")),o):["number","boolean","string"].includes(typeof s)?(o.push("".concat(r,"=").concat(encodeURIComponent(s))),o):(o.push(t.objKeys(s).reduce(e(s,r),[]).join("&")),o)}}(e),[]).join("&")},t.scrollTo=function(e,n,i){function o(t,e,n){this.start=this.position(),this.change=t-this.start,this.currentTime=0,this.increment=20,this.duration=void 0===n?500:n,this.callback=e,this.finish=!1,this.animateScroll()}return Math.easeInOutQuad=function(t,e,n,i){return(t/=i/2)<1?n/2*t*t+e:-n/2*(--t*(t-2)-1)+e},o.prototype.stop=function(){this.finish=!0},o.prototype.move=function(e){t.doc.documentElement.scrollTop=e,t.globalBody.parentNode.scrollTop=e,t.globalBody.scrollTop=e},o.prototype.position=function(){return t.doc.documentElement.scrollTop||t.globalBody.parentNode.scrollTop||t.globalBody.scrollTop},o.prototype.animateScroll=function(){this.currentTime+=this.increment;var e=Math.easeInOutQuad(this.currentTime,this.start,this.change,this.duration);this.move(e),this.currentTime<this.duration&&!this.finish?t.requestAnimationFrame.call(t.win,this.animateScroll.bind(this)):this.callback&&"function"==typeof this.callback&&this.callback()},new o(e,n,i)},t.unwrap=function(e){var n,i=e;t.forEach(e,(function(t,e){n?n+=t:n=t})),i.replaceWith(n)},t.performance={start:function(t){performance.mark(t+"Start")},stop:function(t){performance.mark(t+"End"),performance.measure(t,t+"Start",t+"End")}},t.fps=function(){var e=0,n=0,i=0;!function(){var o=e=0,a=0,s=0,r=document.getElementById("fpsTable"),c=function(e){void 0===document.getElementsByTagName("body")[0]?t.requestAnimationFrame.call(t.win,(function(){c(e)})):document.getElementsByTagName("body")[0].appendChild(e)};null===r&&((r=document.createElement("div")).style.position="fixed",r.style.top="120px",r.style.left="10px",r.style.width="100px",r.style.height="20px",r.style.border="1px solid black",r.style.fontSize="11px",r.style.zIndex="100000",r.style.backgroundColor="white",r.id="fpsTable",c(r));var l=function(){i++,n=Date.now(),(a=(i/(s=(n-e)/1e3)).toPrecision(2))!=o&&(o=a,r.innerHTML=o+"fps"),1<s&&(e=n,i=0),t.requestAnimationFrame.call(t.win,l)};l()}()},t.instr=function(t,e){for(var n=0;n<e.length;n++)if(-1!==t.toLowerCase().indexOf(e[n].toLowerCase()))return!0},t.winLoad=function(e,n){function i(i){if("complete"===t.doc.readyState||"interactive"===t.doc.readyState)return!i||n?setTimeout(e,n||1):e(i),1}i()||t.addEvents(t.win,{load:i})},t.docReady=function(e,n){function i(i){if("complete"===t.doc.readyState||"interactive"===t.doc.readyState)return!i||n?setTimeout(e,n||1):e(i),1}i()||t.addEvents(t.doc,{DOMContentLoaded:i})},t.fireOnce=function(){t.docReady((function(){t.assets=t.assets||[],t.assets.length&&(t.boot(),t.load_assets())}),50)},t.boot=function(){t.length&&t.doc.querySelectorAll("style[media]").forEach((function(t){"not all"==t.getAttribute("media")&&t.removeAttribute("media")}))},t.create_js=function(e,n){var i=t.doc.createElement("script");switch(i.setAttribute("src",e),n){case"defer":i.setAttribute("defer",!0);break;case"async":i.setAttribute("async",!0);break;case"deferasync":i.setAttribute("defer",!0),i.setAttribute("async",!0)}t.globalBody.appendChild(i)},t.load_assets=function(){"object"==typeof t.assets&&t.forEach(t.assets.slice(0),(function(e,n){var i="";e.defer&&(i+="defer"),e.async&&(i+="async"),t.create_js(e.url,i);var o=t.assets.indexOf(e);o>-1&&t.assets.splice(o,1)})),t.assets=jnewsoption.au_scripts=window.jnewsads=[]},t.docReady((function(){t.globalBody=t.globalBody==t.doc?t.doc.getElementsByTagName("body")[0]:t.globalBody,t.globalBody=t.globalBody?t.globalBody:t.doc}))},window.jnews.library=new window.jnews.library;</script><style data-styled="active" data-styled-version="5.3.6"></style></head>
+<body class="wp-admin wp-core-ui js index-php auto-fold admin-bar branch-6-9 version-6-9 admin-color-fresh locale-en-us svg wp-theme-jnews customize-support sticky-menu">
+<script type="text/javascript">
+	document.body.className = document.body.className.replace('no-js','js');
+</script>
+
+<script>
+		(function() {
+			var request, b = document.body, c = 'className', cs = 'customize-support', rcs = new RegExp('(^|\\s+)(no-)?'+cs+'(\\s+|$)');
+
+				request = true;
+	
+			b[c] = b[c].replace( rcs, ' ' );
+			// The customizer requires postMessage and CORS (if the site is cross domain).
+			b[c] += ( window.postMessage && request ? ' ' : ' no-' ) + cs;
+		}());
+	
+//# sourceURL=wp_customize_support_script
+</script>
+
+<div id="wpwrap">
+
+<div id="adminmenumain" role="navigation" aria-label="Main menu">
+<a href="#wpbody-content" class="screen-reader-shortcut">Skip to main content</a>
+<a href="#wp-toolbar" class="screen-reader-shortcut">Skip to toolbar</a>
+<div id="adminmenuback"></div>
+<div id="adminmenuwrap">
+<ul id="adminmenu">
+
+
+	<li class="wp-first-item wp-has-submenu wp-has-current-submenu wp-menu-open menu-top menu-top-first menu-icon-dashboard menu-top-last" id="menu-dashboard">
+	<a href="index.php" class="wp-first-item wp-has-submenu wp-has-current-submenu wp-menu-open menu-top menu-top-first menu-icon-dashboard menu-top-last"><div class="wp-menu-image dashicons-before dashicons-dashboard" aria-hidden="true"><br></div><div class="wp-menu-name">Dashboard</div></a>
+	<ul class="wp-submenu wp-submenu-wrap"><li class="wp-submenu-head" aria-hidden="true">Dashboard</li><li class="wp-first-item current"><a href="index.php" class="wp-first-item current" aria-current="page">Home</a></li><li><a href="update-core.php">Updates <span class="update-plugins count-4"><span class="update-count">4</span></span></a></li></ul></li>
+	<li class="wp-not-current-submenu wp-menu-separator" aria-hidden="true"><div class="separator"></div></li>
+	<li class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-post open-if-no-js menu-top-first" id="menu-posts">
+	<a href="edit.php" class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-post open-if-no-js menu-top-first" data-ariahaspopup=""><div class="wp-menu-image dashicons-before dashicons-admin-post" aria-hidden="true"><br></div><div class="wp-menu-name">Posts</div></a>
+	<ul class="wp-submenu wp-submenu-wrap"><li class="wp-submenu-head" aria-hidden="true">Posts</li><li class="wp-first-item"><a href="edit.php" class="wp-first-item">All Posts</a></li><li><a href="post-new.php">Add Post</a></li><li><a href="edit-tags.php?taxonomy=category">Categories</a></li><li><a href="edit-tags.php?taxonomy=post_tag">Tags</a></li></ul></li>
+	<li class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-media" id="menu-media">
+	<a href="upload.php" class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-media" data-ariahaspopup=""><div class="wp-menu-image dashicons-before dashicons-admin-media" aria-hidden="true"><br></div><div class="wp-menu-name">Media</div></a>
+	<ul class="wp-submenu wp-submenu-wrap"><li class="wp-submenu-head" aria-hidden="true">Media</li><li class="wp-first-item"><a href="upload.php" class="wp-first-item">Library</a></li><li><a href="media-new.php">Add Media File</a></li></ul></li>
+	<li class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-page" id="menu-pages">
+	<a href="edit.php?post_type=page" class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-page" data-ariahaspopup=""><div class="wp-menu-image dashicons-before dashicons-admin-page" aria-hidden="true"><br></div><div class="wp-menu-name">Pages</div></a>
+	<ul class="wp-submenu wp-submenu-wrap"><li class="wp-submenu-head" aria-hidden="true">Pages</li><li class="wp-first-item"><a href="edit.php?post_type=page" class="wp-first-item">All Pages</a></li><li><a href="post-new.php?post_type=page">Add Page</a></li></ul></li>
+	<li class="wp-not-current-submenu menu-top menu-icon-comments menu-top-last" id="menu-comments">
+	<a href="edit-comments.php" class="wp-not-current-submenu menu-top menu-icon-comments menu-top-last"><div class="wp-menu-image dashicons-before dashicons-admin-comments" aria-hidden="true"><br></div><div class="wp-menu-name">Comments <span class="awaiting-mod count-0"><span class="pending-count" aria-hidden="true">0</span><span class="comments-in-moderation-text screen-reader-text">0 Comments in moderation</span></span></div></a></li>
+	<li class="wp-not-current-submenu wp-menu-separator" aria-hidden="true"><div class="separator"></div></li>
+	<li class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-appearance menu-top-first" id="menu-appearance">
+	<a href="themes.php" class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-appearance menu-top-first" data-ariahaspopup=""><div class="wp-menu-image dashicons-before dashicons-admin-appearance" aria-hidden="true"><br></div><div class="wp-menu-name">Appearance</div></a>
+	<ul class="wp-submenu wp-submenu-wrap"><li class="wp-submenu-head" aria-hidden="true">Appearance</li><li class="wp-first-item"><a href="themes.php" class="wp-first-item">Themes <span class="update-plugins count-0"><span class="theme-count">0</span></span></a></li><li><a href="site-editor.php">Design</a></li><li class="hide-if-no-customize"><a href="customize.php?return=%2Fwp-admin%2F" class="hide-if-no-customize">Customize</a></li><li><a href="widgets.php">Widgets</a></li><li><a href="nav-menus.php">Menus</a></li><li><a href="themes.php?page=jnews">JNews Dashboard</a></li><li><a href="themes.php?page=jnews_import">Import Demo &amp; Style</a></li><li><a href="themes.php?page=jnews_plugin">Install Plugin</a></li><li><a href="themes.php?page=jnews_system">System Status</a></li><li><a href="themes.php?page=jnews_documentation">Video Documentation</a></li><li><a href="themes.php?page=jnews-install-plugins">Install Plugins</a></li><li><a href="theme-editor.php">Theme File Editor</a></li></ul></li>
+	<li class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-plugins" id="menu-plugins">
+	<a href="plugins.php" class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-plugins" data-ariahaspopup=""><div class="wp-menu-image dashicons-before dashicons-admin-plugins" aria-hidden="true"><br></div><div class="wp-menu-name">Plugins <span class="update-plugins count-4"><span class="plugin-count">4</span></span></div></a>
+	<ul class="wp-submenu wp-submenu-wrap"><li class="wp-submenu-head" aria-hidden="true">Plugins <span class="update-plugins count-4"><span class="plugin-count">4</span></span></li><li class="wp-first-item"><a href="plugins.php" class="wp-first-item">Installed Plugins</a></li><li><a href="plugin-install.php">Add Plugin</a></li><li><a href="plugin-editor.php">Plugin File Editor</a></li></ul></li>
+	<li class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-users" id="menu-users">
+	<a href="users.php" class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-users" data-ariahaspopup=""><div class="wp-menu-image dashicons-before dashicons-admin-users" aria-hidden="true"><br></div><div class="wp-menu-name">Users</div></a>
+	<ul class="wp-submenu wp-submenu-wrap"><li class="wp-submenu-head" aria-hidden="true">Users</li><li class="wp-first-item"><a href="users.php" class="wp-first-item">All Users</a></li><li><a href="user-new.php">Add User</a></li><li><a href="profile.php">Profile</a></li></ul></li>
+	<li class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-tools" id="menu-tools">
+	<a href="tools.php" class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-tools" data-ariahaspopup=""><div class="wp-menu-image dashicons-before dashicons-admin-tools" aria-hidden="true"><br></div><div class="wp-menu-name">Tools</div></a>
+	<ul class="wp-submenu wp-submenu-wrap"><li class="wp-submenu-head" aria-hidden="true">Tools</li><li class="wp-first-item"><a href="tools.php" class="wp-first-item">Available Tools</a></li><li><a href="import.php">Import</a></li><li><a href="export.php">Export</a></li><li><a href="site-health.php">Site Health <span class="menu-counter site-health-counter count-1"><span class="count">1</span></span></a></li><li><a href="export-personal-data.php">Export Personal Data</a></li><li><a href="erase-personal-data.php">Erase Personal Data</a></li><li><a href="tools.php?page=wpseo_redirects_tools">Yoast Redirects</a></li></ul></li>
+	<li class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-settings" id="menu-settings">
+	<a href="options-general.php" class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-settings" data-ariahaspopup=""><div class="wp-menu-image dashicons-before dashicons-admin-settings" aria-hidden="true"><br></div><div class="wp-menu-name">Settings</div></a>
+	<ul class="wp-submenu wp-submenu-wrap"><li class="wp-submenu-head" aria-hidden="true">Settings</li><li class="wp-first-item"><a href="options-general.php" class="wp-first-item">General</a></li><li><a href="options-writing.php">Writing</a></li><li><a href="options-reading.php">Reading</a></li><li><a href="options-discussion.php">Discussion</a></li><li><a href="options-media.php">Media</a></li><li><a href="options-permalink.php">Permalinks</a></li><li><a href="options-privacy.php">Privacy</a></li><li><a href="options-general.php?page=ad-inserter.php">Ad Inserter Pro</a></li><li><a href="options-general.php?page=adstxt-settings">Ads.txt</a></li><li><a href="options-general.php?page=app-adstxt-settings">App-ads.txt</a></li><li><a href="options-general.php?page=litespeed-cache-options">LiteSpeed Cache</a></li></ul></li>
+	<li class="wp-has-submenu wp-not-current-submenu menu-top toplevel_page_wpcode menu-top-last" id="toplevel_page_wpcode"><a href="admin.php?page=wpcode" class="wp-has-submenu wp-not-current-submenu menu-top toplevel_page_wpcode menu-top-last" data-ariahaspopup=""><div class="wp-menu-image svg" style="background-image: url(&quot;data:image/svg+xml;base64,PHN2ZyBjbGFzcz0id3Bjb2RlLWljb24gd3Bjb2RlLWljb24tbG9nbyIgd2lkdGg9IjM2IiBoZWlnaHQ9IjM0IiB2aWV3Qm94PSItMTAgLTYgODAgODAiIGZpbGw9IiNhN2FhYWQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgaWQ9IiI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik01Ny41NzA2IDY0SDYuNTY3MzJDMi44OTk4NSA2NCAwIDYxLjEwNjQgMCA1Ny40NDY4VjYuNTUzMTlDMCAyLjg5MzYyIDIuODk5ODUgMCA2LjU2NzMyIDBINTcuNTcwNkM2MS4yMzgxIDAgNjQuMTM3OSAyLjg5MzYyIDY0LjEzNzkgNi41NTMxOVY1Ny40NDY4QzY0LjEzNzkgNjEuMTA2NCA2MS4yMzgxIDY0IDU3LjU3MDYgNjRaTTE1Ljg2MyA1Mi4wODU1QzE1LjUyMTkgNTIuMDg1NSAxNS4wOTU0IDUyLjAwMDQgMTQuNzU0MyA1MS45MTUzQzEzLjIxOTEgNTEuMzE5NiAxMi40NTE1IDQ5LjYxNzUgMTMuMDQ4NSA0OC4wODU1TDI2LjQzOSAxMy43ODc3QzI3LjAzNiAxMi4yNTU4IDI4Ljc0MTggMTEuNDg5OCAzMC4yNzcgMTIuMDg1NUMzMS44MTIyIDEyLjY4MTMgMzIuNTc5OCAxNC4zODM0IDMxLjk4MjggMTUuOTE1M0wxOC42Nzc2IDUwLjIxMzJDMTguMjUxMiA1MS40MDQ3IDE3LjA1NzEgNTIuMDg1NSAxNS44NjMgNTIuMDg1NVpNMzUuMDUzNCA0Ny43NDQ1QzM1LjY1MDQgNDguMzQwMyAzNi40MTggNDguNTk1NiAzNy4xODU2IDQ4LjU5NTZDMzcuOTUzMiA0OC41OTU2IDM4LjcyMDggNDguMzQwMyAzOS4zMTc5IDQ3Ljc0NDVMNDkuODA4NSAzNy4zNjE2QzUxLjY4NDkgMzUuNDg5MiA1MS42ODQ5IDMyLjM0MDMgNDkuODA4NSAzMC40NjhMMzkuMzE3OSAxOS45OTk5QzM4LjIwOTEgMTguODA4NCAzNi4zMzI3IDE4LjgwODQgMzUuMTM4NiAxOS45OTk5QzMzLjk0NDYgMjEuMTA2MyAzMy45NDQ2IDIyLjk3ODYgMzUuMTM4NiAyNC4xNzAxTDQ0Ljc3NjQgMzMuODcyMkwzNS4wNTM0IDQzLjU3NDNDMzMuODU5MyA0NC42ODA3IDMzLjg1OTMgNDYuNTUzMSAzNS4wNTM0IDQ3Ljc0NDVaIiBmaWxsPSIjYTdhYWFkIi8+PC9zdmc+&quot;) !important;" aria-hidden="true"><br></div><div class="wp-menu-name">Code Snippets</div></a>
+	<ul class="wp-submenu wp-submenu-wrap"><li class="wp-submenu-head" aria-hidden="true">Code Snippets</li><li class="wp-first-item"><a href="admin.php?page=wpcode" class="wp-first-item">Code Snippets</a></li><li><a href="admin.php?page=wpcode-snippet-manager">+ Add Snippet</a></li><li><a href="admin.php?page=wpcode-headers-footers">Header &amp; Footer</a></li><li><a href="admin.php?page=wpcode-pixel">Conversion Pixels</a></li><li><a href="admin.php?page=wpcode-library">Library</a></li><li><a href="admin.php?page=wpcode-file-editor">File Editor</a></li><li><a href="admin.php?page=wpcode-search-replace">Search &amp; Replace</a></li><li><a href="admin.php?page=wpcode-duplicator">Secure Backups</a></li><li><a href="admin.php?page=wpcode-tools">Tools</a></li><li><a href="admin.php?page=wpcode-settings">Settings</a></li><li class="wpcode-sidebar-upgrade-pro"><a href="https://wpcode.com/lite/?utm_source=liteplugin&amp;utm_medium=dashboard&amp;utm_campaign=admin-side-menu" class="wpcode-sidebar-upgrade-pro">Upgrade to Pro</a></li></ul></li>
+	<li class="wp-not-current-submenu wp-menu-separator" aria-hidden="true"><div class="separator"></div></li>
+	<li class="wp-has-submenu wp-not-current-submenu menu-top toplevel_page_wpseo_dashboard menu-top-first" id="toplevel_page_wpseo_dashboard"><a href="admin.php?page=wpseo_dashboard" class="wp-has-submenu wp-not-current-submenu menu-top toplevel_page_wpseo_dashboard menu-top-first" data-ariahaspopup=""><div class="wp-menu-image svg" style="background-image: url(&quot;data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgc3R5bGU9ImZpbGw6I2E3YWFhZCIgdmlld0JveD0iMCAwIDUxMiA1MTIiIHJvbGU9ImltZyIgYXJpYS1oaWRkZW49InRydWUiIGZvY3VzYWJsZT0iZmFsc2UiPjxnPjxnPjxnPjxnPjxwYXRoIGQ9Ik0yMDMuNiwzOTVjNi44LTE3LjQsNi44LTM2LjYsMC01NGwtNzkuNC0yMDRoNzAuOWw0Ny43LDE0OS40bDc0LjgtMjA3LjZIMTE2LjRjLTQxLjgsMC03NiwzNC4yLTc2LDc2VjM1N2MwLDQxLjgsMzQuMiw3Niw3Niw3NkgxNzNDMTg5LDQyNC4xLDE5Ny42LDQxMC4zLDIwMy42LDM5NXoiLz48L2c+PGc+PHBhdGggZD0iTTQ3MS42LDE1NC44YzAtNDEuOC0zNC4yLTc2LTc2LTc2aC0zTDI4NS43LDM2NWMtOS42LDI2LjctMTkuNCw0OS4zLTMwLjMsNjhoMjE2LjJWMTU0Ljh6Ii8+PC9nPjwvZz48cGF0aCBzdHJva2Utd2lkdGg9IjIuOTc0IiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIGQ9Ik0zMzgsMS4zbC05My4zLDI1OS4xbC00Mi4xLTEzMS45aC04OS4xbDgzLjgsMjE1LjJjNiwxNS41LDYsMzIuNSwwLDQ4Yy03LjQsMTktMTksMzcuMy01Myw0MS45bC03LjIsMXY3Nmg4LjNjODEuNywwLDExOC45LTU3LjIsMTQ5LjYtMTQyLjlMNDMxLjYsMS4zSDMzOHogTTI3OS40LDM2MmMtMzIuOSw5Mi02Ny42LDEyOC43LTEyNS43LDEzMS44di00NWMzNy41LTcuNSw1MS4zLTMxLDU5LjEtNTEuMWM3LjUtMTkuMyw3LjUtNDAuNywwLTYwbC03NS0xOTIuN2g1Mi44bDUzLjMsMTY2LjhsMTA1LjktMjk0aDU4LjFMMjc5LjQsMzYyeiIvPjwvZz48L2c+PC9zdmc+&quot;) !important;" aria-hidden="true"><br></div><div class="wp-menu-name">Yoast SEO <span class="update-plugins count-2"><span class="plugin-count" aria-hidden="true">2</span><span class="screen-reader-text">2 notifications</span></span></div></a>
+	<ul class="wp-submenu wp-submenu-wrap"><li class="wp-submenu-head" aria-hidden="true">Yoast SEO <span class="update-plugins count-2"><span class="plugin-count" aria-hidden="true">2</span><span class="screen-reader-text">2 notifications</span></span></li><li class="wp-first-item"><a href="admin.php?page=wpseo_dashboard" class="wp-first-item">General</a></li><li><a href="admin.php?page=wpseo_page_settings">Settings</a></li><li><a href="admin.php?page=wpseo_integrations">Integrations</a></li><li><a href="admin.php?page=wpseo_tools">Tools</a></li><li><a href="admin.php?page=wpseo_page_academy">Academy</a></li><li><a href="admin.php?page=wpseo_licenses">Plans</a></li><li><a href="admin.php?page=wpseo_workouts">Workouts <span class="yoast-badge yoast-premium-badge"></span></a></li><li><a href="admin.php?page=wpseo_redirects">Redirects <span class="yoast-badge yoast-premium-badge"></span></a></li><li><a href="admin.php?page=wpseo_brand_insights" target="_blank">Brand Insights <span class="yoast-badge yoast-ai-plus-badge"></span></a></li><li><a href="admin.php?page=wpseo_page_support">Support</a></li><li><a href="admin.php?page=wpseo_upgrade_sidebar" target="_blank"><span class="yst-root"><span class="yst-button yst-w-full yst-whitespace-nowrap yst-button--upsell yst-button--small">Upgrade </span></span></a></li></ul></li>
+	<li class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-generic toplevel_page_litespeed menu-top-last" id="toplevel_page_litespeed"><a href="admin.php?page=litespeed" class="wp-has-submenu wp-not-current-submenu menu-top menu-icon-generic toplevel_page_litespeed menu-top-last" data-ariahaspopup=""><div class="wp-menu-image dashicons-before dashicons-admin-generic" aria-hidden="true"><br></div><div class="wp-menu-name">LiteSpeed Cache</div></a>
+	<ul class="wp-submenu wp-submenu-wrap"><li class="wp-submenu-head" aria-hidden="true">LiteSpeed Cache</li><li class="wp-first-item"><a href="admin.php?page=litespeed" class="wp-first-item">Dashboard</a></li><li><a href="admin.php?page=litespeed-presets">Presets</a></li><li><a href="admin.php?page=litespeed-general">General</a></li><li><a href="admin.php?page=litespeed-cache">Cache</a></li><li><a href="admin.php?page=litespeed-cdn">CDN</a></li><li><a href="admin.php?page=litespeed-img_optm">Image Optimization</a></li><li><a href="admin.php?page=litespeed-page_optm">Page Optimization</a></li><li><a href="admin.php?page=litespeed-db_optm">Database</a></li><li><a href="admin.php?page=litespeed-crawler">Crawler</a></li><li><a href="admin.php?page=litespeed-toolbox">Toolbox</a></li></ul></li><li id="collapse-menu" class="hide-if-no-js"><button type="button" id="collapse-button" aria-label="Collapse Main menu" aria-expanded="true"><span class="collapse-button-icon" aria-hidden="true"></span><span class="collapse-button-label">Collapse Menu</span></button></li></ul>
+</div>
+</div>
+<div id="wpcontent">
+
+		<div id="wpadminbar" class="nojq">
+						<div class="quicklinks" id="wp-toolbar" role="navigation" aria-label="Toolbar">
+				<ul role="menu" id="wp-admin-bar-root-default" class="ab-top-menu"><li role="group" id="wp-admin-bar-menu-toggle"><a class="ab-item" role="menuitem" href="#" aria-expanded="false"><span class="ab-icon" aria-hidden="true"></span><span class="screen-reader-text">Menu</span></a></li><li role="group" id="wp-admin-bar-wp-logo" class="menupop"><a class="ab-item" role="menuitem" aria-expanded="false" href="https://spotlight.tfvp.org/wp-admin/about.php"><span class="ab-icon" aria-hidden="true"></span><span class="screen-reader-text">About WordPress</span></a><div class="ab-sub-wrapper"><ul role="menu" aria-label="About WordPress" id="wp-admin-bar-wp-logo-default" class="ab-submenu"><li role="group" id="wp-admin-bar-about"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/about.php">About WordPress</a></li><li role="group" id="wp-admin-bar-contribute"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/contribute.php">Get Involved</a></li></ul><ul role="menu" aria-label="About WordPress" id="wp-admin-bar-wp-logo-external" class="ab-sub-secondary ab-submenu"><li role="group" id="wp-admin-bar-wporg"><a class="ab-item" role="menuitem" href="https://wordpress.org/">WordPress.org</a></li><li role="group" id="wp-admin-bar-documentation"><a class="ab-item" role="menuitem" href="https://wordpress.org/documentation/">Documentation</a></li><li role="group" id="wp-admin-bar-learn"><a class="ab-item" role="menuitem" href="https://learn.wordpress.org/">Learn WordPress</a></li><li role="group" id="wp-admin-bar-support-forums"><a class="ab-item" role="menuitem" href="https://wordpress.org/support/forums/">Support</a></li><li role="group" id="wp-admin-bar-feedback"><a class="ab-item" role="menuitem" href="https://wordpress.org/support/forum/requests-and-feedback">Feedback</a></li></ul></div></li><li role="group" id="wp-admin-bar-site-name" class="menupop"><a class="ab-item" role="menuitem" aria-expanded="false" href="https://spotlight.tfvp.org/">spotlight.tfvp.org</a><div class="ab-sub-wrapper"><ul role="menu" aria-label="spotlight.tfvp.org" id="wp-admin-bar-site-name-default" class="ab-submenu"><li role="group" id="wp-admin-bar-view-site"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/">Visit Site</a></li></ul></div></li><li role="group" id="wp-admin-bar-updates"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/update-core.php"><span class="ab-icon" aria-hidden="true"></span><span class="ab-label" aria-hidden="true">4</span><span class="screen-reader-text updates-available-text">4 updates available</span></a></li><li role="group" id="wp-admin-bar-comments"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/edit-comments.php"><span class="ab-icon" aria-hidden="true"></span><span class="ab-label awaiting-mod pending-count count-0" aria-hidden="true">0</span><span class="screen-reader-text comments-in-moderation-text">0 Comments in moderation</span></a></li><li role="group" id="wp-admin-bar-new-content" class="menupop"><a class="ab-item" role="menuitem" aria-expanded="false" href="https://spotlight.tfvp.org/wp-admin/post-new.php"><span class="ab-icon" aria-hidden="true"></span><span class="ab-label">New</span></a><div class="ab-sub-wrapper"><ul role="menu" aria-label="New" id="wp-admin-bar-new-content-default" class="ab-submenu"><li role="group" id="wp-admin-bar-new-post"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/post-new.php">Post</a></li><li role="group" id="wp-admin-bar-new-media"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/media-new.php">Media</a></li><li role="group" id="wp-admin-bar-new-page"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/post-new.php?post_type=page">Page</a></li><li role="group" id="wp-admin-bar-new-user"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/user-new.php">User</a></li></ul></div></li><li role="group" id="wp-admin-bar-wpseo-menu" class="menupop"><a class="ab-item" role="menuitem" aria-expanded="false" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_dashboard"><div id="yoast-ab-icon" class="ab-item yoast-logo svg" style="background-image: url(&quot;data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbDpzcGFjZT0icHJlc2VydmUiIHN0eWxlPSJmaWxsOiNhN2FhYWQiIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNMjAzLjYgMzk1YzYuOC0xNy40IDYuOC0zNi42IDAtNTRsLTc5LjQtMjA0aDcwLjlsNDcuNyAxNDkuNCA3NC44LTIwNy42SDExNi40Yy00MS44IDAtNzYgMzQuMi03NiA3NlYzNTdjMCA0MS44IDM0LjIgNzYgNzYgNzZIMTczYzE2LTguOSAyNC42LTIyLjcgMzAuNi0zOE00NzEuNiAxNTQuOGMwLTQxLjgtMzQuMi03Ni03Ni03NmgtM0wyODUuNyAzNjVjLTkuNiAyNi43LTE5LjQgNDkuMy0zMC4zIDY4aDIxNi4yeiIvPjxwYXRoIGQ9Im0zMzggMS4zLTkzLjMgMjU5LjEtNDIuMS0xMzEuOWgtODkuMWw4My44IDIxNS4yYzYgMTUuNSA2IDMyLjUgMCA0OC03LjQgMTktMTkgMzcuMy01MyA0MS45bC03LjIgMXY3Nmg4LjNjODEuNyAwIDExOC45LTU3LjIgMTQ5LjYtMTQyLjlMNDMxLjYgMS4zek0yNzkuNCAzNjJjLTMyLjkgOTItNjcuNiAxMjguNy0xMjUuNyAxMzEuOHYtNDVjMzcuNS03LjUgNTEuMy0zMSA1OS4xLTUxLjEgNy41LTE5LjMgNy41LTQwLjcgMC02MGwtNzUtMTkyLjdoNTIuOGw1My4zIDE2Ni44IDEwNS45LTI5NGg1OC4xeiIvPjwvc3ZnPg==&quot;) !important;"><span class="screen-reader-text">SEO</span></div> <div class="wp-core-ui wp-ui-notification yoast-issue-counter"><span class="yoast-issues-count" aria-hidden="true">2</span><span class="screen-reader-text">2 notifications</span></div></a><div class="ab-sub-wrapper"><ul role="menu" id="wp-admin-bar-wpseo-menu-default" class="ab-submenu"><li role="group" id="wp-admin-bar-wpseo-notifications"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_dashboard#/alert-center">Notifications <div class="wp-core-ui wp-ui-notification yoast-issue-counter"><span class="yoast-issues-count" aria-hidden="true">2</span><span class="screen-reader-text">2 notifications</span></div></a></li><li role="group" id="wp-admin-bar-wpseo-settings" class="menupop"><div class="ab-item ab-empty-item" tabindex="0" role="menuitem" aria-expanded="false"><span class="wp-admin-bar-arrow" aria-hidden="true"></span>SEO Settings</div><div class="ab-sub-wrapper"><ul role="menu" id="wp-admin-bar-wpseo-settings-default" class="ab-submenu"><li role="group" id="wp-admin-bar-wpseo-general"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_dashboard">General</a></li><li role="group" id="wp-admin-bar-wpseo-page-settings"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_page_settings">Settings</a></li><li role="group" id="wp-admin-bar-wpseo-integrations"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_integrations">Integrations</a></li><li role="group" id="wp-admin-bar-wpseo-tools"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_tools">Tools</a></li><li role="group" id="wp-admin-bar-wpseo-page-academy"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_page_academy">Academy</a></li><li role="group" id="wp-admin-bar-wpseo-licenses"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_licenses">Plans</a></li><li role="group" id="wp-admin-bar-wpseo-workouts"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_workouts">Workouts <span class="yoast-badge yoast-premium-badge"></span></a></li><li role="group" id="wp-admin-bar-wpseo-redirects"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_redirects">Redirects <span class="yoast-badge yoast-premium-badge"></span></a></li><li role="group" id="wp-admin-bar-wpseo-brand-insights"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_brand_insights" target="_blank">Brand Insights <span class="yoast-badge yoast-ai-plus-badge"></span></a></li><li role="group" id="wp-admin-bar-wpseo-page-support"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_page_support">Support</a></li><li role="group" id="wp-admin-bar-wpseo-upgrade-sidebar"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_upgrade_sidebar"><span class="yst-root"><span class="yst-button yst-w-full yst-whitespace-nowrap yst-button--upsell yst-button--small">Upgrade </span></span></a></li></ul></div></li><li role="group" id="wp-admin-bar-wpseo-get-premium"><div class="ab-item ab-empty-item" tabindex="0" role="menuitem"><a href="https://yoa.st/admin-bar-get-premium?php_version=7.4&amp;platform=wordpress&amp;platform_version=6.9&amp;software=free&amp;software_version=26.5&amp;days_active=53&amp;user_language=en_US" target="_blank" data-action="load-nfd-ctb" data-ctb-id="f6a84663-465f-4cb5-8ba5-f7a6d72224b2">Upgrade</a></div></li></ul></div></li><li role="group" id="wp-admin-bar-wpcode-admin-bar-info" class="menupop wpcode-admin-bar-info menupop"><a class="ab-item" role="menuitem" aria-expanded="false" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode">WPCode</a><div class="ab-sub-wrapper"><ul role="menu" id="wp-admin-bar-wpcode-admin-bar-info-default" class="ab-submenu"><li role="group" id="wp-admin-bar-wpcode-description" class="wpcode-admin-bar-info-submenu wpcode-admin-bar-description"><div class="ab-item ab-empty-item" role="menuitem">Loaded on this page</div></li><li role="group" id="wp-admin-bar-wpcode-loaded-on-this-page" class="menupop wpcode-admin-bar-info-submenu"><a class="ab-item" role="menuitem" aria-expanded="false" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode"><span class="wp-admin-bar-arrow" aria-hidden="true" style="display: none;"></span>Code Snippets (0)</a><div class="ab-sub-wrapper"><ul role="menu" id="wp-admin-bar-wpcode-loaded-on-this-page-default" class="ab-submenu"></ul></div></li><li role="group" id="wp-admin-bar-wpcode-admin-bar-info-add-new" class="wpcode-admin-bar-info-submenu wpcode-admin-bar-info-separator-top"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode-snippet-manager">+ Add Snippet</a></li><li role="group" id="wp-admin-bar-wpcode-admin-bar-info-settings" class="wpcode-admin-bar-info-submenu"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode-settings">Settings</a></li><li role="group" id="wp-admin-bar-wpcode-admin-bar-info-help" class="wpcode-admin-bar-info-submenu"><a class="ab-item" role="menuitem" href="https://wpcode.com/docs/?utm_source=liteplugin&amp;utm_medium=admin-bar&amp;utm_campaign=help" target="_blank" rel="noopener noreferrer">Help Docs</a></li><li role="group" id="wp-admin-bar-wpcode-upgrade" class="wpcode-admin-bar-info-submenu"><a class="ab-item" role="menuitem" href="https://wpcode.com/lite/?utm_source=liteplugin&amp;utm_medium=admin-bar&amp;utm_campaign=upgrade-to-pro" target="_blank" rel="noopener noreferrer">Upgrade to Pro</a></li></ul></div></li><li role="group" id="wp-admin-bar-litespeed-menu" class="menupop litespeed-top-toolbar"><a class="ab-item" tabindex="0" role="menuitem" aria-expanded="false" href="https://spotlight.tfvp.org/wp-admin/index.php?LSCWP_CTRL=purge&amp;LSCWP_NONCE=48d982d13b&amp;litespeed_type=purge_all_lscache"><span class="ab-icon" title="LiteSpeed Cache Purge All - LSCache"></span></a><div class="ab-sub-wrapper"><ul role="menu" id="wp-admin-bar-litespeed-menu-default" class="ab-submenu"><li role="group" id="wp-admin-bar-litespeed-bar-manage"><a class="ab-item" tabindex="0" role="menuitem" href="admin.php?page=litespeed">Manage</a></li><li role="group" id="wp-admin-bar-litespeed-bar-setting"><a class="ab-item" tabindex="0" role="menuitem" href="admin.php?page=litespeed-cache">Settings</a></li><li role="group" id="wp-admin-bar-litespeed-bar-imgoptm"><a class="ab-item" tabindex="0" role="menuitem" href="admin.php?page=litespeed-img_optm">Image Optimization</a></li><li role="group" id="wp-admin-bar-litespeed-purge-all"><a class="ab-item" tabindex="0" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/index.php?LSCWP_CTRL=purge&amp;LSCWP_NONCE=48d982d13b&amp;litespeed_type=purge_all">Purge All</a></li><li role="group" id="wp-admin-bar-litespeed-purge-all-lscache"><a class="ab-item" tabindex="0" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/index.php?LSCWP_CTRL=purge&amp;LSCWP_NONCE=48d982d13b&amp;litespeed_type=purge_all_lscache">Purge All - LSCache</a></li><li role="group" id="wp-admin-bar-litespeed-purge-cssjs"><a class="ab-item" tabindex="0" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/index.php?LSCWP_CTRL=purge&amp;LSCWP_NONCE=48d982d13b&amp;litespeed_type=purge_all_cssjs">Purge All - CSS/JS Cache</a></li><li role="group" id="wp-admin-bar-litespeed-purge-opcache"><a class="ab-item" tabindex="0" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/index.php?LSCWP_CTRL=purge&amp;LSCWP_NONCE=48d982d13b&amp;litespeed_type=purge_all_opcache">Purge All - Opcode Cache</a></li></ul></div></li></ul><ul role="menu" id="wp-admin-bar-top-secondary" class="ab-top-secondary ab-top-menu"><li role="group" id="wp-admin-bar-my-account" class="menupop with-avatar"><a class="ab-item" role="menuitem" aria-expanded="false" href="https://spotlight.tfvp.org/wp-admin/profile.php">Howdy, <span class="display-name">admin79</span><img alt="" src="https://secure.gravatar.com/avatar/c07df73f87635fa9e5b07814d09d4e493a5ddc196989004f6090464d1a87c9a6?s=26&amp;d=mm&amp;r=g" srcset="https://secure.gravatar.com/avatar/c07df73f87635fa9e5b07814d09d4e493a5ddc196989004f6090464d1a87c9a6?s=52&amp;d=mm&amp;r=g 2x" class="avatar avatar-26 photo" height="26" width="26" loading="lazy" decoding="async"></a><div class="ab-sub-wrapper"><ul role="menu" aria-label="Howdy, admin79" id="wp-admin-bar-user-actions" class="ab-submenu"><li role="group" id="wp-admin-bar-user-info"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-admin/profile.php"><img alt="" src="https://secure.gravatar.com/avatar/c07df73f87635fa9e5b07814d09d4e493a5ddc196989004f6090464d1a87c9a6?s=64&amp;d=mm&amp;r=g" srcset="https://secure.gravatar.com/avatar/c07df73f87635fa9e5b07814d09d4e493a5ddc196989004f6090464d1a87c9a6?s=128&amp;d=mm&amp;r=g 2x" class="avatar avatar-64 photo" height="64" width="64" loading="lazy" decoding="async"><span class="display-name">admin79</span><span class="display-name edit-profile">Edit Profile</span></a></li><li role="group" id="wp-admin-bar-logout"><a class="ab-item" role="menuitem" href="https://spotlight.tfvp.org/wp-login.php?action=logout&amp;redirect_to=https%3A%2F%2Fspotlight.tfvp.org%2F&amp;_wpnonce=ac3a462e42">Log Out</a></li></ul></div></li></ul>			</div>
+		</div>
+
+		
+<div id="wpbody" role="main">
+
+<div id="wpbody-content">
+		<div id="screen-meta" class="metabox-prefs">
+
+			<div id="contextual-help-wrap" class="hidden" tabindex="-1" aria-label="Contextual Help Tab">
+				<div id="contextual-help-back"></div>
+				<div id="contextual-help-columns">
+					<div class="contextual-help-tabs">
+						<ul>
+						
+							<li id="tab-link-overview" class="active">
+								<a href="#tab-panel-overview" aria-controls="tab-panel-overview">
+									Overview								</a>
+							</li>
+							
+							<li id="tab-link-help-navigation">
+								<a href="#tab-panel-help-navigation" aria-controls="tab-panel-help-navigation">
+									Navigation								</a>
+							</li>
+							
+							<li id="tab-link-help-layout">
+								<a href="#tab-panel-help-layout" aria-controls="tab-panel-help-layout">
+									Layout								</a>
+							</li>
+							
+							<li id="tab-link-help-content">
+								<a href="#tab-panel-help-content" aria-controls="tab-panel-help-content">
+									Content								</a>
+							</li>
+													</ul>
+					</div>
+
+										<div class="contextual-help-sidebar">
+						<p><strong>For more information:</strong></p><p><a href="https://wordpress.org/documentation/article/dashboard-screen/">Documentation on Dashboard</a></p><p><a href="https://wordpress.org/support/forums/">Support forums</a></p><p><a href="https://wordpress.org/documentation/wordpress-version/version-6-9/">Version 6.9</a></p>					</div>
+					
+					<div class="contextual-help-tabs-wrap">
+						
+							<div id="tab-panel-overview" class="help-tab-content active">
+								<p>Welcome to your WordPress Dashboard!</p><p>The Dashboard is the first place you will come to every time you log into your site. It is where you will find all your WordPress tools. If you need help, just click the “Help” tab above the screen title.</p>							</div>
+							
+							<div id="tab-panel-help-navigation" class="help-tab-content">
+								<p>The left-hand navigation menu provides links to all of the WordPress administration screens, with submenu items displayed on hover. You can minimize this menu to a narrow icon strip by clicking on the Collapse Menu arrow at the bottom.</p><p>Links in the Toolbar at the top of the screen connect your dashboard and the front end of your site, and provide access to your profile and helpful WordPress information.</p>							</div>
+							
+							<div id="tab-panel-help-layout" class="help-tab-content">
+								<p>You can use the following controls to arrange your Dashboard screen to suit your workflow. This is true on most other administration screens as well.</p><p><strong>Screen Options</strong> — Use the Screen Options tab to choose which Dashboard boxes to show.</p><p><strong>Drag and Drop</strong> — To rearrange the boxes, drag and drop by clicking on the title bar of the selected box and releasing when you see a gray dotted-line rectangle appear in the location you want to place the box.</p><p><strong>Box Controls</strong> — Click the title bar of the box to expand or collapse it. Some boxes added by plugins may have configurable content, and will show a “Configure” link in the title bar if you hover over it.</p>							</div>
+							
+							<div id="tab-panel-help-content" class="help-tab-content">
+								<p>The boxes on your Dashboard screen are:</p><p><strong>Welcome</strong> — Shows links for some of the most common tasks when setting up a new site.</p><p><strong>Site Health Status</strong> — Informs you of any potential issues that should be addressed to improve the performance or security of your website.</p><p><strong>At a Glance</strong> — Displays a summary of the content on your site and identifies which theme and version of WordPress you are using.</p><p><strong>Activity</strong> — Shows the upcoming scheduled posts, recently published posts, and the most recent comments on your posts and allows you to moderate them.</p><p><strong>Quick Draft</strong> — Allows you to create a new post and save it as a draft. Also displays links to the 3 most recent draft posts you've started.</p><p><strong>WordPress Events and News</strong> — Upcoming events near you as well as the latest news from the official WordPress project and the <a href="https://planet.wordpress.org/">WordPress Planet</a>.</p>							</div>
+												</div>
+				</div>
+			</div>
+		<div id="screen-options-wrap" class="hidden" tabindex="-1" aria-label="Screen Options Tab">
+<form id="adv-settings" method="post">
+		<fieldset class="metabox-prefs">
+		<legend>Screen elements</legend>
+		<p>
+			Some screen elements can be shown or hidden by using the checkboxes.			Expand or collapse the elements by clicking on their headings, and arrange them by dragging their headings or by clicking on the up and down arrows.		</p>
+		<div class="metabox-prefs-container">
+		<label for="dashboard_php_nag-hide"><input class="hide-postbox-tog" name="dashboard_php_nag-hide" type="checkbox" id="dashboard_php_nag-hide" value="dashboard_php_nag" checked="checked">PHP Update Recommended</label><label for="dashboard_site_health-hide"><input class="hide-postbox-tog" name="dashboard_site_health-hide" type="checkbox" id="dashboard_site_health-hide" value="dashboard_site_health" checked="checked">Site Health Status</label><label for="dashboard_right_now-hide"><input class="hide-postbox-tog" name="dashboard_right_now-hide" type="checkbox" id="dashboard_right_now-hide" value="dashboard_right_now" checked="checked">At a Glance</label><label for="dashboard_activity-hide"><input class="hide-postbox-tog" name="dashboard_activity-hide" type="checkbox" id="dashboard_activity-hide" value="dashboard_activity" checked="checked">Activity</label><label for="wpseo-dashboard-overview-hide"><input class="hide-postbox-tog" name="wpseo-dashboard-overview-hide" type="checkbox" id="wpseo-dashboard-overview-hide" value="wpseo-dashboard-overview" checked="checked">Yoast SEO Posts Overview</label><label for="wpseo-wincher-dashboard-overview-hide"><input class="hide-postbox-tog" name="wpseo-wincher-dashboard-overview-hide" type="checkbox" id="wpseo-wincher-dashboard-overview-hide" value="wpseo-wincher-dashboard-overview" checked="checked">Yoast SEO / Wincher: Top Keyphrases</label><label for="dashboard_quick_press-hide"><input class="hide-postbox-tog" name="dashboard_quick_press-hide" type="checkbox" id="dashboard_quick_press-hide" value="dashboard_quick_press" checked="checked"><span class="hide-if-no-js">Quick Draft</span> <span class="hide-if-js">Your Recent Drafts</span></label><label for="dashboard_primary-hide"><input class="hide-postbox-tog" name="dashboard_primary-hide" type="checkbox" id="dashboard_primary-hide" value="dashboard_primary" checked="checked">WordPress Events and News</label><label for="wp_welcome_panel-hide"><input type="checkbox" id="wp_welcome_panel-hide" checked="checked">Welcome</label>
+		</div>
+		</fieldset>
+		
+<input type="hidden" id="screenoptionnonce" name="screenoptionnonce" value="ba9bf3908e">
+</form>
+</div>		</div>
+				<div id="screen-meta-links">
+					<div id="screen-options-link-wrap" class="hide-if-no-js screen-meta-toggle">
+			<button type="button" id="show-settings-link" class="button show-settings" aria-controls="screen-options-wrap" aria-expanded="false">Screen Options</button>
+			</div>
+						<div id="contextual-help-link-wrap" class="hide-if-no-js screen-meta-toggle">
+			<button type="button" id="contextual-help-link" class="button show-settings" aria-controls="contextual-help-wrap" aria-expanded="false">Help</button>
+			</div>
+				</div>
+				
+		<script>
+				jQuery( document ).ready( function() {
+					jQuery( "body" ).on( "click", "#yoast-first-time-configuration-notice .notice-dismiss", function() {
+						jQuery( "#yoast-first-time-configuration-notice" ).hide();
+						const data = {
+							"action": "dismiss_first_time_configuration_notice",
+							"nonce": "4309dc3bba"
+						};
+						jQuery.post( ajaxurl, data, function( response ) {});
+					} );
+				} );
+				</script> 
+
+<div class="wrap">
+	<h1>Dashboard</h1><div class="notice notice-warning">
+			<p>
+				<span class="jnews-notice-heading">License Issue</span>
+							<span>Your token is not valid anymore. This generally occurs when your token is updated or deleted from your Envato account. For further information, please contact our support team.</span>
+							<span class="jnews-notice-button">
+								<a href="https://support.jegtheme.com/forums/forum/jnews/" class="button-primary">Support Forum</a>
+							</span>
+
+										</p>
+		</div><div id="yoast-first-time-configuration-notice" class="notice notice-yoast yoast is-dismissible"><div class="notice-yoast__container"><div><div class="notice-yoast__header"><span class="yoast-icon"></span><h2 class="notice-yoast__header-heading yoast-notice-migrated-header">First-time SEO configuration</h2></div><div class="notice-yoast-content"><p>Get started quickly with the <a href="https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_dashboard#/first-time-configuration">Yoast SEO First-time configuration</a> and configure Yoast SEO with the optimal SEO settings for your site!</p></div></div><img src="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/images/mirrored_fit_bubble_woman_1_optim.svg" alt="" height="60" width="75"></div><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div><div id="setting-error-tgmpa" class="notice notice-warning settings-error is-dismissible"> 
+<p><strong><span style="display: block; margin: 0.5em 0.5em 0 0; clear: both;">This theme requires the following plugin: <em>Vafpress Post Formats UI</em>.</span>
+<span style="display: block; margin: 0.5em 0.5em 0 0; clear: both;">This theme recommends the following plugins: <em><a href="https://spotlight.tfvp.org/wp-admin/plugin-install.php?tab=plugin-information&amp;plugin=autoptimize&amp;TB_iframe=true&amp;width=640&amp;height=500" class="thickbox">Autoptimize</a></em>, <em><a href="https://spotlight.tfvp.org/wp-admin/plugin-install.php?tab=plugin-information&amp;plugin=buddypress&amp;TB_iframe=true&amp;width=640&amp;height=500" class="thickbox">BuddyPress</a></em>, <em>BuddyPress Follow</em>, <em><a href="https://spotlight.tfvp.org/wp-admin/plugin-install.php?tab=plugin-information&amp;plugin=classic-editor&amp;TB_iframe=true&amp;width=640&amp;height=500" class="thickbox">Classic Editor</a></em>, <em><a href="https://spotlight.tfvp.org/wp-admin/plugin-install.php?tab=plugin-information&amp;plugin=elementor&amp;TB_iframe=true&amp;width=640&amp;height=500" class="thickbox">Elementor Page Builder</a></em>, <em><a href="https://spotlight.tfvp.org/wp-admin/plugin-install.php?tab=plugin-information&amp;plugin=gutenberg&amp;TB_iframe=true&amp;width=640&amp;height=500" class="thickbox">Gutenberg</a></em>, <em>JNews - AMP</em>, <em>JNews - Auto Load Post</em>, <em>JNews - Bookmark Button</em>, <em>JNews - Breadcrumb</em>, <em>JNews - Customize Detail Category</em>, <em>JNews - Essential</em>, <em>JNews - Extended Category Option</em>, <em>JNews - Food Recipe</em>, <em>JNews - Frontend Submit</em>, <em>JNews - Frontend Translation</em>, <em>JNews - Gallery</em>, <em>JNews - Gutenberg</em>, <em>JNews - Instagram Feed</em>, <em>JNews - JMagz Migration</em>, <em>JNews - JSON LD Rich Snippet</em>, <em>JNews - Jannah Migration</em>, <em>JNews - Like Button</em>, <em>JNews - Meta Header</em>, <em>JNews - Newsmag Migration</em>, <em>JNews - Newspaper Migration</em>, <em>JNews - Paywall</em>, <em>JNews - Podcast</em>, <em>JNews - Publisher Migration</em>, <em>JNews - Push Notification</em>, <em>JNews - Review</em>, <em>JNews - Sahifa Migration</em>, <em>JNews - Social Login</em>, <em>JNews - Social Share</em>, <em>JNews - Soledad Migration</em>, <em>JNews - Split</em>, <em>JNews - Subscribe to Download</em>, <em>JNews - Tiktok Feed</em>, <em>JNews - Video</em>, <em>JNews - View Counter</em>, <em>JNews - Weather</em>, <em><a href="https://spotlight.tfvp.org/wp-admin/plugin-install.php?tab=plugin-information&amp;plugin=onesignal-free-web-push-notifications&amp;TB_iframe=true&amp;width=640&amp;height=500" class="thickbox">OneSignal - Free Web Push Notifications</a></em>, <em><a href="https://spotlight.tfvp.org/wp-admin/plugin-install.php?tab=plugin-information&amp;plugin=powerpress&amp;TB_iframe=true&amp;width=640&amp;height=500" class="thickbox">PowerPress Podcasting plugin by Blubrry</a></em>, <em>Slider Revolution</em>, <em><a href="https://spotlight.tfvp.org/wp-admin/plugin-install.php?tab=plugin-information&amp;plugin=wp-super-cache&amp;TB_iframe=true&amp;width=640&amp;height=500" class="thickbox">WP Super Cache</a></em>, <em>WPBakery Visual Composer</em>, <em><a href="https://spotlight.tfvp.org/wp-admin/plugin-install.php?tab=plugin-information&amp;plugin=woocommerce&amp;TB_iframe=true&amp;width=640&amp;height=500" class="thickbox">WooCommerce</a></em>, <em><a href="https://spotlight.tfvp.org/wp-admin/plugin-install.php?tab=plugin-information&amp;plugin=amp&amp;TB_iframe=true&amp;width=640&amp;height=500" class="thickbox">WordPress AMP</a></em> and <em>YellowPencil Pro</em>.</span>
+<span style="display: block; margin: 0.5em 0.5em 0 0; clear: both;"><a href="https://spotlight.tfvp.org/wp-admin/themes.php?page=jnews-install-plugins&amp;plugin_status=install">Begin installing plugins</a> | <a href="/wp-admin/?tgmpa-dismiss=dismiss_admin_notices&amp;_wpnonce=18bf57b177" class="dismiss-notice" target="_parent">Dismiss this notice</a></span>
+</strong></p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
+
+	
+
+	<div id="welcome-panel" class="welcome-panel">
+		<input type="hidden" id="welcomepanelnonce" name="welcomepanelnonce" value="e70de4055b">		<a class="welcome-panel-close" href="https://spotlight.tfvp.org/wp-admin/?welcome=0" aria-label="Dismiss the welcome panel">Dismiss</a>
+			<div class="welcome-panel-content">
+	<div class="welcome-panel-header">
+		<div class="welcome-panel-header-image">
+			<svg preserveAspectRatio="xMidYMin slice" fill="none" viewBox="0 0 1232 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <g clip-path="url(#a)">
+    <path fill="#151515" d="M0 0h1232v240H0z"></path>
+    <ellipse cx="616" cy="232" fill="url(#b)" opacity=".05" rx="1497" ry="249"></ellipse>
+    <mask id="d" width="1000" height="400" x="232" y="20" maskUnits="userSpaceOnUse" style="mask-type:alpha">
+      <path fill="url(#c)" d="M0 0h1000v400H0z" transform="translate(232 20)"></path>
+    </mask>
+    <g stroke-width="2" mask="url(#d)">
+      <path stroke="url(#e)" d="M387 20v1635"></path>
+      <path stroke="url(#f)" d="M559.5 20v1635"></path>
+      <path stroke="url(#g)" d="M732 20v1635"></path>
+      <path stroke="url(#h)" d="M904.5 20v1635"></path>
+      <path stroke="url(#i)" d="M1077 20v1635"></path>
+    </g>
+  </g>
+  <defs>
+    <linearGradient id="e" x1="387.5" x2="387.5" y1="20" y2="1655" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3858E9" stop-opacity="0"></stop>
+      <stop offset=".297" stop-color="#3858E9"></stop>
+      <stop offset=".734" stop-color="#3858E9"></stop>
+      <stop offset="1" stop-color="#3858E9" stop-opacity="0"></stop>
+      <stop offset="1" stop-color="#3858E9" stop-opacity="0"></stop>
+    </linearGradient>
+    <linearGradient id="f" x1="560" x2="560" y1="20" y2="1655" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFCB5" stop-opacity="0"></stop>
+      <stop offset="0" stop-color="#FFFCB5" stop-opacity="0"></stop>
+      <stop offset=".297" stop-color="#FFFCB5"></stop>
+      <stop offset=".734" stop-color="#FFFCB5"></stop>
+      <stop offset="1" stop-color="#FFFCB5" stop-opacity="0"></stop>
+    </linearGradient>
+    <linearGradient id="g" x1="732.5" x2="732.5" y1="20" y2="1655" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C7FFDB" stop-opacity="0"></stop>
+      <stop offset=".297" stop-color="#C7FFDB"></stop>
+      <stop offset=".693" stop-color="#C7FFDB"></stop>
+      <stop offset="1" stop-color="#C7FFDB" stop-opacity="0"></stop>
+    </linearGradient>
+    <linearGradient id="h" x1="905" x2="905" y1="20" y2="1655" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFB7A7" stop-opacity="0"></stop>
+      <stop offset=".297" stop-color="#FFB7A7"></stop>
+      <stop offset=".734" stop-color="#FFB7A7"></stop>
+      <stop offset="1" stop-color="#3858E9" stop-opacity="0"></stop>
+      <stop offset="1" stop-color="#FFB7A7" stop-opacity="0"></stop>
+    </linearGradient>
+    <linearGradient id="i" x1="1077.5" x2="1077.5" y1="20" y2="1655" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7B90FF" stop-opacity="0"></stop>
+      <stop offset=".297" stop-color="#7B90FF"></stop>
+      <stop offset=".734" stop-color="#7B90FF"></stop>
+      <stop offset="1" stop-color="#3858E9" stop-opacity="0"></stop>
+      <stop offset="1" stop-color="#7B90FF" stop-opacity="0"></stop>
+    </linearGradient>
+    <radialGradient id="b" cx="0" cy="0" r="1" gradientTransform="matrix(0 249 -1497 0 616 232)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3858E9"></stop>
+      <stop offset="1" stop-color="#151515" stop-opacity="0"></stop>
+    </radialGradient>
+    <radialGradient id="c" cx="0" cy="0" r="1" gradientTransform="matrix(0 765 -1912.5 0 500 -110)" gradientUnits="userSpaceOnUse">
+      <stop offset=".161" stop-color="#151515" stop-opacity="0"></stop>
+      <stop offset=".682"></stop>
+    </radialGradient>
+    <clipPath id="a">
+      <path fill="#fff" d="M0 0h1232v240H0z"></path>
+    </clipPath>
+  </defs>
+</svg>
+		</div>
+		<h2>Welcome to WordPress!</h2>
+		<p>
+			<a href="https://spotlight.tfvp.org/wp-admin/about.php">
+			Learn more about the 6.9 version.			</a>
+		</p>
+	</div>
+	<div class="welcome-panel-column-container">
+		<div class="welcome-panel-column">
+			<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+				<rect width="48" height="48" rx="4" fill="#1E1E1E"></rect>
+				<path fill-rule="evenodd" clip-rule="evenodd" d="M32.0668 17.0854L28.8221 13.9454L18.2008 24.671L16.8983 29.0827L21.4257 27.8309L32.0668 17.0854ZM16 32.75H24V31.25H16V32.75Z" fill="white"></path>
+			</svg>
+			<div class="welcome-panel-column-content">
+				<h3>Author rich content with blocks and patterns</h3>
+				<p>Block patterns are pre-configured block layouts. Use them to get inspired or create new pages in a flash.</p>
+				<a href="https://spotlight.tfvp.org/wp-admin/post-new.php?post_type=page">Add a new page</a>
+			</div>
+		</div>
+		<div class="welcome-panel-column">
+			<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+				<rect width="48" height="48" rx="4" fill="#1E1E1E"></rect>
+				<path fill-rule="evenodd" clip-rule="evenodd" d="M18 16h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H18a2 2 0 0 1-2-2V18a2 2 0 0 1 2-2zm12 1.5H18a.5.5 0 0 0-.5.5v3h13v-3a.5.5 0 0 0-.5-.5zm.5 5H22v8h8a.5.5 0 0 0 .5-.5v-7.5zm-10 0h-3V30a.5.5 0 0 0 .5.5h2.5v-8z" fill="#fff"></path>
+			</svg>
+			<div class="welcome-panel-column-content">
+							<h3>Start Customizing</h3>
+				<p>Configure your site’s logo, header, menus, and more in the Customizer.</p>
+									<a class="load-customize hide-if-no-customize" href="https://spotlight.tfvp.org/wp-admin/customize.php">Open the Customizer</a>
+										</div>
+		</div>
+		<div class="welcome-panel-column">
+			<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+				<rect width="48" height="48" rx="4" fill="#1E1E1E"></rect>
+				<path fill-rule="evenodd" clip-rule="evenodd" d="M31 24a7 7 0 0 1-7 7V17a7 7 0 0 1 7 7zm-7-8a8 8 0 1 1 0 16 8 8 0 0 1 0-16z" fill="#fff"></path>
+			</svg>
+			<div class="welcome-panel-column-content">
+							<h3>Discover a new way to build your site.</h3>
+				<p>There is a new kind of WordPress theme, called a block theme, that lets you build the site you’ve always wanted — with blocks and styles.</p>
+				<a href="https://wordpress.org/documentation/article/block-themes/">Learn about block themes</a>
+						</div>
+		</div>
+	</div>
+	</div>
+		</div>
+
+	<div id="dashboard-widgets-wrap">
+	<div id="dashboard-widgets" class="metabox-holder">
+	<div id="postbox-container-1" class="postbox-container">
+	<div id="normal-sortables" class="meta-box-sortables ui-sortable"><div id="dashboard_php_nag" class="postbox  php-no-security-updates">
+<div class="postbox-header"><h2 class="hndle ui-sortable-handle"><span aria-hidden="true" class="dashicons dashicons-warning"></span><span class="screen-reader-text">Warning: </span>PHP Update Recommended</h2>
+<div class="handle-actions hide-if-no-js"><button type="button" class="handle-order-higher" aria-disabled="true" aria-describedby="dashboard_php_nag-handle-order-higher-description"><span class="screen-reader-text">Move up</span><span class="order-higher-indicator" aria-hidden="true"></span></button><span class="hidden" id="dashboard_php_nag-handle-order-higher-description">Move PHP Update Recommended box up</span><button type="button" class="handle-order-lower" aria-disabled="false" aria-describedby="dashboard_php_nag-handle-order-lower-description"><span class="screen-reader-text">Move down</span><span class="order-lower-indicator" aria-hidden="true"></span></button><span class="hidden" id="dashboard_php_nag-handle-order-lower-description">Move PHP Update Recommended box down</span><button type="button" class="handlediv" aria-expanded="true"><span class="screen-reader-text">Toggle panel: PHP Update Recommended</span><span class="toggle-indicator" aria-hidden="true"></span></button></div></div><div class="inside">
+	<p class="bigger-bolder-text">Your site is running on an outdated version of PHP (7.4.33), which does not receive security updates. It should be updated.</p>
+
+	<p>What is PHP and how does it affect my site?</p>
+	<p>
+		PHP is one of the programming languages used to build WordPress. Newer versions of PHP receive regular security updates and may increase your site’s performance.		The minimum recommended version of PHP is 8.3.	</p>
+
+	<p class="button-container">
+		<a class="button button-primary" href="https://wordpress.org/support/update-php/" target="_blank">Learn more about updating PHP<span class="screen-reader-text"> (opens in a new tab)</span><span aria-hidden="true" class="dashicons dashicons-external"></span></a>	</p>
+	</div>
+</div>
+<div id="dashboard_site_health" class="postbox ">
+<div class="postbox-header"><h2 class="hndle ui-sortable-handle">Site Health Status</h2>
+<div class="handle-actions hide-if-no-js"><button type="button" class="handle-order-higher" aria-disabled="false" aria-describedby="dashboard_site_health-handle-order-higher-description"><span class="screen-reader-text">Move up</span><span class="order-higher-indicator" aria-hidden="true"></span></button><span class="hidden" id="dashboard_site_health-handle-order-higher-description">Move Site Health Status box up</span><button type="button" class="handle-order-lower" aria-disabled="false" aria-describedby="dashboard_site_health-handle-order-lower-description"><span class="screen-reader-text">Move down</span><span class="order-lower-indicator" aria-hidden="true"></span></button><span class="hidden" id="dashboard_site_health-handle-order-lower-description">Move Site Health Status box down</span><button type="button" class="handlediv" aria-expanded="true"><span class="screen-reader-text">Toggle panel: Site Health Status</span><span class="toggle-indicator" aria-hidden="true"></span></button></div></div><div class="inside">
+	<div class="health-check-widget">
+		<div class="health-check-widget-title-section site-health-progress-wrapper hide-if-no-js orange">
+			<div class="site-health-progress">
+				<svg aria-hidden="true" focusable="false" width="100%" height="100%" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
+					<circle r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
+					<circle id="bar" r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0" style="stroke-dashoffset: 96.1327px;"></circle>
+				</svg>
+			</div>
+			<div class="site-health-progress-label">Should be improved</div>
+		</div>
+
+		<div class="site-health-details">
+							<p>
+											Your site has a critical issue that should be addressed as soon as possible to improve its performance and security.									</p>
+			
+							<p>
+					Take a look at the <strong>6 items</strong> on the <a href="https://spotlight.tfvp.org/wp-admin/site-health.php">Site Health screen</a>.				</p>
+					</div>
+	</div>
+
+	</div>
+</div>
+<div id="dashboard_right_now" class="postbox ">
+<div class="postbox-header"><h2 class="hndle ui-sortable-handle">At a Glance</h2>
+<div class="handle-actions hide-if-no-js"><button type="button" class="handle-order-higher" aria-disabled="false" aria-describedby="dashboard_right_now-handle-order-higher-description"><span class="screen-reader-text">Move up</span><span class="order-higher-indicator" aria-hidden="true"></span></button><span class="hidden" id="dashboard_right_now-handle-order-higher-description">Move At a Glance box up</span><button type="button" class="handle-order-lower" aria-disabled="false" aria-describedby="dashboard_right_now-handle-order-lower-description"><span class="screen-reader-text">Move down</span><span class="order-lower-indicator" aria-hidden="true"></span></button><span class="hidden" id="dashboard_right_now-handle-order-lower-description">Move At a Glance box down</span><button type="button" class="handlediv" aria-expanded="true"><span class="screen-reader-text">Toggle panel: At a Glance</span><span class="toggle-indicator" aria-hidden="true"></span></button></div></div><div class="inside">
+	<div class="main">
+	<ul>
+	<li class="post-count"><a href="edit.php?post_type=post">240 Posts</a></li><li class="page-count"><a href="edit.php?post_type=page">1 Page</a></li>		<li class="comment-count">
+			<a href="edit-comments.php">1 Comment</a>
+		</li>
+				<li class="comment-mod-count hidden">
+			<a href="edit-comments.php?comment_status=moderated" class="comments-in-moderation-text">0 Comments in moderation</a>
+		</li>
+			</ul>
+	<p id="wp-version-message"><span id="wp-version">WordPress 6.9 running <a href="themes.php">JNews</a> theme.</span></p>	</div>
+	</div>
+</div>
+<div id="dashboard_activity" class="postbox ">
+<div class="postbox-header"><h2 class="hndle ui-sortable-handle">Activity</h2>
+<div class="handle-actions hide-if-no-js"><button type="button" class="handle-order-higher" aria-disabled="false" aria-describedby="dashboard_activity-handle-order-higher-description"><span class="screen-reader-text">Move up</span><span class="order-higher-indicator" aria-hidden="true"></span></button><span class="hidden" id="dashboard_activity-handle-order-higher-description">Move Activity box up</span><button type="button" class="handle-order-lower" aria-disabled="false" aria-describedby="dashboard_activity-handle-order-lower-description"><span class="screen-reader-text">Move down</span><span class="order-lower-indicator" aria-hidden="true"></span></button><span class="hidden" id="dashboard_activity-handle-order-lower-description">Move Activity box down</span><button type="button" class="handlediv" aria-expanded="true"><span class="screen-reader-text">Toggle panel: Activity</span><span class="toggle-indicator" aria-hidden="true"></span></button></div></div><div class="inside">
+<div id="activity-widget"><div id="published-posts" class="activity-block"><h3>Recently Published</h3><ul><li><span>Jan 31st, 9:32 am</span> <a href="https://spotlight.tfvp.org/wp-admin/post.php?post=999&amp;action=edit" aria-label="Edit “Here Why You Don Smoke Cr ck During Traffic Stop_part2”">Here Why You Don Smoke Cr ck During Traffic Stop_part2</a></li><li><span>Jan 31st, 8:59 am</span> <a href="https://spotlight.tfvp.org/wp-admin/post.php?post=994&amp;action=edit" aria-label="Edit “Here Why You Don Smoke Cr ck During Traffic Stop_part2”">Here Why You Don Smoke Cr ck During Traffic Stop_part2</a></li><li><span>Jan 31st, 8:30 am</span> <a href="https://spotlight.tfvp.org/wp-admin/post.php?post=989&amp;action=edit" aria-label="Edit “Here Why You Don Smoke Cr ck During Traffic Stop_part2”">Here Why You Don Smoke Cr ck During Traffic Stop_part2</a></li><li><span>Jan 31st, 8:20 am</span> <a href="https://spotlight.tfvp.org/wp-admin/post.php?post=984&amp;action=edit" aria-label="Edit “N3101001_Head Injury, Completely Disoriented… He Couldn’t Even Lift His Head”">N3101001_Head Injury, Completely Disoriented… He Couldn’t Even Lift His Head</a></li><li><span>Jan 31st, 8:17 am</span> <a href="https://spotlight.tfvp.org/wp-admin/post.php?post=979&amp;action=edit" aria-label="Edit “N3101001_Head Injury, Completely Disoriented… He Couldn’t Even Lift His Head”">N3101001_Head Injury, Completely Disoriented… He Couldn’t Even Lift His Head</a></li></ul></div><div id="latest-comments" class="activity-block table-view-list"><h3>Recent Comments</h3><ul id="the-comment-list" data-wp-lists="list:comment">
+		<li id="comment-1" class="comment even thread-even depth-1 comment-item approved">
+
+			<img alt="" src="https://secure.gravatar.com/avatar/8e1606e6fba450a9362af43874c1b2dfad34c782e33d0a51e1b46c18a2a567dd?s=50&amp;d=mm&amp;r=g" srcset="https://secure.gravatar.com/avatar/8e1606e6fba450a9362af43874c1b2dfad34c782e33d0a51e1b46c18a2a567dd?s=100&amp;d=mm&amp;r=g 2x" class="avatar avatar-50 photo" height="50" width="50" loading="lazy" decoding="async">
+			
+			<div class="dashboard-comment-wrap has-row-actions  has-avatar">
+			<p class="comment-meta">
+				From <cite class="comment-author"><a href="https://wordpress.org/" class="url" rel="ugc external nofollow">A WordPress Commenter</a></cite> on <a href="https://spotlight.tfvp.org/1/11/">Hello world!</a> <span class="approve">[Pending]</span>			</p>
+
+							<blockquote><p>Hi, this is a comment. To get started with moderating, editing, and deleting comments, please visit the Comments screen in…</p></blockquote>
+						<p class="row-actions"><span class="approve"><a href="comment.php?action=approvecomment&amp;p=1&amp;c=1&amp;_wpnonce=124335da98" data-wp-lists="dim:the-comment-list:comment-1:unapproved:e7e7d3:e7e7d3:new=approved" class="vim-a aria-button-if-js" aria-label="Approve this comment" role="button">Approve</a></span><span class="unapprove"><a href="comment.php?action=unapprovecomment&amp;p=1&amp;c=1&amp;_wpnonce=124335da98" data-wp-lists="dim:the-comment-list:comment-1:unapproved:e7e7d3:e7e7d3:new=unapproved" class="vim-u aria-button-if-js" aria-label="Unapprove this comment" role="button">Unapprove</a></span><span class="reply hide-if-no-js"> | <button type="button" onclick="window.commentReply &amp;&amp; commentReply.open('1','1');" class="vim-r button-link hide-if-no-js" aria-label="Reply to this comment">Reply</button></span><span class="edit"> | <a href="comment.php?action=editcomment&amp;c=1" aria-label="Edit this comment">Edit</a></span><span class="spam"> | <a href="comment.php?action=spamcomment&amp;p=1&amp;c=1&amp;_wpnonce=8651ef62c7" data-wp-lists="delete:the-comment-list:comment-1::spam=1" class="vim-s vim-destructive aria-button-if-js" aria-label="Mark this comment as spam" role="button">Spam</a></span><span class="trash"> | <a href="comment.php?action=trashcomment&amp;p=1&amp;c=1&amp;_wpnonce=8651ef62c7" data-wp-lists="delete:the-comment-list:comment-1::trash=1" class="delete vim-d vim-destructive aria-button-if-js" aria-label="Move this comment to the Trash" role="button">Trash</a></span><span class="view"> | <a class="comment-link" href="https://spotlight.tfvp.org/1/11/#comment-1" aria-label="View this comment">View</a></span></p>
+						</div>
+		</li>
+	</ul><h3 class="screen-reader-text">View more comments</h3><ul class="subsubsub">
+	<li class="all"><a href="https://spotlight.tfvp.org/wp-admin/edit-comments.php?comment_status=all">All <span class="count">(<span class="all-count">1</span>)</span></a> |</li>
+	<li class="mine"><a href="https://spotlight.tfvp.org/wp-admin/edit-comments.php?comment_status=mine&amp;user_id=1">Mine <span class="count">(<span class="mine-count">0</span>)</span></a> |</li>
+	<li class="moderated"><a href="https://spotlight.tfvp.org/wp-admin/edit-comments.php?comment_status=moderated">Pending <span class="count">(<span class="pending-count">0</span>)</span></a> |</li>
+	<li class="approved"><a href="https://spotlight.tfvp.org/wp-admin/edit-comments.php?comment_status=approved">Approved <span class="count">(<span class="approved-count">1</span>)</span></a> |</li>
+	<li class="spam"><a href="https://spotlight.tfvp.org/wp-admin/edit-comments.php?comment_status=spam">Spam <span class="count">(<span class="spam-count">0</span>)</span></a> |</li>
+	<li class="trash"><a href="https://spotlight.tfvp.org/wp-admin/edit-comments.php?comment_status=trash">Trash <span class="count">(<span class="trash-count">0</span>)</span></a></li>
+</ul><form method="get">
+	<div id="com-reply" style="display:none;"><div id="replyrow" style="display:none;">
+	<fieldset class="comment-reply">
+	<legend>
+		<span class="hidden" id="editlegend">Edit Comment</span>
+		<span class="hidden" id="replyhead">Reply to Comment</span>
+		<span class="hidden" id="addhead">Add Comment</span>
+	</legend>
+
+	<div id="replycontainer">
+	<label for="replycontent" class="screen-reader-text">
+		Comment	</label>
+	<div id="wp-replycontent-wrap" class="wp-core-ui wp-editor-wrap html-active"><link rel="stylesheet" id="editor-buttons-css" href="https://spotlight.tfvp.org/wp-includes/css/editor.min.css?ver=6.9" media="all">
+<div id="wp-replycontent-editor-container" class="wp-editor-container"><div id="qt_replycontent_toolbar" class="quicktags-toolbar hide-if-no-js"><input type="button" id="qt_replycontent_strong" class="ed_button button button-small" aria-label="Bold" value="b"><input type="button" id="qt_replycontent_em" class="ed_button button button-small" aria-label="Italic" value="i"><input type="button" id="qt_replycontent_link" class="ed_button button button-small" aria-label="Insert link" value="link"><input type="button" id="qt_replycontent_block" class="ed_button button button-small" aria-label="Blockquote" value="b-quote"><input type="button" id="qt_replycontent_del" class="ed_button button button-small" aria-label="Deleted text (strikethrough)" value="del"><input type="button" id="qt_replycontent_ins" class="ed_button button button-small" aria-label="Inserted text" value="ins"><input type="button" id="qt_replycontent_img" class="ed_button button button-small" aria-label="Insert image" value="img"><input type="button" id="qt_replycontent_ul" class="ed_button button button-small" aria-label="Bulleted list" value="ul"><input type="button" id="qt_replycontent_ol" class="ed_button button button-small" aria-label="Numbered list" value="ol"><input type="button" id="qt_replycontent_li" class="ed_button button button-small" aria-label="List item" value="li"><input type="button" id="qt_replycontent_code" class="ed_button button button-small" aria-label="Code" value="code"><input type="button" id="qt_replycontent_close" class="ed_button button button-small" title="Close all open tags" value="close tags"></div><textarea class="wp-editor-area" rows="20" cols="40" name="replycontent" id="replycontent"></textarea></div>
+</div>
+
+	</div>
+
+	<div id="edithead" style="display:none;">
+		<div class="inside">
+		<label for="author-name">Name</label>
+		<input type="text" name="newcomment_author" size="50" value="" id="author-name">
+		</div>
+
+		<div class="inside">
+		<label for="author-email">Email</label>
+		<input type="text" name="newcomment_author_email" size="50" value="" id="author-email">
+		</div>
+
+		<div class="inside">
+		<label for="author-url">URL</label>
+		<input type="text" id="author-url" name="newcomment_author_url" class="code" size="103" value="">
+		</div>
+	</div>
+
+	<div id="replysubmit" class="submit">
+		<p class="reply-submit-buttons">
+			<button type="button" class="save button button-primary">
+				<span id="addbtn" style="display: none;">Add Comment</span>
+				<span id="savebtn" style="display: none;">Update Comment</span>
+				<span id="replybtn" style="display: none;">Submit Reply</span>
+			</button>
+			<button type="button" class="cancel button">Cancel</button>
+			<span class="waiting spinner"></span>
+		</p>
+		<div class="notice notice-error notice-alt inline hidden"><p class="error"></p></div>	</div>
+
+	<input type="hidden" name="action" id="action" value="">
+	<input type="hidden" name="comment_ID" id="comment_ID" value="">
+	<input type="hidden" name="comment_post_ID" id="comment_post_ID" value="">
+	<input type="hidden" name="status" id="status" value="">
+	<input type="hidden" name="position" id="position" value="-1">
+	<input type="hidden" name="checkbox" id="checkbox" value="0">
+	<input type="hidden" name="mode" id="mode" value="dashboard">
+	<input type="hidden" id="_ajax_nonce-replyto-comment" name="_ajax_nonce-replyto-comment" value="d752a96d79"><input type="hidden" id="_wp_unfiltered_html_comment" name="_wp_unfiltered_html_comment" value="2951432913">	</fieldset>
+	</div></div>
+	</form>
+	<div class="hidden" id="trash-undo-holder">
+	<div class="trash-undo-inside">
+		Comment by <strong></strong> moved to the Trash.		<span class="undo untrash"><a href="#">Undo</a></span>
+	</div>
+</div>
+<div class="hidden" id="spam-undo-holder">
+	<div class="spam-undo-inside">
+		Comment by <strong></strong> marked as spam.		<span class="undo unspam"><a href="#">Undo</a></span>
+	</div>
+</div>
+	</div></div></div>
+</div>
+<div id="wpseo-dashboard-overview" class="postbox  yoast wpseo-dashboard-overview">
+<div class="postbox-header"><h2 class="hndle ui-sortable-handle">Yoast SEO Posts Overview</h2>
+<div class="handle-actions hide-if-no-js"><button type="button" class="handle-order-higher" aria-disabled="false" aria-describedby="wpseo-dashboard-overview-handle-order-higher-description"><span class="screen-reader-text">Move up</span><span class="order-higher-indicator" aria-hidden="true"></span></button><span class="hidden" id="wpseo-dashboard-overview-handle-order-higher-description">Move Yoast SEO Posts Overview box up</span><button type="button" class="handle-order-lower" aria-disabled="false" aria-describedby="wpseo-dashboard-overview-handle-order-lower-description"><span class="screen-reader-text">Move down</span><span class="order-lower-indicator" aria-hidden="true"></span></button><span class="hidden" id="wpseo-dashboard-overview-handle-order-lower-description">Move Yoast SEO Posts Overview box down</span><button type="button" class="handlediv" aria-expanded="true"><span class="screen-reader-text">Toggle panel: Yoast SEO Posts Overview</span><span class="toggle-indicator" aria-hidden="true"></span></button></div></div><div class="inside">
+<div id="yoast-seo-dashboard-widget"><div><div class="sc-caPbAK ipXAMa seo-assessment"><p class="sc-hjjlnc knKQfB seo-assessment__text">Below are your published posts' SEO scores. Now is as good a time as any to start improving some of your posts!</p><div class="sc-dsHJmm iMrqRg progress"><span class="sc-cZFQFd bXkzyL progress__part"></span></div><ul class="sc-hOzowv iDvBOg assessments" role="list"><li class="sc-jNJNQp jZQYXI assessments__item"><span class="sc-hlLBRy sc-eKJbhj cVVeRR gljlSA assessments__item-bullet"></span><span class="sc-hlLBRy sc-bTTELM cVVeRR fwMJKH assessments__item-text"><a href="https://spotlight.tfvp.org/wp-admin/edit.php?post_status=publish&amp;post_type=post&amp;seo_filter=na">Posts <strong>without</strong> a focus keyphrase</a></span><span class="sc-hlLBRy sc-kImNAt cVVeRR gglXiz assessments__item-score">240</span></li></ul></div><div class="sc-iJnaPW bDekQB wordpress-feed"><h3 class="sc-gikAfH kmAMee wordpress-feed__header">Latest blog posts on Yoast.com</h3><ul class="sc-ezOQGI dmoxhw wordpress-feed__posts" role="list"><li class="sc-kMjNwy bKWtgk wordpress-feed__post"><a class="sc-bYMpWt laHohy wordpress-feed__post-link" href="https://yoast.com/yoast-seo-for-shopify-january-29-2026/#utm_source=yoast-seo&amp;utm_medium=software&amp;utm_campaign=wordpress-general&amp;utm_content=wordpress-dashboard" target="_blank">New&nbsp;to Yoast SEO for Shopify:&nbsp;Enhanced pricing visibility in product schema&nbsp;<span class="sc-gswNZR eASTkv">(Opens in a new browser tab)</span></a><p class="wordpress-feed__post-description">Learn about the latest update to Yoast SOE for Shopify schema that enhances pricing communication with clear sale price strikethroughs.</p></li><li class="sc-kMjNwy bKWtgk wordpress-feed__post"><a class="sc-bYMpWt laHohy wordpress-feed__post-link" href="https://yoast.com/open-web/#utm_source=yoast-seo&amp;utm_medium=software&amp;utm_campaign=wordpress-general&amp;utm_content=wordpress-dashboard" target="_blank">What is the open web?<span class="sc-gswNZR eASTkv">(Opens in a new browser tab)</span></a><p class="wordpress-feed__post-description">Understand the open web and its importance to your website in a world increasingly influenced by AI and online search.</p></li></ul><div class="sc-ilhmMj JITbd wordpress-feed__footer"><a class="sc-bYMpWt laHohy wordpress-feed__footer-link" href="https://yoast.com/seo-blog/#utm_source=yoast-seo&amp;utm_medium=software&amp;utm_campaign=wordpress-general&amp;utm_content=wordpress-dashboard" target="_blank">Read more like this on our SEO blog<span class="sc-gswNZR eASTkv">(Opens in a new browser tab)</span></a></div></div></div></div></div>
+</div>
+<div id="wpseo-wincher-dashboard-overview" class="postbox  yoast wpseo-wincherdashboard-overview">
+<div class="postbox-header"><h2 class="hndle ui-sortable-handle">Yoast SEO / Wincher: Top Keyphrases</h2>
+<div class="handle-actions hide-if-no-js"><button type="button" class="handle-order-higher" aria-disabled="false" aria-describedby="wpseo-wincher-dashboard-overview-handle-order-higher-description"><span class="screen-reader-text">Move up</span><span class="order-higher-indicator" aria-hidden="true"></span></button><span class="hidden" id="wpseo-wincher-dashboard-overview-handle-order-higher-description">Move Yoast SEO / Wincher: Top Keyphrases box up</span><button type="button" class="handle-order-lower" aria-disabled="false" aria-describedby="wpseo-wincher-dashboard-overview-handle-order-lower-description"><span class="screen-reader-text">Move down</span><span class="order-lower-indicator" aria-hidden="true"></span></button><span class="hidden" id="wpseo-wincher-dashboard-overview-handle-order-lower-description">Move Yoast SEO / Wincher: Top Keyphrases box down</span><button type="button" class="handlediv" aria-expanded="true"><span class="screen-reader-text">Toggle panel: Yoast SEO / Wincher: Top Keyphrases</span><span class="toggle-indicator" aria-hidden="true"></span></button></div></div><div class="inside">
+<div id="yoast-seo-wincher-dashboard-widget"><div class="sc-elAWhN fAyiEk wincher-seo-performance"><div class="sc-ksBlkl fYaOsr wincher-performance-report-alert"><svg aria-hidden="true" role="img" focusable="false" class="sc-bcXHqe fjLZXR yoast-svg-icon yoast-svg-icon-alert-warning sc-fnGiBr hIjshk" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" fill="#674e00"><path d="M569.517 440.013C587.975 472.007 564.806 512 527.94 512H48.054c-36.937 0-59.999-40.055-41.577-71.987L246.423 23.985c18.467-32.009 64.72-31.951 83.154 0l239.94 416.028zM288 354c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"></path></svg><div class="sc-hBxehG hsPXm">Your Wincher account does not contain any keyphrases for this website yet. You can track keyphrases by using the "Track SEO Performance" button in the post editor.</div></div></div></div></div>
+</div>
+</div>	</div>
+	<div id="postbox-container-2" class="postbox-container">
+	<div id="side-sortables" class="meta-box-sortables ui-sortable"><div id="dashboard_quick_press" class="postbox ">
+<div class="postbox-header"><h2 class="hndle ui-sortable-handle"><span class="hide-if-no-js">Quick Draft</span> <span class="hide-if-js">Your Recent Drafts</span></h2>
+<div class="handle-actions hide-if-no-js"><button type="button" class="handle-order-higher" aria-disabled="false" aria-describedby="dashboard_quick_press-handle-order-higher-description"><span class="screen-reader-text">Move up</span><span class="order-higher-indicator" aria-hidden="true"></span></button><span class="hidden" id="dashboard_quick_press-handle-order-higher-description">Move <span class="hide-if-no-js">Quick Draft</span> <span class="hide-if-js">Your Recent Drafts</span> box up</span><button type="button" class="handle-order-lower" aria-disabled="false" aria-describedby="dashboard_quick_press-handle-order-lower-description"><span class="screen-reader-text">Move down</span><span class="order-lower-indicator" aria-hidden="true"></span></button><span class="hidden" id="dashboard_quick_press-handle-order-lower-description">Move <span class="hide-if-no-js">Quick Draft</span> <span class="hide-if-js">Your Recent Drafts</span> box down</span><button type="button" class="handlediv" aria-expanded="true"><span class="screen-reader-text">Toggle panel: <span class="hide-if-no-js">Quick Draft</span> <span class="hide-if-js">Your Recent Drafts</span></span><span class="toggle-indicator" aria-hidden="true"></span></button></div></div><div class="inside">
+
+	<form name="post" action="https://spotlight.tfvp.org/wp-admin/post.php" method="post" id="quick-press" class="initial-form hide-if-no-js">
+
+		
+		<div class="input-text-wrap" id="title-wrap">
+			<label for="title">
+				Title			</label>
+			<input type="text" name="post_title" id="title" autocomplete="off">
+		</div>
+
+		<div class="textarea-wrap" id="description-wrap">
+			<label for="content">Content</label>
+			<textarea name="content" id="content" placeholder="What’s on your mind?" class="mceEditor" rows="3" cols="15" autocomplete="off"></textarea>
+		</div>
+
+		<p class="submit">
+			<input type="hidden" name="action" id="quickpost-action" value="post-quickdraft-save">
+			<input type="hidden" name="post_ID" value="355">
+			<input type="hidden" name="post_type" value="post">
+			<input type="hidden" id="_wpnonce" name="_wpnonce" value="467400512f"><input type="hidden" name="_wp_http_referer" value="/wp-admin/">			<input type="submit" name="save" id="save-post" class="button button-primary" value="Save Draft">			<br class="clear">
+		</p>
+
+	</form>
+	<div class="drafts"><p class="view-all"><a href="https://spotlight.tfvp.org/wp-admin/edit.php?post_status=draft">View all drafts</a></p>
+<h2 class="hide-if-no-js">Your Recent Drafts</h2>
+<ul><li>
+<div class="draft-title"><a href="https://spotlight.tfvp.org/wp-admin/post.php?post=638&amp;action=edit" aria-label="Edit “cc”">cc</a><time datetime="2026-01-29T06:41:47+00:00">January 29, 2026</time></div></li>
+<li>
+<div class="draft-title"><a href="https://spotlight.tfvp.org/wp-admin/post.php?post=633&amp;action=edit" aria-label="Edit “cc”">cc</a><time datetime="2026-01-29T06:33:39+00:00">January 29, 2026</time></div></li>
+<li>
+<div class="draft-title"><a href="https://spotlight.tfvp.org/wp-admin/post.php?post=627&amp;action=edit" aria-label="Edit “Hi”">Hi</a><time datetime="2026-01-29T06:29:29+00:00">January 29, 2026</time></div></li>
+</ul>
+</div></div>
+</div>
+<div id="dashboard_primary" class="postbox ">
+<div class="postbox-header"><h2 class="hndle ui-sortable-handle">WordPress Events and News</h2>
+<div class="handle-actions hide-if-no-js"><button type="button" class="handle-order-higher" aria-disabled="false" aria-describedby="dashboard_primary-handle-order-higher-description"><span class="screen-reader-text">Move up</span><span class="order-higher-indicator" aria-hidden="true"></span></button><span class="hidden" id="dashboard_primary-handle-order-higher-description">Move WordPress Events and News box up</span><button type="button" class="handle-order-lower" aria-disabled="false" aria-describedby="dashboard_primary-handle-order-lower-description"><span class="screen-reader-text">Move down</span><span class="order-lower-indicator" aria-hidden="true"></span></button><span class="hidden" id="dashboard_primary-handle-order-lower-description">Move WordPress Events and News box down</span><button type="button" class="handlediv" aria-expanded="true"><span class="screen-reader-text">Toggle panel: WordPress Events and News</span><span class="toggle-indicator" aria-hidden="true"></span></button></div></div><div class="inside">
+<div class="notice notice-error community-events-errors inline" aria-hidden="true"><p class="hide-if-js">This widget requires JavaScript.</p><p class="community-events-error-occurred" aria-hidden="true">An error occurred. Please try again.</p><p class="community-events-could-not-locate" aria-hidden="true"></p></div>	<div id="community-events" class="community-events" aria-hidden="false">
+		<div class="activity-block">
+			<p>
+				<span id="community-events-location-message" aria-hidden="false">Attend an upcoming event near you.</span>
+
+				<button class="button-link community-events-toggle-location" aria-expanded="false" aria-hidden="false">
+					<span class="dashicons dashicons-location" aria-hidden="true"></span>
+					<span class="community-events-location-edit">Select location</span>
+				</button>
+			</p>
+
+			<form class="community-events-form" aria-hidden="true" action="https://spotlight.tfvp.org/wp-admin/admin-ajax.php" method="post">
+				<label for="community-events-location">
+					City:				</label>
+								<input id="community-events-location" class="regular-text" type="text" name="community-events-location" placeholder="Cincinnati">
+
+				<input type="submit" name="community-events-submit" id="community-events-submit" class="button" value="Submit">
+				<button class="community-events-cancel button-link" type="button" aria-expanded="false">
+					Cancel				</button>
+
+				<span class="spinner"></span>
+			</form>
+		</div>
+
+		<ul class="community-events-results activity-block last" aria-hidden="false">
+		<li class="event-none">
+			
+				There are no events scheduled near you at the moment. Would you like to <a href="https://make.wordpress.org/community/handbook/meetup-organizer/welcome/">organize a WordPress event</a>?			
+		</li>
+	</ul>
+	</div>
+
+	
+	<div class="wordpress-news hide-if-no-js" style=""><div class="rss-widget"><ul><li><a class="rsswidget" href="https://wordpress.org/news/2026/01/new-ai-agent-skill/">New AI Agent Skill for WordPress</a></li><li><a class="rsswidget" href="https://wordpress.org/news/2026/01/wordcamp-asia-2026/">Be Part of WordCamp Asia 2026</a></li></ul></div><div class="rss-widget"><ul><li><a class="rsswidget" href="https://gutenbergtimes.com/navigation-overlays-wordpress-7-0-interactivity-api-helper-ai-skills-and-wcasia-weekend-edition-355/">Gutenberg Times: Navigation Overlays, WordPress 7.0, Interactivity API Helper, AI Skills, and  #WCAsia — Weekend Edition #355</a></li><li><a class="rsswidget" href="https://wordpress.org/news/2026/01/new-ai-agent-skill/">WordPress.org blog: New AI Agent Skill for WordPress</a></li><li><a class="rsswidget" href="https://openchannels.fm/take-the-time-to-listen/">Open Channels FM: Take the Time to Listen</a></li></ul></div></div>
+
+	<p class="community-events-footer">
+		<a href="https://make.wordpress.org/community/meetups-landing-page" target="_blank">Meetups <span class="screen-reader-text"> (opens in a new tab)</span><span aria-hidden="true" class="dashicons dashicons-external"></span></a>
+		|
+
+		<a href="https://central.wordcamp.org/schedule/" target="_blank">WordCamps <span class="screen-reader-text"> (opens in a new tab)</span><span aria-hidden="true" class="dashicons dashicons-external"></span></a>
+		|
+
+		<a href="https://wordpress.org/news/" target="_blank">News <span class="screen-reader-text"> (opens in a new tab)</span><span aria-hidden="true" class="dashicons dashicons-external"></span></a>	</p>
+
+	</div>
+</div>
+</div>	</div>
+	<div id="postbox-container-3" class="postbox-container">
+	<div id="column3-sortables" class="meta-box-sortables ui-sortable empty-container" data-emptystring="Drag boxes here"></div>	</div>
+	<div id="postbox-container-4" class="postbox-container">
+	<div id="column4-sortables" class="meta-box-sortables ui-sortable empty-container" data-emptystring="Drag boxes here"></div>	</div>
+</div>
+
+	<input type="hidden" id="closedpostboxesnonce" name="closedpostboxesnonce" value="ed84edcd29"><input type="hidden" id="meta-box-order-nonce" name="meta-box-order-nonce" value="c8bcf6ec27">	</div><!-- dashboard-widgets-wrap -->
+
+</div><!-- wrap -->
+
+
+	<script id="tmpl-community-events-attend-event-near" type="text/template">
+		Attend an upcoming event near <strong>{{ data.location.description }}</strong>.	</script>
+
+	<script id="tmpl-community-events-could-not-locate" type="text/template">
+		<em>{{data.unknownCity}}</em> could not be located. Please try another nearby city. For example: Kansas City; Springfield; Portland.	</script>
+
+	<script id="tmpl-community-events-event-list" type="text/template">
+		<# _.each( data.events, function( event ) { #>
+			<li class="event event-{{ event.type }} wp-clearfix">
+				<div class="event-info">
+					<div class="dashicons event-icon" aria-hidden="true"></div>
+					<div class="event-info-inner">
+						<a class="event-title" href="{{ event.url }}">{{ event.title }}</a>
+						<# if ( event.type ) {
+							const titleCaseEventType = event.type.replace(
+								/\w\S*/g,
+								function ( type ) { return type.charAt(0).toUpperCase() + type.substr(1).toLowerCase(); }
+							);
+						#>
+							{{ 'wordcamp' === event.type ? 'WordCamp' : titleCaseEventType }}
+							<span class="ce-separator" aria-hidden="true"></span>
+						<# } #>
+						<span class="event-city">{{ event.location.location }}</span>
+					</div>
+				</div>
+
+				<div class="event-date-time">
+					<span class="event-date">{{ event.user_formatted_date }}</span>
+					<# if ( 'meetup' === event.type ) { #>
+						<span class="event-time">
+							{{ event.user_formatted_time }} {{ event.timeZoneAbbreviation }}
+						</span>
+					<# } #>
+				</div>
+			</li>
+		<# } ) #>
+
+		<# if ( data.events.length <= 2 ) { #>
+			<li class="event-none">
+				Want more events? <a href="https://make.wordpress.org/community/organize-event-landing-page/">Help organize the next one</a>!			</li>
+		<# } #>
+
+	</script>
+
+	<script id="tmpl-community-events-no-upcoming-events" type="text/template">
+		<li class="event-none">
+			<# if ( data.location.description ) { #>
+				There are no events scheduled near {{ data.location.description }} at the moment. Would you like to <a href="https://make.wordpress.org/community/handbook/meetup-organizer/welcome/">organize a WordPress event</a>?
+			<# } else { #>
+				There are no events scheduled near you at the moment. Would you like to <a href="https://make.wordpress.org/community/handbook/meetup-organizer/welcome/">organize a WordPress event</a>?			<# } #>
+		</li>
+	</script>
+	
+<div class="clear"></div></div><!-- wpbody-content -->
+<div class="clear"></div></div><!-- wpbody -->
+<div class="clear"></div></div><!-- wpcontent -->
+
+<div id="wpfooter" role="contentinfo">
+		<p id="footer-left" class="alignleft">
+		<span id="footer-thankyou">Thank you for creating with <a href="https://wordpress.org/">WordPress</a>.</span>	</p>
+	<p id="footer-upgrade" class="alignright">
+		Version 6.9	</p>
+	<div class="clear"></div>
+</div>
+<script type="text/javascript">list_args = {"class":"WP_Comments_List_Table","screen":{"id":"dashboard","base":"dashboard"}};</script>
+<script type="text/javascript">list_args = {"class":"WP_Comments_List_Table","screen":{"id":"dashboard","base":"dashboard"}};</script>
+		<script>
+			var wpcode_admin_bar_info = [];
+			var wpcode_admin_bar_info_count = 0;
+		</script>
+			<div id="wp-auth-check-wrap" class="hidden">
+	<div id="wp-auth-check-bg"></div>
+	<div id="wp-auth-check">
+	<button type="button" class="wp-auth-check-close button-link"><span class="screen-reader-text">
+		Close dialog	</span></button>
+			<div id="wp-auth-check-form" class="loading" data-src="https://spotlight.tfvp.org/wp-login.php?interim-login=1&amp;wp_lang=en_US"></div>
+			<div class="wp-auth-fallback">
+		<p><b class="wp-auth-fallback-expired" tabindex="0">Session expired</b></p>
+		<p><a href="https://spotlight.tfvp.org/wp-login.php" target="_blank">Please log in again.</a>
+		The login page will open in a new tab. After logging in you can close it and return to this page.</p>
+	</div>
+	</div>
+	</div>
+	<link rel="stylesheet" id="yoast-seo-notifications-css" href="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/css/dist/notifications-2650.css" media="all">
+<script type="text/javascript" src="https://spotlight.tfvp.org/wp-admin/load-scripts.php?c=0&amp;load%5Bchunk_0%5D=hoverIntent,wp-dom-ready,wp-hooks&amp;ver=6.9"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/i18n.min.js?ver=c26c3dc7bed366793375" id="wp-i18n-js"></script>
+<script id="wp-i18n-js-after">
+wp.i18n.setLocaleData( { 'text direction\u0004ltr': [ 'ltr' ] } );
+//# sourceURL=wp-i18n-js-after
+</script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/a11y.min.js?ver=cb460b4676c94bd228ed" id="wp-a11y-js"></script>
+<script id="common-js-extra">
+var bulkActionObserverIds = {"bulk_action":"action","changeit":"new_role"};
+//# sourceURL=common-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-admin/js/common.min.js?ver=6.9" id="common-js"></script>
+<script src="https://spotlight.tfvp.org/wp-content/plugins/insert-headers-and-footers/build/admin-bar.js?ver=c95624a69c80301272a0" id="wpcode-admin-bar-js-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/hoverintent-js.min.js?ver=2.2.1" id="hoverintent-js-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/admin-bar.min.js?ver=6.9" id="admin-bar-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/clipboard.min.js?ver=2.0.11" id="clipboard-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/underscore.min.js?ver=1.13.7" id="underscore-js"></script>
+<script id="wp-util-js-extra">
+var _wpUtilSettings = {"ajax":{"url":"/wp-admin/admin-ajax.php"}};
+//# sourceURL=wp-util-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/wp-util.min.js?ver=6.9" id="wp-util-js"></script>
+<script id="wp-api-request-js-extra">
+var wpApiSettings = {"root":"https://spotlight.tfvp.org/wp-json/","nonce":"fa9d763224","versionString":"wp/v2/"};
+//# sourceURL=wp-api-request-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/api-request.min.js?ver=6.9" id="wp-api-request-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/url.min.js?ver=9e178c9516d1222dc834" id="wp-url-js"></script>
+<script id="site-health-js-extra">
+var SiteHealth = {"screen":"dashboard","nonce":{"site_status":"e461e5a106","site_status_result":"742ce1bb5f"},"site_status":{"direct":[],"async":[],"issues":{"good":18,"recommended":5,"critical":1}}};
+//# sourceURL=site-health-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-admin/js/site-health.min.js?ver=6.9" id="site-health-js"></script>
+<script id="wp-ajax-response-js-extra">
+var wpAjax = {"noPerm":"Sorry, you are not allowed to do that.","broken":"An error occurred while processing your request. Please try again later."};
+//# sourceURL=wp-ajax-response-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/wp-ajax-response.min.js?ver=6.9" id="wp-ajax-response-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/jquery/jquery.color.min.js?ver=3.0.0" id="jquery-color-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/wp-lists.min.js?ver=6.9" id="wp-lists-js"></script>
+<script id="quicktags-js-extra">
+var quicktagsL10n = {"closeAllOpenTags":"Close all open tags","closeTags":"close tags","enterURL":"Enter the URL","enterImageURL":"Enter the URL of the image","enterImageDescription":"Enter a description of the image","textdirection":"text direction","toggleTextdirection":"Toggle Editor Text Direction","dfw":"Distraction-free writing mode","strong":"Bold","strongClose":"Close bold tag","em":"Italic","emClose":"Close italic tag","link":"Insert link","blockquote":"Blockquote","blockquoteClose":"Close blockquote tag","del":"Deleted text (strikethrough)","delClose":"Close deleted text tag","ins":"Inserted text","insClose":"Close inserted text tag","image":"Insert image","ul":"Bulleted list","ulClose":"Close bulleted list tag","ol":"Numbered list","olClose":"Close numbered list tag","li":"List item","liClose":"Close list item tag","code":"Code","codeClose":"Close code tag","more":"Insert Read More tag"};
+//# sourceURL=quicktags-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/quicktags.min.js?ver=6.9" id="quicktags-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/jquery/jquery.query.js?ver=2.2.3" id="jquery-query-js"></script>
+<script id="admin-comments-js-extra">
+var adminCommentsSettings = {"hotkeys_highlight_first":"","hotkeys_highlight_last":""};
+//# sourceURL=admin-comments-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-admin/js/edit-comments.min.js?ver=6.9" id="admin-comments-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/jquery/ui/core.min.js?ver=1.13.3" id="jquery-ui-core-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/jquery/ui/mouse.min.js?ver=1.13.3" id="jquery-ui-mouse-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/jquery/ui/sortable.min.js?ver=1.13.3" id="jquery-ui-sortable-js"></script>
+<script src="https://spotlight.tfvp.org/wp-admin/js/postbox.min.js?ver=6.9" id="postbox-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1" id="moment-js"></script>
+<script id="moment-js-after">
+moment.updateLocale( 'en_US', {"months":["January","February","March","April","May","June","July","August","September","October","November","December"],"monthsShort":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"weekdays":["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],"weekdaysShort":["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],"week":{"dow":1},"longDateFormat":{"LT":"g:i a","LTS":null,"L":null,"LL":"F j, Y","LLL":"F j, Y g:i a","LLLL":null}} );
+//# sourceURL=moment-js-after
+</script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/deprecated.min.js?ver=e1f84915c5e8ae38964c" id="wp-deprecated-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/date.min.js?ver=795a56839718d3ff7eae" id="wp-date-js"></script>
+<script id="wp-date-js-after">
+wp.date.setSettings( {"l10n":{"locale":"en_US","months":["January","February","March","April","May","June","July","August","September","October","November","December"],"monthsShort":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"weekdays":["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],"weekdaysShort":["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],"meridiem":{"am":"am","pm":"pm","AM":"AM","PM":"PM"},"relative":{"future":"%s from now","past":"%s ago","s":"a second","ss":"%d seconds","m":"a minute","mm":"%d minutes","h":"an hour","hh":"%d hours","d":"a day","dd":"%d days","M":"a month","MM":"%d months","y":"a year","yy":"%d years"},"startOfWeek":1},"formats":{"time":"g:i a","date":"F j, Y","datetime":"F j, Y g:i a","datetimeAbbreviated":"M j, Y g:i a"},"timezone":{"offset":0,"offsetFormatted":"0","string":"","abbr":""}} );
+//# sourceURL=wp-date-js-after
+</script>
+<script id="dashboard-js-extra">
+var communityEventsData = {"nonce":"38ad786d2c","cache":"","time_format":"g:i a"};
+//# sourceURL=dashboard-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-admin/js/dashboard.min.js?ver=6.9" id="dashboard-js"></script>
+<script id="thickbox-js-extra">
+var thickboxL10n = {"next":"Next \u003E","prev":"\u003C Prev","image":"Image","of":"of","close":"Close","noiframes":"This feature requires inline frames. You have iframes disabled or your browser does not support them.","loadingAnimation":"https://spotlight.tfvp.org/wp-includes/js/thickbox/loadingAnimation.gif"};
+//# sourceURL=thickbox-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/thickbox/thickbox.js?ver=3.1-20121105" id="thickbox-js"></script>
+<script src="https://spotlight.tfvp.org/wp-admin/js/plugin-install.min.js?ver=6.9" id="plugin-install-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/wp-sanitize.min.js?ver=6.9" id="wp-sanitize-js"></script>
+<script id="updates-js-extra">
+var _wpUpdatesSettings = {"ajax_nonce":"7ad0fc37b7"};
+//# sourceURL=updates-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-admin/js/updates.min.js?ver=6.9" id="updates-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/shortcode.min.js?ver=6.9" id="shortcode-js"></script>
+<script src="https://spotlight.tfvp.org/wp-admin/js/media-upload.min.js?ver=6.9" id="media-upload-js"></script>
+<script src="https://spotlight.tfvp.org/wp-admin/js/svg-painter.js?ver=6.9" id="svg-painter-js"></script>
+<script id="heartbeat-js-extra">
+var heartbeatSettings = {"nonce":"4a99d9a29d"};
+//# sourceURL=heartbeat-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/heartbeat.min.js?ver=6.9" id="heartbeat-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/wp-auth-check.min.js?ver=6.9" id="wp-auth-check-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/vendor/react.min.js?ver=18.3.1.1" id="react-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/vendor/react-dom.min.js?ver=18.3.1.1" id="react-dom-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/vendor/react-jsx-runtime.min.js?ver=18.3.1" id="react-jsx-runtime-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/dom.min.js?ver=26edef3be6483da3de2e" id="wp-dom-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/escape-html.min.js?ver=6561a406d2d232a6fbd2" id="wp-escape-html-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/element.min.js?ver=6a582b0c827fa25df3dd" id="wp-element-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/is-shallow-equal.min.js?ver=e0f9f1d78d83f5196979" id="wp-is-shallow-equal-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/keycodes.min.js?ver=34c8fb5e7a594a1c8037" id="wp-keycodes-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/priority-queue.min.js?ver=2d59d091223ee9a33838" id="wp-priority-queue-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/compose.min.js?ver=7a9b375d8c19cf9d3d9b" id="wp-compose-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/html-entities.min.js?ver=e8b78b18a162491d5e5f" id="wp-html-entities-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/primitives.min.js?ver=0b5dcc337aa7cbf75570" id="wp-primitives-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/private-apis.min.js?ver=4f465748bda624774139" id="wp-private-apis-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/redux-routine.min.js?ver=8bb92d45458b29590f53" id="wp-redux-routine-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/data.min.js?ver=f940198280891b0b6318" id="wp-data-js"></script>
+<script id="wp-data-js-after">
+( function() {
+	var userId = 1;
+	var storageKey = "WP_DATA_USER_" + userId;
+	wp.data
+		.use( wp.data.plugins.persistence, { storageKey: storageKey } );
+} )();
+//# sourceURL=wp-data-js-after
+</script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/rich-text.min.js?ver=5bdbb44f3039529e3645" id="wp-rich-text-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/warning.min.js?ver=d69bc18c456d01c11d5a" id="wp-warning-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/components.min.js?ver=ad5cb4227f07a3d422ad" id="wp-components-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/keyboard-shortcuts.min.js?ver=fbc45a34ce65c5723afa" id="wp-keyboard-shortcuts-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/commands.min.js?ver=cac8f4817ab7cea0ac49" id="wp-commands-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/api-fetch.min.js?ver=3a4d9af2b423048b0dee" id="wp-api-fetch-js"></script>
+<script id="wp-api-fetch-js-after">
+wp.apiFetch.use( wp.apiFetch.createRootURLMiddleware( "https://spotlight.tfvp.org/wp-json/" ) );
+wp.apiFetch.nonceMiddleware = wp.apiFetch.createNonceMiddleware( "fa9d763224" );
+wp.apiFetch.use( wp.apiFetch.nonceMiddleware );
+wp.apiFetch.use( wp.apiFetch.mediaUploadMiddleware );
+wp.apiFetch.nonceEndpoint = "https://spotlight.tfvp.org/wp-admin/admin-ajax.php?action=rest-nonce";
+//# sourceURL=wp-api-fetch-js-after
+</script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/blob.min.js?ver=9113eed771d446f4a556" id="wp-blob-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/block-serialization-default-parser.min.js?ver=14d44daebf663d05d330" id="wp-block-serialization-default-parser-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/autop.min.js?ver=9fb50649848277dd318d" id="wp-autop-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/shortcode.min.js?ver=0b3174183b858f2df320" id="wp-shortcode-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/blocks.min.js?ver=de131db49fa830bc97da" id="wp-blocks-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/notices.min.js?ver=f62fbf15dcc23301922f" id="wp-notices-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/preferences-persistence.min.js?ver=e954d3a4426d311f7d1a" id="wp-preferences-persistence-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/preferences.min.js?ver=2ca086aed510c242a1ed" id="wp-preferences-js"></script>
+<script id="wp-preferences-js-after">
+( function() {
+				var serverData = "";
+				var userId = "1";
+				var persistenceLayer = wp.preferencesPersistence.__unstableCreatePersistenceLayer( serverData, userId );
+				var preferencesStore = wp.preferences.store;
+				wp.data.dispatch( preferencesStore ).setPersistenceLayer( persistenceLayer );
+			} ) ();
+//# sourceURL=wp-preferences-js-after
+</script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/style-engine.min.js?ver=7c6fcedc37dadafb8a81" id="wp-style-engine-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/token-list.min.js?ver=cfdf635a436c3953a965" id="wp-token-list-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/block-editor.min.js?ver=6ab992f915da9674d250" id="wp-block-editor-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/core-data.min.js?ver=15baadfe6e1374188072" id="wp-core-data-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/router.min.js?ver=2dfc4b954318a03e6a76" id="wp-router-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/core-commands.min.js?ver=effe2d88d7f0c50a8ce9" id="wp-core-commands-js"></script>
+<script id="wp-core-commands-js-after">
+wp.coreCommands.initializeCommandPalette( {"is_network_admin":false,"menu_commands":[{"label":"Dashboard","url":"index.php","name":"index.php"},{"label":"Dashboard \u003E Home","url":"index.php","name":"index.php-index.php"},{"label":"Dashboard \u003E Updates","url":"update-core.php","name":"index.php-update-core.php"},{"label":"Posts","url":"edit.php","name":"edit.php"},{"label":"Posts \u003E All Posts","url":"edit.php","name":"edit.php-edit.php"},{"label":"Posts \u003E Add Post","url":"post-new.php","name":"edit.php-post-new.php"},{"label":"Posts \u003E Categories","url":"edit-tags.php?taxonomy=category","name":"edit.php-edit-tags.php?taxonomy=category"},{"label":"Posts \u003E Tags","url":"edit-tags.php?taxonomy=post_tag","name":"edit.php-edit-tags.php?taxonomy=post_tag"},{"label":"Media","url":"upload.php","name":"upload.php"},{"label":"Media \u003E Library","url":"upload.php","name":"upload.php-upload.php"},{"label":"Media \u003E Add Media File","url":"media-new.php","name":"upload.php-media-new.php"},{"label":"Pages","url":"edit.php?post_type=page","name":"edit.php?post_type=page"},{"label":"Pages \u003E All Pages","url":"edit.php?post_type=page","name":"edit.php?post_type=page-edit.php?post_type=page"},{"label":"Pages \u003E Add Page","url":"post-new.php?post_type=page","name":"edit.php?post_type=page-post-new.php?post_type=page"},{"label":"Comments","url":"edit-comments.php","name":"edit-comments.php"},{"label":"Appearance","url":"themes.php","name":"themes.php"},{"label":"Appearance \u003E Themes","url":"themes.php","name":"themes.php-themes.php"},{"label":"Appearance \u003E Design","url":"site-editor.php","name":"themes.php-site-editor.php"},{"label":"Appearance \u003E Customize","url":"customize.php?return=%2Fwp-admin%2F","name":"themes.php-customize.php?return=%2Fwp-admin%2F"},{"label":"Appearance \u003E Widgets","url":"widgets.php","name":"themes.php-widgets.php"},{"label":"Appearance \u003E Menus","url":"nav-menus.php","name":"themes.php-nav-menus.php"},{"label":"Appearance \u003E JNews Dashboard","url":"https://spotlight.tfvp.org/wp-admin/themes.php?page=jnews","name":"themes.php-jnews"},{"label":"Appearance \u003E Import Demo &amp; Style","url":"https://spotlight.tfvp.org/wp-admin/themes.php?page=jnews_import","name":"themes.php-jnews_import"},{"label":"Appearance \u003E Install Plugin","url":"https://spotlight.tfvp.org/wp-admin/themes.php?page=jnews_plugin","name":"themes.php-jnews_plugin"},{"label":"Appearance \u003E System Status","url":"https://spotlight.tfvp.org/wp-admin/themes.php?page=jnews_system","name":"themes.php-jnews_system"},{"label":"Appearance \u003E Video Documentation","url":"https://spotlight.tfvp.org/wp-admin/themes.php?page=jnews_documentation","name":"themes.php-jnews_documentation"},{"label":"Appearance \u003E Install Plugins","url":"https://spotlight.tfvp.org/wp-admin/themes.php?page=jnews-install-plugins","name":"themes.php-jnews-install-plugins"},{"label":"Appearance \u003E Theme File Editor","url":"theme-editor.php","name":"themes.php-theme-editor.php"},{"label":"Plugins","url":"plugins.php","name":"plugins.php"},{"label":"Plugins \u003E Installed Plugins","url":"plugins.php","name":"plugins.php-plugins.php"},{"label":"Plugins \u003E Add Plugin","url":"plugin-install.php","name":"plugins.php-plugin-install.php"},{"label":"Plugins \u003E Plugin File Editor","url":"plugin-editor.php","name":"plugins.php-plugin-editor.php"},{"label":"Users","url":"users.php","name":"users.php"},{"label":"Users \u003E All Users","url":"users.php","name":"users.php-users.php"},{"label":"Users \u003E Add User","url":"user-new.php","name":"users.php-user-new.php"},{"label":"Users \u003E Profile","url":"profile.php","name":"users.php-profile.php"},{"label":"Tools","url":"tools.php","name":"tools.php"},{"label":"Tools \u003E Available Tools","url":"tools.php","name":"tools.php-tools.php"},{"label":"Tools \u003E Import","url":"import.php","name":"tools.php-import.php"},{"label":"Tools \u003E Export","url":"export.php","name":"tools.php-export.php"},{"label":"Tools \u003E Site Health","url":"site-health.php","name":"tools.php-site-health.php"},{"label":"Tools \u003E Export Personal Data","url":"export-personal-data.php","name":"tools.php-export-personal-data.php"},{"label":"Tools \u003E Erase Personal Data","url":"erase-personal-data.php","name":"tools.php-erase-personal-data.php"},{"label":"Tools \u003E Yoast Redirects","url":"https://spotlight.tfvp.org/wp-admin/tools.php?page=wpseo_redirects_tools","name":"tools.php-wpseo_redirects_tools"},{"label":"Settings","url":"options-general.php","name":"options-general.php"},{"label":"Settings \u003E General","url":"options-general.php","name":"options-general.php-options-general.php"},{"label":"Settings \u003E Writing","url":"options-writing.php","name":"options-general.php-options-writing.php"},{"label":"Settings \u003E Reading","url":"options-reading.php","name":"options-general.php-options-reading.php"},{"label":"Settings \u003E Discussion","url":"options-discussion.php","name":"options-general.php-options-discussion.php"},{"label":"Settings \u003E Media","url":"options-media.php","name":"options-general.php-options-media.php"},{"label":"Settings \u003E Permalinks","url":"options-permalink.php","name":"options-general.php-options-permalink.php"},{"label":"Settings \u003E Privacy","url":"options-privacy.php","name":"options-general.php-options-privacy.php"},{"label":"Settings \u003E Ad Inserter Pro","url":"ad-inserter.php","name":"options-general.php-ad-inserter.php"},{"label":"Settings \u003E Ads.txt","url":"https://spotlight.tfvp.org/wp-admin/options-general.php?page=adstxt-settings","name":"options-general.php-adstxt-settings"},{"label":"Settings \u003E App-ads.txt","url":"https://spotlight.tfvp.org/wp-admin/options-general.php?page=app-adstxt-settings","name":"options-general.php-app-adstxt-settings"},{"label":"Settings \u003E LiteSpeed Cache","url":"https://spotlight.tfvp.org/wp-admin/options-general.php?page=litespeed-cache-options","name":"options-general.php-litespeed-cache-options"},{"label":"Code Snippets","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode","name":"wpcode"},{"label":"Code Snippets \u003E Code Snippets","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode","name":"wpcode-wpcode"},{"label":"Code Snippets \u003E + Add Snippet","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode-snippet-manager","name":"wpcode-wpcode-snippet-manager"},{"label":"Code Snippets \u003E Header & Footer","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode-headers-footers","name":"wpcode-wpcode-headers-footers"},{"label":"Code Snippets \u003E Conversion Pixels","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode-pixel","name":"wpcode-wpcode-pixel"},{"label":"Code Snippets \u003E Library","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode-library","name":"wpcode-wpcode-library"},{"label":"Code Snippets \u003E Generator","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode-generator","name":"wpcode-wpcode-generator"},{"label":"Code Snippets \u003E File Editor","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode-file-editor","name":"wpcode-wpcode-file-editor"},{"label":"Code Snippets \u003E Search & Replace","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode-search-replace","name":"wpcode-wpcode-search-replace"},{"label":"Code Snippets \u003E Secure Backups","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode-duplicator","name":"wpcode-wpcode-duplicator"},{"label":"Code Snippets \u003E Tools","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode-tools","name":"wpcode-wpcode-tools"},{"label":"Code Snippets \u003E Settings","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode-settings","name":"wpcode-wpcode-settings"},{"label":"Code Snippets \u003E 1-Click","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpcode-click","name":"wpcode-wpcode-click"},{"label":"Code Snippets \u003E Upgrade to Pro","url":"https://wpcode.com/lite/?utm_source=liteplugin&#038;utm_medium=wpcode-admin&#038;utm_campaign=admin-side-menu","name":"wpcode-https://wpcode.com/lite/?utm_source=liteplugin&#038;utm_medium=wpcode-admin&#038;utm_campaign=admin-side-menu"},{"label":"Yoast SEO","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_dashboard","name":"wpseo_dashboard"},{"label":"Yoast SEO \u003E General","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_dashboard","name":"wpseo_dashboard-wpseo_dashboard"},{"label":"Yoast SEO \u003E Settings","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_page_settings","name":"wpseo_dashboard-wpseo_page_settings"},{"label":"Yoast SEO \u003E Integrations","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_integrations","name":"wpseo_dashboard-wpseo_integrations"},{"label":"Yoast SEO \u003E Tools","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_tools","name":"wpseo_dashboard-wpseo_tools"},{"label":"Yoast SEO \u003E Academy","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_page_academy","name":"wpseo_dashboard-wpseo_page_academy"},{"label":"Yoast SEO \u003E Plans","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_licenses","name":"wpseo_dashboard-wpseo_licenses"},{"label":"Yoast SEO \u003E Workouts","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_workouts","name":"wpseo_dashboard-wpseo_workouts"},{"label":"Yoast SEO \u003E Redirects","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_redirects","name":"wpseo_dashboard-wpseo_redirects"},{"label":"Yoast SEO \u003E Brand Insights","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_brand_insights","name":"wpseo_dashboard-wpseo_brand_insights"},{"label":"Yoast SEO \u003E Support","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_page_support","name":"wpseo_dashboard-wpseo_page_support"},{"label":"Yoast SEO \u003E ","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=wpseo_upgrade_sidebar","name":"wpseo_dashboard-wpseo_upgrade_sidebar"},{"label":"LiteSpeed Cache","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=litespeed","name":"litespeed"},{"label":"LiteSpeed Cache \u003E Dashboard","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=litespeed","name":"litespeed-litespeed"},{"label":"LiteSpeed Cache \u003E Presets","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=litespeed-presets","name":"litespeed-litespeed-presets"},{"label":"LiteSpeed Cache \u003E General","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=litespeed-general","name":"litespeed-litespeed-general"},{"label":"LiteSpeed Cache \u003E Cache","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=litespeed-cache","name":"litespeed-litespeed-cache"},{"label":"LiteSpeed Cache \u003E CDN","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=litespeed-cdn","name":"litespeed-litespeed-cdn"},{"label":"LiteSpeed Cache \u003E Image Optimization","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=litespeed-img_optm","name":"litespeed-litespeed-img_optm"},{"label":"LiteSpeed Cache \u003E Page Optimization","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=litespeed-page_optm","name":"litespeed-litespeed-page_optm"},{"label":"LiteSpeed Cache \u003E Database","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=litespeed-db_optm","name":"litespeed-litespeed-db_optm"},{"label":"LiteSpeed Cache \u003E Crawler","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=litespeed-crawler","name":"litespeed-litespeed-crawler"},{"label":"LiteSpeed Cache \u003E Toolbox","url":"https://spotlight.tfvp.org/wp-admin/admin.php?page=litespeed-toolbox","name":"litespeed-litespeed-toolbox"}]} );
+//# sourceURL=wp-core-commands-js-after
+</script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/dist/vendor/lodash.min.js?ver=4.17.21" id="lodash-js"></script>
+<script id="lodash-js-after">
+window.lodash = _.noConflict();
+//# sourceURL=lodash-js-after
+</script>
+<script src="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/js/dist/externals/propTypes.js?ver=4c546a0c9e97b70d3fe0" id="yoast-seo-prop-types-package-js"></script>
+<script src="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/js/dist/externals/styledComponents.js?ver=3c7b466139e7508cd799" id="yoast-seo-styled-components-package-js"></script>
+<script src="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/js/dist/externals/helpers.js?ver=e7a33d29c6f511c40828" id="yoast-seo-helpers-package-js"></script>
+<script src="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/js/dist/externals/styleGuide.js?ver=a65ddb8de826da5fea4d" id="yoast-seo-style-guide-package-js"></script>
+<script src="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/js/dist/externals/componentsNew.js?ver=f6dde93d372aaa6034b8" id="yoast-seo-components-new-package-js"></script>
+<script src="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/js/dist/externals/analysisReport.js?ver=34eef771ba6c89d4477c" id="yoast-seo-analysis-report-package-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/backbone.min.js?ver=1.6.0" id="backbone-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/wp-api.min.js?ver=6.9" id="wp-api-js"></script>
+<script src="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/js/dist/api-client.js?ver=f56d7de163fa219c67e2" id="yoast-seo-api-client-js"></script>
+<script id="yoast-seo-dashboard-widget-js-extra">
+var wpseoDashboardWidgetL10n = {"feed_header":"Latest blog posts on Yoast.com","feed_footer":"Read more like this on our SEO blog","wp_version":"6.9-0","php_version":"7.4"};
+//# sourceURL=yoast-seo-dashboard-widget-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/js/dist/dashboard-widget.js?ver=751474c1233a3eb40fcd" id="yoast-seo-dashboard-widget-js"></script>
+<script id="yoast-seo-wincher-dashboard-widget-js-extra">
+var wpseoWincherDashboardWidgetL10n = {"wincher_is_logged_in":"","wincher_website_id":""};
+//# sourceURL=yoast-seo-wincher-dashboard-widget-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-content/plugins/wordpress-seo/js/dist/wincher-dashboard-widget.js?ver=63d0a790229681c72b7e" id="yoast-seo-wincher-dashboard-widget-js"></script>
+<script src="https://spotlight.tfvp.org/wp-content/plugins/ad-inserter-pro/includes/js/ai-admin.js?ver=2.7.32" id="ai-admin-gen-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/jquery/ui/accordion.min.js?ver=1.13.3" id="jquery-ui-accordion-js"></script>
+<script src="https://spotlight.tfvp.org/wp-content/themes/jnews/assets/js/admin/jquery.tooltipster.min.js?ver=9.0.6" id="tooltipster-js"></script>
+<script src="https://spotlight.tfvp.org/wp-content/themes/jnews/assets/js/admin/jnews.admin.js?ver=9.0.6" id="jnews-admin-js"></script>
+<script id="wplink-js-extra">
+var wpLinkL10n = {"title":"Insert/edit link","update":"Update","save":"Add Link","noTitle":"(no title)","noMatchesFound":"No results found.","linkSelected":"Link selected.","linkInserted":"Link inserted.","minInputLength":"3"};
+//# sourceURL=wplink-js-extra
+</script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/wplink.min.js?ver=6.9" id="wplink-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/jquery/ui/menu.min.js?ver=1.13.3" id="jquery-ui-menu-js"></script>
+<script src="https://spotlight.tfvp.org/wp-includes/js/jquery/ui/autocomplete.min.js?ver=1.13.3" id="jquery-ui-autocomplete-js"></script>
+
+		<script type="text/javascript">
+		tinyMCEPreInit = {
+			baseURL: "https://spotlight.tfvp.org/wp-includes/js/tinymce",
+			suffix: ".min",
+						mceInit: {},
+			qtInit: {'replycontent':{id:"replycontent",buttons:"strong,em,link,block,del,ins,img,ul,ol,li,code,close"}},
+			ref: {plugins:"",theme:"modern",language:""},
+			load_ext: function(url,lang){var sl=tinymce.ScriptLoader;sl.markDone(url+'/langs/'+lang+'.js');sl.markDone(url+'/langs/'+lang+'_dlg.js');}
+		};
+		</script>
+				<script type="text/javascript">
+		
+		( function() {
+			var initialized = [];
+			var initialize  = function() {
+				var init, id, inPostbox, $wrap;
+				var readyState = document.readyState;
+
+				if ( readyState !== 'complete' && readyState !== 'interactive' ) {
+					return;
+				}
+
+				for ( id in tinyMCEPreInit.mceInit ) {
+					if ( initialized.indexOf( id ) > -1 ) {
+						continue;
+					}
+
+					init      = tinyMCEPreInit.mceInit[id];
+					$wrap     = tinymce.$( '#wp-' + id + '-wrap' );
+					inPostbox = $wrap.parents( '.postbox' ).length > 0;
+
+					if (
+						! init.wp_skip_init &&
+						( $wrap.hasClass( 'tmce-active' ) || ! tinyMCEPreInit.qtInit.hasOwnProperty( id ) ) &&
+						( readyState === 'complete' || ( ! inPostbox && readyState === 'interactive' ) )
+					) {
+						tinymce.init( init );
+						initialized.push( id );
+
+						if ( ! window.wpActiveEditor ) {
+							window.wpActiveEditor = id;
+						}
+					}
+				}
+			}
+
+			if ( typeof tinymce !== 'undefined' ) {
+				if ( tinymce.Env.ie && tinymce.Env.ie < 11 ) {
+					tinymce.$( '.wp-editor-wrap ' ).removeClass( 'tmce-active' ).addClass( 'html-active' );
+				} else {
+					if ( document.readyState === 'complete' ) {
+						initialize();
+					} else {
+						document.addEventListener( 'readystatechange', initialize );
+					}
+				}
+			}
+
+			if ( typeof quicktags !== 'undefined' ) {
+				for ( id in tinyMCEPreInit.qtInit ) {
+					quicktags( tinyMCEPreInit.qtInit[id] );
+
+					if ( ! window.wpActiveEditor ) {
+						window.wpActiveEditor = id;
+					}
+				}
+			}
+		}());
+		</script>
+				<div id="wp-link-backdrop" style="display: none"></div>
+		<div id="wp-link-wrap" class="wp-core-ui" style="display: none" role="dialog" aria-modal="true" aria-labelledby="link-modal-title">
+		<form id="wp-link" tabindex="-1">
+		<input type="hidden" id="_ajax_linking_nonce" name="_ajax_linking_nonce" value="5de2731574">		<h1 id="link-modal-title">Insert/edit link</h1>
+		<button type="button" id="wp-link-close"><span class="screen-reader-text">
+			Close		</span></button>
+		<div id="link-selector">
+			<div id="link-options">
+				<p class="howto" id="wplink-enter-url">Enter the destination URL</p>
+				<div>
+					<label><span>URL</span>
+					<input id="wp-link-url" type="text" aria-describedby="wplink-enter-url"></label>
+				</div>
+				<div class="wp-link-text-field">
+					<label><span>Link Text</span>
+					<input id="wp-link-text" type="text"></label>
+				</div>
+				<div class="link-target">
+					<label><span></span>
+					<input type="checkbox" id="wp-link-target"> Open link in a new tab</label>
+				</div>
+			</div>
+			<p class="howto" id="wplink-link-existing-content">Or link to existing content</p>
+			<div id="search-panel">
+				<div class="link-search-wrapper">
+					<label>
+						<span class="search-label">Search</span>
+						<input type="search" id="wp-link-search" class="link-search-field" autocomplete="off" aria-describedby="wplink-link-existing-content">
+						<span class="spinner"></span>
+					</label>
+				</div>
+				<div id="search-results" class="query-results" tabindex="0">
+					<ul></ul>
+					<div class="river-waiting">
+						<span class="spinner"></span>
+					</div>
+				</div>
+				<div id="most-recent-results" class="query-results" tabindex="0">
+					<div class="query-notice" id="query-notice-message">
+						<em class="query-notice-default">No search term specified. Showing recent items.</em>
+						<em class="query-notice-hint screen-reader-text">
+							Search or use up and down arrow keys to select an item.						</em>
+					</div>
+					<ul></ul>
+					<div class="river-waiting">
+						<span class="spinner"></span>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="submitbox">
+			<div id="wp-link-cancel">
+				<button type="button" class="button">Cancel</button>
+			</div>
+			<div id="wp-link-update">
+				<input type="submit" value="Add Link" class="button button-primary" id="wp-link-submit" name="wp-link-submit">
+			</div>
+		</div>
+		</form>
+		</div>
+		
+<div class="clear"></div></div><div></div><!-- wpwrap -->
+<script type="text/javascript">if(typeof wpOnload==='function')wpOnload();</script>
+
+
+<p id="a11y-speak-intro-text" class="a11y-speak-intro-text" style="position:absolute;margin:-1px;padding:0;height:1px;width:1px;overflow:hidden;clip-path:inset(50%);border:0;word-wrap:normal !important;" hidden="">Notifications</p><div id="a11y-speak-assertive" class="a11y-speak-region" style="position:absolute;margin:-1px;padding:0;height:1px;width:1px;overflow:hidden;clip-path:inset(50%);border:0;word-wrap:normal !important;" aria-live="assertive" aria-relevant="additions text" aria-atomic="true"></div><div id="a11y-speak-polite" class="a11y-speak-region" style="position:absolute;margin:-1px;padding:0;height:1px;width:1px;overflow:hidden;clip-path:inset(50%);border:0;word-wrap:normal !important;" aria-live="polite" aria-relevant="additions text" aria-atomic="true"></div><div class="quick-draft-textarea-clone" style="display: none; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, Oxygen-Sans, Ubuntu, Cantarell, &quot;Helvetica Neue&quot;, sans-serif; font-size: 14px; line-height: 20px; padding: 6px 7px; white-space: pre-wrap; overflow-wrap: break-word;"></div></body></html>

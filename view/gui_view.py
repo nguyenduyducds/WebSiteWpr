@@ -6,7 +6,7 @@ import threading
 import os
 import webbrowser
 from tkinter import messagebox, filedialog
-from PIL import ImageGrab, Image
+from PIL import ImageGrab, Image, ImageTk
 import io
 
 # Giả lập AppData nếu chưa có module model
@@ -54,10 +54,37 @@ class GUIView(ctk.CTk):
         ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")
         
+        self.app_version = "2.0.1" # Current Version
+
         # Biến dữ liệu
         self.login_frame = None
         self.main_frame = None
         self.post_queue = [] 
+        
+        # Initialize Update Checker
+        try:
+            from model.update_checker import UpdateChecker
+            # Replace checks URL with a real one. For now using a dummy.
+            # If user has a real URL, they can put it in config.json
+            update_url = self.initial_config.get('update_url', "https://raw.githubusercontent.com/nguyenduyducds/WebSiteWpr/main/version.json")
+            self.updater = UpdateChecker(self.app_version, update_url)
+            self.after(3000, self.check_startup_update) # Check after 3s
+        except Exception as e:
+            print(f"Update init failed: {e}")
+            
+    def check_startup_update(self):
+        """Check for updates silently on startup"""
+        if hasattr(self, 'updater'):
+            self.updater.check_for_updates(callback=self.on_update_found)
+            
+    def on_update_found(self, has_update, new_version, download_url):
+        if has_update:
+            msg = f"🎉 Có phiên bản mới: v{new_version}!\n\nBạn đang dùng: v{self.app_version}\n\nNhấn OK để tải về ngay."
+            if messagebox.askyesno("Cập nhật phần mềm", msg):
+                if download_url:
+                    webbrowser.open(download_url)
+                else:
+                    messagebox.showinfo("Thông tin", f"Vui lòng liên hệ Admin để nhận bản cập nhật v{new_version}.") 
         self.content_pool = []
         self.batch_data = None
         self.published_links = []
@@ -329,8 +356,9 @@ class GUIView(ctk.CTk):
             "🌙 Dark Mode": "dark"
         }
         
-        selected = self.theme_var.get() if hasattr(self, 'theme_var') else "🏎️ Supercar News (Premium)"
-        return theme_map.get(selected, "supercar")
+        selected = self.theme_var.get() if hasattr(self, 'theme_var') else "⚪ Không dùng theme (Raw HTML)"
+        return theme_map.get(selected, "none")  # Default to "none" instead of "supercar"
+
     
     def on_login_click(self):
         site = self.entry_site.get().strip()
@@ -615,12 +643,30 @@ class GUIView(ctk.CTk):
         self.entry_title.bind('<Control-v>', self._handle_title_paste)
         self.entry_title.bind('<Control-V>', self._handle_title_paste)
         
-        self.entry_video = self.create_form_input(
-            form_container, 
-            "🎬 Video URL", 
-            "https://youtube.com/... hoặc paste iframe code",
-            height=48
+        # Video Input - Changed to Textbox for Bulk Support
+        video_container = ctk.CTkFrame(form_container, fg_color="transparent")
+        video_container.pack(fill="x", pady=10)
+        
+        ctk.CTkLabel(
+            video_container, 
+            text="🎬 Link nhúng video embed Code (Nhập nhiều dòng để thêm hàng loạt)", 
+            font=("Segoe UI", 13, "bold"), 
+            anchor="w",
+            text_color=self.colors['text_primary']
+        ).pack(fill="x", pady=(0, 8))
+        
+        self.entry_video = ctk.CTkTextbox(
+            video_container,
+            height=120,
+            font=("Segoe UI", 12),
+            corner_radius=12,
+            border_width=2,
+            border_color=self.colors['border'],
+            fg_color=self.colors['bg_light'],
+            text_color=self.colors['text_primary'],
         )
+        self.entry_video.pack(fill="x")
+        self.entry_video.insert("1.0", "") # Empty start
         
         # Custom Image Input with Browse Button
         self.create_image_input_section(form_container)
@@ -700,33 +746,70 @@ class GUIView(ctk.CTk):
         separator = ctk.CTkFrame(container, height=2, fg_color="gray")
         separator.pack(fill="x", padx=30, pady=10)
 
-        # Bulk Facebook Import Section
-        bulk_frm = ctk.CTkFrame(container)
-        bulk_frm.pack(fill="both", expand=True, pady=10)
+        # Multi-platform Import Section (Split Layout)
+        bulk_container = ctk.CTkFrame(container)
+        bulk_container.pack(fill="both", expand=True, pady=10)
         
-        ctk.CTkLabel(bulk_frm, text="📱 Nhập Nhiều Link Facebook", font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=30, pady=(10, 5))
-        ctk.CTkLabel(bulk_frm, text="Nhập mỗi link Facebook một dòng (video hoặc post)", font=("Segoe UI", 11), text_color="gray").pack(anchor="w", padx=30)
+        # --- Left Column: Input ---
+        left_panel = ctk.CTkFrame(bulk_container, fg_color="transparent")
+        left_panel.pack(side="left", fill="both", expand=True, padx=10, pady=10)
         
-        # Textarea for multiple FB links
-        self.textbox_fb_links = ctk.CTkTextbox(bulk_frm, height=200, font=("Consolas", 11))
-        self.textbox_fb_links.pack(fill="both", expand=True, padx=30, pady=10)
-        self.textbox_fb_links.insert("1.0", "# Ví dụ:\n# https://www.facebook.com/watch/?v=123456789\n# https://fb.watch/abc123/\n# https://www.facebook.com/username/videos/123456789/\n cái này update sau hihi :>>")
+        # Header Row with Count
+        header_row = ctk.CTkFrame(left_panel, fg_color="transparent")
+        header_row.pack(fill="x", pady=(0, 5))
+        ctk.CTkLabel(header_row, text="🎬 Nhập Link Video", font=("Segoe UI", 16, "bold")).pack(side="left")
+        self.lbl_link_count = ctk.CTkLabel(header_row, text="(0 link)", text_color="#10b981", font=("Segoe UI", 12, "bold"))
+        self.lbl_link_count.pack(side="left", padx=10)
+
+        ctk.CTkLabel(left_panel, text="Hỗ trợ Facebook, YouTube, Vimeo (Mỗi dòng 1 link)", font=("Segoe UI", 11), text_color="gray").pack(anchor="w")
         
-        # Bulk import options
-        bulk_options = ctk.CTkFrame(bulk_frm, fg_color="transparent")
-        bulk_options.pack(fill="x", padx=30, pady=5)
+        self.textbox_fb_links = ctk.CTkTextbox(left_panel, height=300, font=("Consolas", 11))
+        self.textbox_fb_links.pack(fill="both", expand=True, pady=10)
+        self.textbox_fb_links.insert("1.0", "# Nhập link video vào đây:\n")
+        self.textbox_fb_links.bind("<KeyRelease>", self.update_link_count_display)
         
-        self.chk_auto_title_fb = ctk.CTkCheckBox(bulk_options, text="Tự động tạo tiêu đề từ link", font=("Segoe UI", 11))
-        self.chk_auto_title_fb.pack(side="left", padx=5)
+        # Options
+        bulk_options = ctk.CTkFrame(left_panel, fg_color="transparent")
+        bulk_options.pack(fill="x", pady=5)
+        self.chk_auto_title_fb = ctk.CTkCheckBox(bulk_options, text="Auto Title", font=("Segoe UI", 11))
+        self.chk_auto_title_fb.pack(side="left")
         self.chk_auto_title_fb.select()
         
-        # Bulk import button
-        self.btn_import_fb = ctk.CTkButton(bulk_frm, text="📥 Thêm Tất Cả Vào Hàng Chờ", 
-                                          height=45, 
-                                          fg_color="#1877F2",
-                                          font=("Segoe UI", 13, "bold"),
+        # Buttons
+        action_buttons = ctk.CTkFrame(left_panel, fg_color="transparent")
+        action_buttons.pack(fill="x", pady=10)
+        self.btn_import_fb = ctk.CTkButton(action_buttons, text="🚀 Phân Tích & Lấy Embed", 
+                                          height=45, fg_color="#d97706", font=("Segoe UI", 13, "bold"),
                                           command=self.import_fb_bulk)
-        self.btn_import_fb.pack(fill="x", padx=30, pady=10)
+        self.btn_import_fb.pack(fill="x")
+
+        # --- Right Column: Results List ---
+        right_panel = ctk.CTkFrame(bulk_container, width=500) # Wider for details
+        right_panel.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+        
+        # Header with Title and Bulk Actions
+        header_frame = ctk.CTkFrame(right_panel, fg_color="transparent")
+        header_frame.pack(fill="x", padx=10, pady=(0, 5))
+        
+        ctk.CTkLabel(header_frame, text="📊 Kết Quả Phân Tích AI", font=("Segoe UI", 16, "bold")).pack(side="left")
+        
+        # Bulk Toolbar
+        bulk_tools = ctk.CTkFrame(right_panel, fg_color="#2b2b2b", height=40)
+        bulk_tools.pack(fill="x", padx=5, pady=5)
+        
+        self.chk_select_all = ctk.CTkCheckBox(bulk_tools, text="Chọn tất cả", width=100, command=self.toggle_select_all_results)
+        self.chk_select_all.pack(side="left", padx=10, pady=5)
+        
+        ctk.CTkButton(bulk_tools, text="➕ Thêm vào Hàng Chờ", 
+                      fg_color="#10b981", hover_color="#059669", 
+                      width=150, height=30,
+                      command=self.add_selected_results_to_queue).pack(side="right", padx=10, pady=5)
+        
+        self.results_scroll = ctk.CTkScrollableFrame(right_panel, label_text="Danh sách Video")
+        self.results_scroll.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Result Area
+
 
     # =========================================================================
     # TAB 2: BATCH & QUEUE (Hợp nhất Logic Hàng chờ vào đây)
@@ -779,10 +862,12 @@ class GUIView(ctk.CTk):
         
         ctk.CTkButton(q_header, text="🗑️ Xóa All", width=60, fg_color=self.colors['danger'], command=self.clear_queue).pack(side="right")
 
-        # Listbox
-        self.queue_listbox = ctk.CTkTextbox(right_col, font=("Consolas", 12))
-        self.queue_listbox.pack(fill="both", expand=True, padx=10, pady=5)
-        self.queue_listbox.configure(state="disabled")
+        # Listbox replacement with Scrollable Frame for Cards
+        self.queue_scroll = ctk.CTkScrollableFrame(right_col, label_text="Danh sách Video đang chờ")
+        self.queue_scroll.pack(fill="both", expand=True, padx=10, pady=5)
+        # self.queue_listbox = ctk.CTkTextbox(right_col, font=("Consolas", 12)) # Removed
+        # self.queue_listbox.pack(fill="both", expand=True, padx=10, pady=5)
+        # self.queue_listbox.configure(state="disabled")
 
         # Action Button (Run Batch)
         self.btn_batch_post = ctk.CTkButton(right_col, text="▶️ CHẠY AUTO POST (HÀNG CHỜ)", height=50, 
@@ -876,11 +961,91 @@ class GUIView(ctk.CTk):
                                       command=self.on_vimeo_reg_click)
         self.btn_vm_reg.pack(fill="x", padx=30, pady=20)
 
+        # Account List Section
+        list_frame = ctk.CTkFrame(frm)
+        list_frame.pack(fill="both", expand=True, pady=10)
+        
+        header_frame = ctk.CTkFrame(list_frame, fg_color="transparent")
+        header_frame.pack(fill="x", padx=10, pady=5)
+        ctk.CTkLabel(header_frame, text="📋 Danh sách Tài Khoản", font=("Segoe UI", 14, "bold")).pack(side="left")
+        ctk.CTkButton(header_frame, text="🔄 Refresh", width=80, height=25, command=self.refresh_account_list).pack(side="right")
+        
+        # Scrollable list
+        self.acc_scroll = ctk.CTkScrollableFrame(list_frame, label_text="Click 'Login' để mở trình duyệt")
+        self.acc_scroll.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        # Initial load
+        self.after(500, self.refresh_account_list)
+
         # Log Section
         ctk.CTkLabel(frm, text="📜 Nhật ký chạy:", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=30, pady=(10,0))
         self.txt_vimeo_log = ctk.CTkTextbox(frm, font=("Consolas", 10), height=300)
         self.txt_vimeo_log.pack(fill="both", expand=True, padx=30, pady=10)
         self.txt_vimeo_log.configure(state="disabled")
+
+    def refresh_account_list(self):
+        """Read vimeo_accounts.txt and populate the scrollable list"""
+        # Clear existing
+        try:
+            for widget in self.acc_scroll.winfo_children():
+                widget.destroy()
+        except:
+            pass # Widget might not be ready
+            
+        try:
+            if os.path.exists("vimeo_accounts.txt"):
+                with open("vimeo_accounts.txt", "r", encoding="utf-8") as f:
+                    lines = [l.strip() for l in f.readlines() if l.strip()]
+                
+                if not lines:
+                    ctk.CTkLabel(self.acc_scroll, text="File tài khoản trống").pack(pady=10)
+                    return
+
+                for idx, line in enumerate(lines):
+                    if "|" in line:
+                        parts = line.split("|")
+                        if len(parts) >= 2:
+                            email = parts[0].strip()
+                            pwd = parts[1].strip()
+                            
+                            row = ctk.CTkFrame(self.acc_scroll)
+                            row.pack(fill="x", pady=2, padx=2)
+                            
+                            # Login Button (Pack FIRST to ensure visibility)
+                            btn = ctk.CTkButton(row, text="Login 🚀", width=80, height=24,
+                                              fg_color=self.colors['primary'],
+                                              command=lambda e=email, p=pwd: self.start_vimeo_session(e, p))
+                            btn.pack(side="right", padx=10, pady=2)
+
+                            # Info (Pack SECOND to take remaining space)
+                            info_text = f"{idx+1}. {email} | {pwd}"
+                            ctk.CTkLabel(row, text=info_text, font=("Consolas", 12), anchor="w").pack(side="left", padx=10, fill="x", expand=True)
+            else:
+                ctk.CTkLabel(self.acc_scroll, text="Không tìm thấy file vimeo_accounts.txt\nTạo file này với định dạng: email|password").pack(pady=20)
+                
+        except Exception as e:
+            print(f"Error loading accounts: {e}")
+
+    def start_vimeo_session(self, email, pwd):
+        """Launch browser and auto-login"""
+        import threading
+        from model.vimeo_helper import VimeoHelper
+        
+        if hasattr(self, 'txt_vimeo_log'):
+            self.txt_vimeo_log.configure(state="normal")
+            self.txt_vimeo_log.insert("end", f"\n[SYSTEM] 🚀 Đang mở trình duyệt cho: {email}...\n")
+            self.txt_vimeo_log.see("end")
+            self.txt_vimeo_log.configure(state="disabled")
+            
+        def _run():
+            helper = VimeoHelper()
+            try:
+                helper.login_interactive(email, pwd)
+            except Exception as e:
+                print(f"Login error: {e}")
+                
+        # Run in thread so GUI doesn't freeze
+        threading.Thread(target=_run, daemon=True).start()
 
     # =========================================================================
     # TAB 4.5: IMAGE MANAGEMENT (Quản lý ảnh API car)
@@ -1133,13 +1298,7 @@ class GUIView(ctk.CTk):
         self.history_textbox.tag_bind("link", "<Enter>", lambda e: self.history_textbox.config(cursor="hand2"))
         self.history_textbox.tag_bind("link", "<Leave>", lambda e: self.history_textbox.config(cursor="arrow"))
 
-    def clear_history(self):
-        """Clear all history in the textbox"""
-        if hasattr(self, 'history_textbox'):
-            self.history_textbox.configure(state="normal")
-            self.history_textbox.delete("1.0", "end")
-            self.history_textbox.configure(state="disabled")
-        self.log("🗑️ Đã xóa sạch lịch sử link.")
+    # Method removed (using the one defined later which correctly clears self.published_links)
 
     # =========================================================================
     # TAB 6: SETTINGS
@@ -1249,14 +1408,137 @@ class GUIView(ctk.CTk):
         except Exception as e:
             self.log(f"❌ Lỗi import folder: {e}")
 
+    def add_result_card(self, idx, title, embed_code, image_url, analysis_text):
+        """Add a result card to the scrollable list"""
+        try:
+            # Card Frame
+            card = ctk.CTkFrame(self.results_scroll, fg_color="#2b2b2b", corner_radius=8, border_width=1, border_color="#404040")
+            card.pack(fill="x", pady=5, padx=5)
+            
+            # STORE DATA ON CARD FOR BULK ACTIONS
+            card.data = {
+                'title': title,
+                'embed_code': embed_code,
+                'image_url': image_url
+            }
+            
+            # Checkbox (Left)
+            card.checkbox = ctk.CTkCheckBox(card, text="", width=24, checkbox_width=20, checkbox_height=20)
+            card.checkbox.pack(side="left", padx=(10, 0))
+            # Auto-select if face detected (Optional smart feature? maybe just leave unchecked)
+            # card.checkbox.select() 
+            
+            # --- Layout: Image Left, Info Right ---
+            # Image Placeholder/Canvas
+            img_frame = ctk.CTkFrame(card, width=100, height=100, fg_color="#1a1a1a")
+            img_frame.pack(side="left", padx=5, pady=5)
+            img_frame.pack_propagate(False) # Fixed size
+            
+            # Load Image
+            if image_url and os.path.exists(image_url):
+                 try:
+                    from PIL import Image, ImageTk
+                    pil_img = Image.open(image_url)
+                    pil_img.thumbnail((100, 100))
+                    ctk_img = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=pil_img.size)
+                    ctk.CTkLabel(img_frame, text="", image=ctk_img).pack(expand=True)
+                 except:
+                    ctk.CTkLabel(img_frame, text="No Image").pack(expand=True)
+            else:
+                 ctk.CTkLabel(img_frame, text="No Image").pack(expand=True)
+
+            # Info Frame
+            info_frame = ctk.CTkFrame(card, fg_color="transparent")
+            info_frame.pack(side="left", fill="both", expand=True, padx=10, pady=5)
+            
+            # Title
+            ctk.CTkLabel(info_frame, text=f"{idx}. {title}", font=("Segoe UI", 12, "bold"), anchor="w").pack(fill="x")
+            
+            # AI Analysis Result
+            ai_color = "#3b82f6" # default blue
+            if "Phát hiện" in analysis_text or "Face Detected" in analysis_text: ai_color = "#22c55e" # Green
+            ctk.CTkLabel(info_frame, text=f"🧠 AI: {analysis_text}", font=("Segoe UI", 11), text_color=ai_color, anchor="w").pack(fill="x")
+            
+            # Embed Code (Entry for easy copying)
+            embed_entry = ctk.CTkEntry(info_frame, font=("Consolas", 10), height=25)
+            embed_entry.pack(fill="x", pady=2)
+            embed_entry.insert(0, embed_code)
+            
+            # Add to Queue Button
+            ctk.CTkButton(info_frame, text="⬇ Thêm vào Queue", 
+                         width=100, height=24, 
+                         fg_color="#3b82f6", font=("Segoe UI", 10),
+                         command=lambda c=card: self.add_single_result_to_queue(c)).pack(anchor="e", pady=2)
+            
+        except Exception as e:
+            print(f"Error adding card: {e}")
+
+    def toggle_select_all_results(self):
+        """Select or deselect all cards"""
+        state = self.chk_select_all.get()
+        for widget in self.results_scroll.winfo_children():
+            if hasattr(widget, 'checkbox'):
+                if state: widget.checkbox.select()
+                else: widget.checkbox.deselect()
+
+    def add_single_result_to_queue(self, card):
+        """Add a single card's data to the queue"""
+        try:
+            data = card.data
+            # Create post data
+            post_data = {
+                'title': data['title'],
+                'video_url': data['embed_code'],
+                'image_url': data['image_url'],
+                'content': '',
+                'needs_body_content': True,
+                'theme': self.get_selected_theme_id()
+            }
+            self.post_queue.append(post_data)
+            self.update_queue_display()
+            self.log(f"✅ Đã thêm '{data['title']}' vào hàng chờ.")
+        except Exception as e:
+            self.log(f"❌ Lỗi thêm bài: {e}")
+
+    def add_selected_results_to_queue(self):
+        """Add all checked cards to queue"""
+        added_count = 0
+        for widget in self.results_scroll.winfo_children():
+            if hasattr(widget, 'checkbox') and widget.checkbox.get() == 1:
+                self.add_single_result_to_queue(widget)
+                added_count += 1
+        
+        if added_count > 0:
+            self.log(f"🎉 Đã thêm {added_count} video đã chọn vào hàng chờ!")
+        else:
+            self.log("⚠️ Chưa chọn video nào!")
+
+    def update_link_count_display(self, event=None):
+        """Update the link count label based on textbox content"""
+        try:
+            if not hasattr(self, 'textbox_fb_links') or not hasattr(self, 'lbl_link_count'):
+                return
+                
+            text = self.textbox_fb_links.get("1.0", "end").strip()
+            if not text:
+                count = 0
+            else:
+                lines = text.split('\n')
+                # Count non-empty non-comment lines
+                count = sum(1 for line in lines if line.strip() and not line.strip().startswith('#'))
+            
+            self.lbl_link_count.configure(text=f"({count} link)")
+        except:
+            pass
+
     def import_fb_bulk(self):
-        """Import multiple Facebook video links and add to queue"""
+        """Import multiple video links, generate embeds, and SHOW RESULT in List"""
         try:
             # Get text from textbox
             fb_text = self.textbox_fb_links.get("1.0", "end").strip()
             
             if not fb_text:
-                self.log("❌ Chưa nhập link Facebook nào!")
+                self.log("❌ Chưa nhập link Video nào!")
                 return
             
             # Split by lines and filter out comments and empty lines
@@ -1265,125 +1547,125 @@ class GUIView(ctk.CTk):
             
             for line in lines:
                 line = line.strip()
-                # Skip empty lines and comments
-                if not line or line.startswith('#'):
-                    continue
-                # Check if it's a valid URL for supported platforms
+                if not line or line.startswith('#'): continue
                 if any(domain in line for domain in ['facebook.com', 'fb.watch', 'vimeo.com', 'youtube.com', 'youtu.be']):
                     video_links.append(line)
             
             if not video_links:
-                self.log("❌ Không tìm thấy link Video hợp lệ (Facebook/Vimeo/Youtube)!")
+                self.log("❌ Không tìm thấy link Video hợp lệ!")
                 return
             
-            self.log(f"📱 Bắt đầu import {len(video_links)} link Video...")
-            self.btn_import_fb.configure(state="disabled", text="⏳ Đang xử lý...")
+            self.log(f"📱 Bắt đầu xử lý {len(video_links)} link Video (AI Analysis)...")
+            self.btn_import_fb.configure(state="disabled", text="⏳ Đang phân tích...")
             
-            # Process in thread to avoid blocking UI
+            # Clear previous results in scrollable frame
+            for widget in self.results_scroll.winfo_children():
+                widget.destroy()
+            
+            # Process in thread
             import threading
             import requests 
             from bs4 import BeautifulSoup
+            import cv2
+            import numpy as np
+            import urllib.request
 
-            def _get_generic_title(url):
+            def _get_meta(url):
+                title = None
+                img_url = None
                 try:
-                    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+                    headers = {'User-Agent': 'Mozilla/5.0'}
                     resp = requests.get(url, headers=headers, timeout=5)
                     if resp.status_code == 200:
                         soup = BeautifulSoup(resp.text, 'html.parser')
-                        # Try og:title first
-                        og = soup.find("meta", property="og:title")
-                        if og and og.get("content"):
-                            return og.get("content").split(" | ")[0]
-                        # Try title tag
-                        if soup.title:
-                            return soup.title.string.split(" | ")[0]
-                except:
-                    pass
-                return None
+                        # Title
+                        og_title = soup.find("meta", property="og:title")
+                        if og_title: title = og_title.get("content")
+                        if not title and soup.title: title = soup.title.string
+                        # Image
+                        og_image = soup.find("meta", property="og:image")
+                        if og_image: img_url = og_image.get("content")
+                except: pass
+                return title, img_url
             
+            def _analyze_face(img_path):
+                try:
+                    # Load Haar Cascade (Fastest)
+                    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+                    img = cv2.imread(img_path)
+                    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                    faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+                    if len(faces) > 0:
+                        return f"✅ Phát hiện {len(faces)} khuôn mặt"
+                    return "❌ Không thấy mặt"
+                except Exception as e:
+                    return f"Lỗi: {str(e)[:20]}"
+
             def _process_links():
-                imported_count = 0
+                processed_count = 0
+                
                 for idx, link in enumerate(video_links):
                     try:
                         title = None
+                        img_remote = None
                         video_url_final = link
                         platform = "Video"
 
                         # 1. FACEBOOK
                         if 'facebook.com' in link or 'fb.watch' in link:
                             platform = "Facebook"
-                            self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] FB: Đang lấy tiêu đề..."))
+                            self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] FB: Đang lấy dữ liệu..."))
                             title = self.get_facebook_title(link)
-                            if not title or title == "Facebook Video":
-                                if self.chk_auto_title_fb.get():
-                                    title = f"Facebook Video {idx + 1} - {time.strftime('%H:%M:%S')}"
-                            # Convert to embed
-                            use_sdk = self.initial_config.get('facebook_use_sdk', False)
-                            video_url_final = self.create_facebook_embed(link, use_sdk=use_sdk)
+                            
+                            # Get Image too if possible
+                            _, img_remote = _get_meta(link)
+                            
+                            # Convert to embed (Iframe)
+                            video_url_final = self.create_facebook_embed(link, use_sdk=False)
                         
-                        # 2. VIMEO
-                        elif 'vimeo.com' in link:
-                            platform = "Vimeo"
-                            self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] Vimeo: Đang lấy tiêu đề..."))
-                            title = _get_generic_title(link)
-                            if not title:
-                                title = f"Vimeo Video {idx + 1}"
-                            # Keep raw URL, wp_model handles embed
-                            video_url_final = link 
-
-                        # 3. YOUTUBE
-                        elif 'youtube.com' in link or 'youtu.be' in link:
-                            platform = "YouTube"
-                            self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] YouTube: Đang lấy tiêu đề..."))
-                            title = _get_generic_title(link)
-                            if not title:
-                                title = f"YouTube Video {idx + 1}"
-                             # Keep raw URL
+                        # 2. OTHERS
+                        else:
+                            self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] Đang lấy dữ liệu..."))
+                            title, img_remote = _get_meta(link)
                             video_url_final = link
 
-                        # Create post data
-                        post_data = {
-                            'title': title,
-                            'video_url': video_url_final,
-                            'image_url': '',
-                            'content': '',
-                            'needs_body_content': True
-                        }
+                        if not title: title = f"Video {idx+1}"
+
+                        # Download Image for Analysis
+                        local_img_path = None
+                        analysis_result = "No Image"
                         
-                        self.post_queue.append(post_data)
-                        imported_count += 1
-                        self.after(0, lambda i=idx, t=title, p=platform: self.log(f"   ✅ [{i+1}] [{p}] {t[:50]}..."))
+                        if img_remote:
+                            try:
+                                timestamp = time.strftime("%Y%m%d_%H%M%S")
+                                if not os.path.exists("temp_analysis"): os.makedirs("temp_analysis")
+                                local_img_path = f"temp_analysis/thumb_{timestamp}_{idx}.jpg"
+                                urllib.request.urlretrieve(img_remote, local_img_path)
+                                
+                                # Analyze
+                                analysis_result = _analyze_face(local_img_path)
+                            except:
+                                analysis_result = "Download Failed"
+
+                        # Add card to UI
+                        self.after(0, lambda i=idx+1, t=title, e=video_url_final, img=local_img_path, a=analysis_result: 
+                                   self.add_result_card(i, t, e, img, a))
+                        
+                        processed_count += 1
                         
                     except Exception as e:
-                        self.after(0, lambda i=idx, err=e: self.log(f"   ❌ Lỗi link {i+1}: {err}"))
+                        print(e)
                         continue
                 
-                # Update display
-                self.after(0, self.update_queue_display)
-                self.after(0, lambda c=imported_count, t=len(video_links): self.log(f"🎉 Đã thêm {c}/{t} link Facebook vào hàng chờ!"))
-                self.after(0, lambda: self.log(f"   📝 Tất cả link đã được chuyển thành mã nhúng"))
-                
-                # Show content pool status
-                if hasattr(self, 'content_pool') and self.content_pool:
-                    remaining = len(self.content_pool)
-                    self.after(0, lambda r=remaining: self.log(f"💾 Có {r} nội dung sẵn sàng để ghép khi đăng bài"))
-                
-                # Clear textbox after import
-                if imported_count > 0:
-                    self.after(0, lambda: self.textbox_fb_links.delete("1.0", "end"))
-                    self.after(0, lambda: self.textbox_fb_links.insert("1.0", "# Nhập link Facebook tiếp theo...\n"))
-                
-                self.after(0, lambda: self.btn_import_fb.configure(state="normal", text="📥 Thêm Tất Cả Vào Hàng Chờ"))
-            
-            threading.Thread(target=_process_links, daemon=True).start()
-            
-        except Exception as e:
-            self.log(f"❌ Lỗi import Facebook: {e}")
-            self.btn_import_fb.configure(state="normal", text="📥 Thêm Tất Cả Vào Hàng Chờ")
-            import traceback
-            traceback.print_exc()
+                self.after(0, lambda: self.log(f"🏁 Hoàn tất phân tích {processed_count} link."))
+                self.after(0, lambda: self.btn_import_fb.configure(state="normal", text="🚀 Phân Tích & Lấy Embed"))
 
-        return fetched_title or "Facebook Video"
+            # Start thread
+            threading.Thread(target=_process_links, daemon=True).start()
+
+        except Exception as e:
+            self.log(f"❌ Lỗi xử lý: {e}")
+            self.btn_import_fb.configure(state="normal", text="🚀 Phân Tích & Lấy Embed")
 
     def get_facebook_title(self, fb_url):
         """Get title from Facebook video page using requests first, then Selenium fallback"""
@@ -1411,23 +1693,36 @@ class GUIView(ctk.CTk):
                 title_tag = soup.find('title')
                 if title_tag:
                     t = title_tag.text.replace(' | Facebook', '').strip()
-                    if t and t.lower() not in ['facebook', 'log into facebook', 'video', 'watch']:
+                    # Filter out generic titles including "Log in" variations
+                    invalid_titles = ['facebook', 'log into facebook', 'login', 'log in', 'video', 'watch', 'welcome to facebook']
+                    if t and t.lower() not in invalid_titles and "log in" not in t.lower():
                         fetched_title = t
                 
+                # Strategy: og:description (Often contains the caption/title for Reels)
+                if not fetched_title or fetched_title.lower() in ['facebook', 'facebook video', 'watch']:
+                    og_desc = soup.find('meta', property='og:description')
+                    if og_desc and og_desc.get('content'):
+                        d = og_desc.get('content').strip()
+                        # Filter out generic descriptions
+                        if d and "log in" not in d.lower() and "sign up" not in d.lower():
+                            fetched_title = d
+                
                 # Strategy: og:title
-                if not fetched_title or fetched_title == "Facebook":
+                if not fetched_title:
                     og_title = soup.find('meta', property='og:title')
                     if og_title and og_title.get('content'):
                         t = og_title.get('content').strip()
-                        if t and t.lower() not in ['facebook', 'watch', 'video', 'log into facebook']:
+                        invalid_titles = ['facebook', 'watch', 'video', 'log into facebook', 'login', 'log in']
+                        if t and t.lower() not in invalid_titles:
                             fetched_title = t
                             
         except Exception as e:
             print(f"[FB] Requests error: {e}")
 
         # --- Method 2: Selenium (Fallback - Slower but Reliable) ---
-        # Only use if Requests failed or returned generic title
-        if not fetched_title or fetched_title in ["Facebook Video", "Facebook", "Log into Facebook"]:
+        # Only use if Requests failed or returned generic title or "Log in"
+        invalid_titles = ["facebook video", "facebook", "log into facebook", "log in", "login"]
+        if not fetched_title or fetched_title.lower() in invalid_titles or "log in" in fetched_title.lower():
             print("[FB] Switching to Selenium for title extraction...")
             try:
                 from selenium import webdriver
@@ -1445,54 +1740,66 @@ class GUIView(ctk.CTk):
                 if os.name == 'nt':
                      options.add_argument("--disable-logging")
                 
+                # Check for cached driver to speed up if possible (not implemented yet, creating new)
                 service = Service(ChromeDriverManager().install())
                 driver = webdriver.Chrome(service=service, options=options)
                 
                 try:
                     driver.get(fb_url)
-                    time.sleep(4) # Wait a bit longer
+                    time.sleep(5) # Wait for load
                     
                     # 1. Try Page Title again
                     page_title = driver.title
                     if page_title:
                         page_title = page_title.replace(' | Facebook', '')
-                        # Remove notification count e.g. "(1) "
+                        # Remove notification count
                         import re
                         page_title = re.sub(r'^\(\d+\)\s*', '', page_title)
                         
-                        if page_title.lower() not in ["facebook", "facebook - log in or sign up"]:
+                        if page_title.lower() not in invalid_titles and "log in" not in page_title.lower():
                              fetched_title = page_title.strip()
                     
-                    # 2. Try looking for the post caption/content
-                    if not fetched_title or fetched_title.lower() == "facebook":
+                    # 2. Try looking for the post caption/content (Better than title)
+                    if not fetched_title or "log in" in fetched_title.lower():
                         # Try multiple selectors for post text
                         selectors = [
-                            "//div[@data-ad-preview='message']",
-                            "//div[contains(@class, 'ecm0bbzt')]", # Common obfuscated class
-                            "//h3", # Sometimes headings
-                            "//span[contains(@class, 'x193iq5w')]", # Another common class text
-                            "//div[@dir='auto']"
+                             "//div[@data-ad-preview='message']", # Classic Text
+                             "//span[contains(@class, 'x193iq5w')]", # Common text class
+                             "//div[@dir='auto']", # Generic text container
+                             "//h3", 
+                             "//h2",
+                             "//span" # Last resort: Longest span
                         ]
                         
+                        longest_text = ""
                         for xpath in selectors:
                             try:
                                 elems = driver.find_elements("xpath", xpath)
                                 for elem in elems:
                                     text = elem.text.strip()
-                                    if text and len(text) > 5 and len(text) < 150: # Reasonable length for title
-                                        fetched_title = text.split('\n')[0] # Take first line
-                                        break
-                                if fetched_title and fetched_title.lower() != "facebook":
-                                    break
-                            except:
-                                pass
-                                
+                                    # Candidate must be reasonable length (10-200 chars)
+                                    if text and 10 < len(text) < 300: 
+                                        # Prefer text that is NOT a button label
+                                        if text.lower() not in ["like", "comment", "share", "follow", "log in"]:
+                                             # Keep the longest valid text found - likely to be the caption
+                                             if len(text) > len(longest_text):
+                                                 longest_text = text
+                            except: pass
+                        
+                        if longest_text:
+                            fetched_title = longest_text.split('\n')[0]
+
                 finally:
-                    driver.quit()
+                    if 'driver' in locals():
+                        driver.quit()
                     
             except Exception as e:
                 print(f"[FB] Selenium error: {e}")
  
+        # Final sanity check to NEVER return "Log in"
+        if fetched_title and ("log in" in fetched_title.lower() or "login" in fetched_title.lower()):
+            fetched_title = None
+
         return fetched_title or "Facebook Video"
 
     def create_facebook_embed(self, fb_url, use_sdk=False):
@@ -1510,43 +1817,115 @@ class GUIView(ctk.CTk):
         clean_url = clean_url.replace("m.facebook.com", "www.facebook.com")
         clean_url = clean_url.replace("web.facebook.com", "www.facebook.com")
         
+        # Decide method: Use SDK if requested, otherwise Iframe
         if use_sdk:
-            # Method 2: Facebook SDK (bypass security if iframe is blocked)
-            # Format: <div class="fb-video" data-href="URL" data-width="267"></div>
+            # Method 2: Facebook SDK (Javascript based)
             embed_code = (
-                f'<!-- Facebook SDK Script -->\n'
-                f'<script async defer crossorigin="anonymous" '
-                f'src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v12.0"></script>\n'
-                f'<!-- Facebook Video Embed -->\n'
+                f'<div id="fb-root"></div>\n'
+                f'<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v18.0" nonce="Aut0Wpr"></script>\n'
                 f'<div class="fb-video" data-href="{clean_url}" data-width="267" data-show-text="false"></div>'
             )
         else:
-            # Method 1: Direct iframe (default, faster)
+            # Method 1: Iframe (HTML only, no JS required)
             # URL encode for Facebook embed
             encoded_url = quote(clean_url, safe='')
             
-            # Create fixed-size Facebook iframe (267x591 - 9:16 ratio for portrait video)
-            # CRITICAL: NO SPACES between attributes - Facebook blocks if there are spaces!
+            # Dimensions for vertical video (9:16 approx)
+            w = "360"
+            h = "640"
+            
+            # Use a robust iframe URL compatible with Reels
             embed_code = (
-                f'<iframe src="https://www.facebook.com/plugins/video.php?height=476&href={encoded_url}&show_text=true&width=267&t=0"'
-                f'width="267"'
-                f'height="591"'
-                f'style="border:none;overflow:hidden"'
-                f'scrolling="no"'
-                f'frameborder="0"'
-                f'allowfullscreen="true"'
-                f'allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"'
-                f'allowFullScreen="true">'
-                f'</iframe>'
+                f'<iframe src="https://www.facebook.com/plugins/video.php?height={h}&href={encoded_url}&show_text=false&width={w}&t=0" '
+                f'width="{w}" height="{h}" '
+                f'style="border:none;overflow:hidden" '
+                f'scrolling="no" frameborder="0" allowfullscreen="true" '
+                f'allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>'
             )
         
         return embed_code
 
     def add_to_queue(self):
-        data = self.get_post_data()
-        if not data.title and not data.video_url:
+        # Grab raw text from Textbox (Bulk support)
+        raw_video_text = self.entry_video.get("1.0", "end").strip()
+        data = self.get_post_data() # Gets other fields (Title, Image, etc)
+        
+        # Check if empty
+        if not data.title and not raw_video_text:
             messagebox.showwarning("Thiếu thông tin", "Nhập ít nhất tiêu đề hoặc video URL!")
             return
+
+        # SPLIT LINES for Bulk Processing
+        video_lines = [line.strip() for line in raw_video_text.split('\n') if line.strip()]
+        
+        if len(video_lines) > 1:
+            # BULK MODE
+            added_count = 0
+            base_title = data.title
+            
+            self.log(f"📦 Phát hiện {len(video_lines)} dòng video. Đang thêm xử lý hàng loạt...")
+            
+            for idx, vid_line in enumerate(video_lines):
+                try:
+                    # Clone data for each post
+                    import copy
+                    current_post = copy.deepcopy(data)
+                    current_post.video_url = vid_line
+                    
+                    # Handle Title
+                    if not base_title: 
+                         # If no title provided, use generic or let later steps handle it
+                         current_post.title = "" 
+                    else:
+                         # Append index to title to differentiate if user provided one
+                         current_post.title = f"{base_title} (Part {idx+1})"
+
+                    # --- Facebook Logic (Mini version for bulk) ---
+                    if 'facebook.com' in vid_line or 'fb.watch' in vid_line:
+                        if not vid_line.startswith('<'): # URL not Embed
+                             # Fetch title if missing
+                             if not current_post.title:
+                                 try:
+                                     # Fast fetch attempt (Blocking UI slightly but accepting for batch)
+                                     self.update_idletasks()
+                                     ft = self.get_facebook_title(vid_line)
+                                     if ft and ft != "Facebook Video":
+                                         current_post.title = ft
+                                 except: pass
+                                 
+                             # Generate Embed
+                             # use_sdk defaults to False, uses Iframe (robust)
+                             current_post.video_url = self.create_facebook_embed(vid_line)
+                    
+                    # Add to queue
+                    cleaned_data = {
+                        'title': current_post.title,
+                        'video_url': current_post.video_url,
+                        'image_url': current_post.image_url,
+                        'content': current_post.content,
+                        'needs_body_content': getattr(current_post, 'needs_body_content', True),
+                        'theme': self.get_selected_theme_id()
+                    }
+                    self.post_queue.append(cleaned_data)
+                    added_count += 1
+                    
+                except Exception as e:
+                    print(f"Error adding line {idx}: {e}")
+            
+            self.log(f"✅ Đã thêm {added_count} bài viết vào hàng chờ!")
+            self.update_queue_display()
+            self.entry_video.delete("1.0", "end")
+            return
+
+        # SINGLE MODE (Original Logic)
+        # Ensure data.video_url is set correctly from the textbox
+        data.video_url = raw_video_text
+        
+        if not data.title and not data.video_url:
+             messagebox.showwarning("Thiếu thông tin", "Nhập ít nhất tiêu đề hoặc video URL!")
+             return
+             
+        # ... Continue with original single logic below ...
         
         # --- Facebook Processing for Single Post ---
         if data.video_url and ('facebook.com' in data.video_url or 'fb.watch' in data.video_url):
@@ -1634,65 +2013,106 @@ class GUIView(ctk.CTk):
         self.textbox_content.delete("1.0", "end")
 
     def update_queue_display(self):
-        self.queue_listbox.configure(state="normal")
-        self.queue_listbox.delete("1.0", "end")
-        self.lbl_queue_count.configure(text=f"({len(self.post_queue)} bài)")
-        
-        if not self.post_queue:
-            self.queue_listbox.insert("end", "Hàng chờ trống. Thêm bài viết để bắt đầu.\n")
-            self.btn_batch_post.configure(state="disabled", text="▶️ CHẠY AUTO POST (HÀNG CHỜ)")
+        """Update Queue display using Cards with Thumbnails"""
+        # Update label count
+        if hasattr(self, 'lbl_queue_count'):
+            self.lbl_queue_count.configure(text=f"({len(self.post_queue)} bài)")
+            
+        # Enable/Disable Run button
+        if hasattr(self, 'btn_batch_post'):
+            if self.post_queue:
+                self.btn_batch_post.configure(state="normal", text="🚀 CHAY AUTO")
+            else:
+                self.btn_batch_post.configure(state="disabled", text="▶️ CHẠY AUTO POST (HÀNG CHỜ)")
+            
+        # Clear existing cards
+        if hasattr(self, 'queue_scroll'):
+            for widget in self.queue_scroll.winfo_children():
+                widget.destroy()
         else:
-            self.btn_batch_post.configure(state="normal", text="🚀 CHAY AUTO")
-            for idx, item in enumerate(self.post_queue):
-                title = item.get('title', 'Không có tiêu đề')
-                video_url = item.get('video_url', '')
-                content = item.get('content', '')
+            return
+            
+        # Populate new cards
+
+        if not self.post_queue:
+            ctk.CTkLabel(self.queue_scroll, text="Hàng chờ trống. Thêm bài viết để bắt đầu.", text_color="gray").pack(pady=20)
+            return
+
+        for idx, post in enumerate(self.post_queue):
+            try:
+                # Post Data
+                title = post.get('title', 'No Title')
+                video_url = post.get('video_url', '')
+                image_url = post.get('image_url', '')
                 
-                # Detect post type
-                post_type = ""
-                preview = ""
+                # Card Frame
+                card = ctk.CTkFrame(self.queue_scroll, fg_color="#2b2b2b", corner_radius=8, border_width=1, border_color="#404040")
+                card.pack(fill="x", pady=5, padx=5)
                 
-                if video_url and 'vimeo.com' in video_url:
-                    # Vimeo video post
-                    post_type = "[Vimeo] "
-                    preview = f"🔗 {video_url[:40]}..."
-                elif video_url and ('youtube' in video_url.lower() or 'youtu.be' in video_url.lower()):
-                    # YouTube video post
-                    post_type = "[YouTube] "
-                    preview = f"🔗 {video_url[:40]}..."
-                elif video_url and 'facebook' in video_url.lower():
-                    # Facebook video post
-                    post_type = "[Facebook] "
-                    preview = f"🔗 {video_url[:40]}..."
-                elif content and not video_url:
-                    # Text content post (from TXT file)
-                    post_type = "[TXT] "
-                    content_preview = content[:50].replace('\n', ' ')
-                    preview = f"📄 {content_preview}..."
-                else:
-                    # Unknown type
-                    post_type = ""
-                    preview = "❓ Không rõ loại"
+                # 1. Thumbnail (Left)
+                thumb_frame = ctk.CTkFrame(card, width=80, height=60, fg_color="#1a1a1a")
+                thumb_frame.pack(side="left", padx=5, pady=5)
+                thumb_frame.pack_propagate(False)
                 
-                display_line = f"{idx+1}. {post_type}{title}\n"
-                if preview:
-                    display_line += f"    {preview}\n"
-                display_line += "-"*50 + "\n"
+                # Load Image if available
+                has_img = False
+                if image_url and os.path.exists(image_url):
+                    try:
+                        from PIL import Image, ImageTk
+                        pil_img = Image.open(image_url)
+                        # Resize preserving aspect ratio roughly or crop? simple thumbnail is fine
+                        pil_img.thumbnail((80, 80))
+                        ctk_img = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=pil_img.size)
+                        ctk.CTkLabel(thumb_frame, text="", image=ctk_img).pack(expand=True)
+                        has_img = True
+                    except: pass
                 
-                self.queue_listbox.insert("end", display_line)
-        
-        self.queue_listbox.configure(state="disabled")
+                if not has_img:
+                    ctk.CTkLabel(thumb_frame, text="No Img", font=("Arial", 9)).pack(expand=True)
+                
+                # 2. Info (Center)
+                info_frame = ctk.CTkFrame(card, fg_color="transparent")
+                info_frame.pack(side="left", fill="both", expand=True, padx=10)
+                
+                # Post Type Icon/Text
+                post_type = "📄" # Default
+                if 'facebook' in video_url: post_type = "Facebook 🟦"
+                elif 'youtube' in video_url: post_type = "YouTube 🟥"
+                elif 'vimeo' in video_url: post_type = "Vimeo 🟦"
+                
+                ctk.CTkLabel(info_frame, text=f"{idx+1}. {post_type}", font=("Segoe UI", 10), text_color="gray", anchor="w").pack(fill="x")
+                ctk.CTkLabel(info_frame, text=title[:60] + "..." if len(title)>60 else title, font=("Segoe UI", 12, "bold"), anchor="w").pack(fill="x")
+                ctk.CTkLabel(info_frame, text=video_url[:80]+"..." if len(video_url)>80 else video_url, font=("Consolas", 9), text_color="gray", anchor="w").pack(fill="x")
+                
+                # 3. Actions (Right)
+                action_frame = ctk.CTkFrame(card, fg_color="transparent")
+                action_frame.pack(side="right", padx=10)
+                
+                # Delete Button
+                ctk.CTkButton(action_frame, text="🗑️", width=40, fg_color="#ef4444", hover_color="#dc2626",
+                              command=lambda i=idx: self.remove_from_queue(i)).pack()
+                
+            except Exception as e:
+                print(f"Error displaying queue item {idx}: {e}")
+
+    def remove_from_queue(self, index):
+        """Remove item from queue by index and refresh display"""
+        if 0 <= index < len(self.post_queue):
+            removed = self.post_queue.pop(index)
+            self.log(f"🗑️ Đã xoá khỏi hàng chờ: {removed.get('title')}")
+            self.update_queue_display()
 
     def clear_queue(self):
         self.post_queue = []
         self.update_queue_display()
+        self.log("🗑️ Đã xóa toàn bộ hàng chờ.")
 
     def get_post_data(self):
         data = AppData()
         data.title = self.entry_title.get()
         
         # Extract video URL from iframe if user pasted full iframe code
-        video_input = self.entry_video.get().strip()
+        video_input = self.entry_video.get("1.0", "end").strip()
         data.video_url = self._extract_video_url(video_input)
         
         data.image_url = self.entry_image.get()
@@ -1876,11 +2296,35 @@ class GUIView(ctk.CTk):
         data.title = item.get('title', '')
         data.video_url = item.get('video_url', '')  # This will be used to generate embed in wp_model.py
         data.image_url = item.get('image_url', '')
+
+        # --- FALLBACK: Use Profile Pic from 'thumbnails' if no video thumb ---
+        if not data.image_url:
+            try:
+                import random
+                thumb_dir = "thumbnails"
+                if os.path.exists(thumb_dir):
+                    profiles = [
+                        f for f in os.listdir(thumb_dir) 
+                        if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')) 
+                        and not f.startswith("car_api_") # Filter out downloaded car images
+                    ]
+                    if profiles:
+                        # Pick random profile pic
+                        selected_profile = random.choice(profiles)
+                        data.image_url = os.path.abspath(os.path.join(thumb_dir, selected_profile))
+                        self.log(f"   🖼️ Không có ảnh video -> Lấy ảnh đại diện: {selected_profile}")
+            except Exception as e:
+                print(f"Error picking profile pic: {e}")
         data.content_image = item.get('content_image', '')  # Content image 1
         data.content_image2 = item.get('content_image2', '')  # Content image 2
         data.content_image3 = item.get('content_image3', '')  # Content image 3
         data.auto_fetch_images = True  # Always auto-fetch for batch posting
         data.content = item.get('content', '')
+        
+        # Get theme from item or fallback to selected theme in GUI
+        # This ensures that even old queue items respect the current GUI selection if they don't have a theme
+        data.theme = item.get('theme', self.get_selected_theme_id())
+        print(f"[DEBUG] Batch item theme: {data.theme}")
         
         # LƯU TITLE VÀO BIẾN TẠM để dùng trong on_post_finished
         self.current_posting_title = data.title
@@ -1893,7 +2337,7 @@ class GUIView(ctk.CTk):
             # Mock success for testing
             self.after(2000, lambda: self.on_post_finished(True, f"https://test.com/{data.title.replace(' ','-')}", True))
 
-    def on_post_finished(self, success, message, is_batch=False, post_title=None):
+    def on_post_finished(self, success, message, is_batch=False, post_title=None, image_path=None):
         if success:
             self.log(f"✅ THÀNH CÔNG: {message}")
             
@@ -1918,11 +2362,32 @@ class GUIView(ctk.CTk):
             if not final_title or final_title == "Unknown":
                  final_title = f"Post {len(self.published_links) + 1}"
 
-            # Add to history with title
+            # --- Resolve Image Path for History if not provided ---
+            if not image_path:
+                if is_batch and self.post_queue:
+                    # Get from current queue item
+                    image_path = self.post_queue[0].get('image_url', '')
+                elif not is_batch:
+                    # Get from UI
+                    if hasattr(self, 'entry_image'):
+                        image_path = self.entry_image.get()
+
+            # Add to history with title AND image
             try:
-                print(f"[DEBUG] Adding to history: '{final_title}' -> {message}")  # Terminal only
-                self.add_to_history(message, final_title)
-                print(f"[DEBUG] Successfully added to history")  # Terminal only
+                print(f"[DEBUG] Adding to history: '{final_title}' -> {message}")
+                # Store in list with image path
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+                history_item = {
+                    'title': final_title,
+                    'link': message,
+                    'timestamp': timestamp,
+                    'status': 'checking', # checking, success, error
+                    'image_path': image_path
+                }
+                self.published_links.append(history_item)
+                
+                # Render immediately
+                self.update_history_status(len(self.published_links)-1, 'checking')
                 
                 # AUTO-CHECK LINK sau 5 giây (tăng từ 2s để WordPress kịp xử lý)
                 self.after(5000, lambda: self.check_published_link(message, final_title))
@@ -2016,50 +2481,69 @@ class GUIView(ctk.CTk):
         except Exception as e:
             print(f"[ERROR] Failed to open link: {e}")
     
-    def add_to_history(self, link, title="", status="pending"):
-        """Add published post to history with title, link and status"""
+    def add_to_history(self, link, title="", status="pending", image_path=None):
+        """Add published post to history with title, link, status AND thumbnail"""
+        # This function is now deprecated/replaced by the logic in on_post_finished
+        # and update_history_status for initial rendering.
+        # Keeping it for now to avoid breaking other parts if any still call it directly.
+        print("[WARNING] add_to_history called directly. Consider using on_post_finished logic.")
         try:
-            # Store in list with both title and link
+            # Store in list with image path
             self.published_links.append({
                 'title': title,
                 'link': link,
                 'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
-                'status': status  # pending, success, error
+                'status': status,
+                'image_path': image_path
             })
             
-            # Display in history textbox with nice formatting
-            # Phải dùng after() vì có thể được gọi từ background thread
+            # Display in history textbox
             def update_ui():
                 if hasattr(self, 'history_textbox'):
                     self.history_textbox.configure(state="normal")
                     
-                    # Format: [Index] Title
-                    #         🔗 Link (clickable)
-                    #         📅 Timestamp
-                    #         ─────────────
                     index = len(self.published_links)
                     
-                    # Status icon
-                    status_icon = "⏳"  # Default pending
-                    if status == "success":
-                        status_icon = "✅"
-                    elif status == "error":
-                        status_icon = "❌"
+                    # --- Insert Image (Thumbnail) ---
+                    has_image = False
+                    if image_path and os.path.exists(image_path):
+                        try:
+                            # Resize image for history list (e.g. 80x80)
+                            pil_img = Image.open(image_path)
+                            pil_img.thumbnail((80, 80)) 
+                            photo = ImageTk.PhotoImage(pil_img)
+                            
+                            # Keep reference to avoid garbage collection
+                            if not hasattr(self, 'history_images'):
+                                self.history_images = []
+                            self.history_images.append(photo)
+                            
+                            # Insert image
+                            self.history_textbox.image_create("end", image=photo)
+                            self.history_textbox.insert("end", "  ") # Spacing
+                            has_image = True
+                        except Exception as e:
+                            print(f"[GUI] Error loading history thumb: {e}")
                     
-                    # Insert title
+                    # --- Status Icon ---
+                    status_icon = "⏳"
+                    if status == "success": status_icon = "✅"
+                    elif status == "error": status_icon = "❌"
+                    
+                    # --- Title ---
                     self.history_textbox.insert("end", f"[{index}] {status_icon} {title}\n")
                     
-                    # Insert link icon
-                    self.history_textbox.insert("end", "🔗 ")
+                    # --- Link ---
+                    indent = "          " if has_image else ""
+                    self.history_textbox.insert("end", f"{indent}🔗 ")
                     
-                    # Insert clickable link
                     link_start = self.history_textbox.index("end-1c")
                     self.history_textbox.insert("end", link)
                     link_end = self.history_textbox.index("end-1c")
                     self.history_textbox.tag_add("link", link_start, link_end)
                     
-                    # Insert timestamp and separator
-                    self.history_textbox.insert("end", f"\n📅 {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                    # --- Timestamp ---
+                    self.history_textbox.insert("end", f"\n{indent}📅 {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
                     self.history_textbox.insert("end", "─" * 60 + "\n\n")
                     
                     self.history_textbox.see("end")
@@ -2076,46 +2560,128 @@ class GUIView(ctk.CTk):
             traceback.print_exc()
     
     def update_history_status(self, index, status):
-        """Update status of a history item (for async link checking)"""
-        try:
-            if 0 <= index - 1 < len(self.published_links):
-                self.published_links[index - 1]['status'] = status
+        """Update status icon in history with Image Support"""
+        if index >= len(self.published_links): return
+        
+        self.published_links[index]['status'] = status
+        
+        # Re-render entire history
+        def rebuild_ui():
+            try:
+                self.history_textbox.configure(state="normal")
+                self.history_textbox.delete("1.0", "end")
                 
-                # Rebuild entire history display
-                def rebuild_ui():
-                    if hasattr(self, 'history_textbox'):
-                        self.history_textbox.configure(state="normal")
-                        self.history_textbox.delete("1.0", "end")
-                        
-                        for i, item in enumerate(self.published_links, 1):
-                            status_icon = "⏳"
-                            if item['status'] == "success":
-                                status_icon = "✅"
-                            elif item['status'] == "error":
-                                status_icon = "❌"
-                            
-                            # Insert title
-                            self.history_textbox.insert("end", f"[{i}] {status_icon} {item['title']}\n")
-                            
-                            # Insert link icon
-                            self.history_textbox.insert("end", "🔗 ")
-                            
-                            # Insert clickable link
-                            link_start = self.history_textbox.index("end-1c")
-                            self.history_textbox.insert("end", item['link'])
-                            link_end = self.history_textbox.index("end-1c")
-                            self.history_textbox.tag_add("link", link_start, link_end)
-                            
-                            # Insert timestamp and separator
-                            self.history_textbox.insert("end", f"\n📅 {item['timestamp']}\n")
-                            self.history_textbox.insert("end", "─" * 60 + "\n\n")
-                        
-                        self.history_textbox.see("end")
-                        self.history_textbox.configure(state="disabled")
+                # Keep references to prevent GC
+                self.history_images_refs = [] 
                 
-                self.after(0, rebuild_ui)
-        except Exception as e:
-            print(f"[ERROR] Failed to update history status: {e}")
+                for i, item in enumerate(self.published_links, 1):
+                    status_icon = "⏳"
+                    if item['status'] == 'success': status_icon = "✅"
+                    elif item['status'] == 'error': status_icon = "❌"
+                    
+                    title = item['title']
+                    has_image = False
+                    
+                    # 1. Number
+                    self.history_textbox.insert("end", f"[{i}] ", "bold")
+                    
+                    # 2. Image (If exists)
+                    img_path = item.get('image_path')
+                    if img_path and os.path.exists(img_path):
+                        try:
+                            from PIL import Image, ImageTk
+                            pil_img = Image.open(img_path)
+                            pil_img.thumbnail((30, 30)) # Small icon size
+                            tk_img = ImageTk.PhotoImage(pil_img)
+                            self.history_images_refs.append(tk_img) # Keep ref
+                            
+                            self.history_textbox.image_create("end", image=tk_img)
+                            self.history_textbox.insert("end", " ") # Spacer
+                            has_image = True
+                        except Exception as e:
+                            print(f"Error loading history image: {e}")
+                    
+                    # 3. Status & Title
+                    self.history_textbox.insert("end", f"{status_icon} {title}\n")
+                    
+                    # 4. Link & Time
+                    indent = "       " + ("     " if has_image else "") # Adjust indent
+                    
+                    self.history_textbox.insert("end", f"{indent}🔗 ")
+                    link_start = self.history_textbox.index("end-1c")
+                    self.history_textbox.insert("end", item['link'])
+                    link_end = self.history_textbox.index("end-1c")
+                    self.history_textbox.tag_add("link", link_start, link_end)
+                    
+                    self.history_textbox.insert("end", f"\n{indent}📅 {item.get('timestamp','')}\n")
+                    self.history_textbox.insert("end", "─" * 60 + "\n\n")
+
+                self.history_textbox.see("end")
+                self.history_textbox.configure(state="disabled")
+                
+            except Exception as e:
+                print(f"UI Rebuild Error: {e}")
+                
+        self.after(0, rebuild_ui)
+        
+        # Re-render entire history
+        def rebuild_ui():
+            try:
+                self.history_textbox.configure(state="normal")
+                self.history_textbox.delete("1.0", "end")
+                
+                # Keep references to prevent GC
+                self.history_images_refs = [] 
+                
+                for i, item in enumerate(self.published_links, 1):
+                    status_icon = "⏳"
+                    if item['status'] == 'success': status_icon = "✅"
+                    elif item['status'] == 'error': status_icon = "❌"
+                    
+                    title = item['title']
+                    has_image = False
+                    
+                    # 1. Number
+                    self.history_textbox.insert("end", f"[{i}] ", "bold")
+                    
+                    # 2. Image (If exists)
+                    img_path = item.get('image_path')
+                    if img_path and os.path.exists(img_path):
+                        try:
+                            from PIL import Image, ImageTk
+                            pil_img = Image.open(img_path)
+                            pil_img.thumbnail((30, 30)) # Small icon size
+                            tk_img = ImageTk.PhotoImage(pil_img)
+                            self.history_images_refs.append(tk_img) # Keep ref
+                            
+                            self.history_textbox.image_create("end", image=tk_img)
+                            self.history_textbox.insert("end", " ") # Spacer
+                            has_image = True
+                        except Exception as e:
+                            print(f"Error loading history image: {e}")
+                    
+                    # 3. Status & Title
+                    self.history_textbox.insert("end", f"{status_icon} {title}\n")
+                    
+                    # 4. Link & Time
+                    indent = "       " + ("     " if has_image else "") # Adjust indent
+                    
+                    self.history_textbox.insert("end", f"{indent}🔗 ")
+                    link_start = self.history_textbox.index("end-1c")
+                    self.history_textbox.insert("end", item['link'])
+                    link_end = self.history_textbox.index("end-1c")
+                    self.history_textbox.tag_add("link", link_start, link_end)
+                    
+                    self.history_textbox.insert("end", f"\n{indent}📅 {item.get('timestamp','')}\n")
+                    self.history_textbox.insert("end", "─" * 60 + "\n\n")
+
+                self.history_textbox.see("end")
+                self.history_textbox.configure(state="disabled")
+                
+            except Exception as e:
+                print(f"UI Rebuild Error: {e}")
+                
+        self.after(0, rebuild_ui)
     
     def check_published_link(self, url, title):
         """
@@ -2216,6 +2782,15 @@ class GUIView(ctk.CTk):
         
         self.clipboard_append("\n".join(text_lines))
         self.log("📋 Đã copy tất cả link vào clipboard.")
+
+    def clear_history(self):
+        """Clear all history"""
+        self.published_links = []
+        if hasattr(self, 'history_textbox'):
+            self.history_textbox.configure(state="normal")
+            self.history_textbox.delete("1.0", "end")
+            self.history_textbox.configure(state="disabled")
+        self.log("🗑️ Đã xóa toàn bộ lịch sử.")
 
     def browse_video_upload(self):
         filenames = filedialog.askopenfilenames(

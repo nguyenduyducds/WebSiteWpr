@@ -9,8 +9,10 @@ env/
 build/
 dist/
 *.spec
+!WprTool.spec
 *.exe
 *.rar
+temp_analysis/
 
 # Browser / Drivers
 chrome_portable/

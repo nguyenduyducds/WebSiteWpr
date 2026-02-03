@@ -77,59 +77,51 @@ class AppController:
         try:
             # Try REST API first (if available and admin account)
             if hasattr(self, 'rest_client') and self.rest_client:
-                try:
-                    print(f"[CONTROLLER] Trying REST API upload for: {image_path}")
-                    
-                    # Copy cookies from Selenium to REST API session
-                    if hasattr(self, 'selenium_client') and self.selenium_client.driver:
-                        try:
-                            selenium_cookies = self.selenium_client.driver.get_cookies()
-                            for cookie in selenium_cookies:
-                                self.rest_client.session.cookies.set(
-                                    cookie['name'], 
-                                    cookie['value'],
-                                    domain=cookie.get('domain', '')
-                                )
-                            print(f"[CONTROLLER] Copied {len(selenium_cookies)} cookies from Selenium to REST API")
-                            
-                            # Extract nonce from page
+                # RETRY LOGIC: Try up to 2 times
+                for attempt in range(2):
+                    try:
+                        print(f"[CONTROLLER] Trying REST API upload for: {image_path} (Attempt {attempt+1})")
+                        
+                        # Copy cookies from Selenium to REST API session (Refresh every time)
+                        if hasattr(self, 'selenium_client') and self.selenium_client.driver:
                             try:
-                                nonce = self.selenium_client.driver.execute_script("""
-                                    // Try multiple methods to get nonce
-                                    if (window.wpApiSettings && window.wpApiSettings.nonce) {
-                                        return window.wpApiSettings.nonce;
-                                    }
-                                    if (window.wp && window.wp.api && window.wp.api.settings && window.wp.api.settings.nonce) {
-                                        return window.wp.api.settings.nonce;
-                                    }
-                                    // Try to find in meta tags
-                                    var meta = document.querySelector('meta[name="wp-rest-nonce"]');
-                                    if (meta) {
-                                        return meta.content;
-                                    }
-                                    return null;
-                                """)
+                                selenium_cookies = self.selenium_client.driver.get_cookies()
+                                for cookie in selenium_cookies:
+                                    self.rest_client.session.cookies.set(
+                                        cookie['name'], 
+                                        cookie['value'],
+                                        domain=cookie.get('domain', '')
+                                    )
+                                # print(f"[CONTROLLER] Copied cookies from Selenium")
                                 
-                                if nonce:
-                                    self.rest_client.nonce = nonce
-                                    print(f"[CONTROLLER] ✅ Extracted nonce from Selenium: {nonce[:10]}...")
-                                else:
-                                    print(f"[CONTROLLER] ⚠️ Could not extract nonce, trying without it")
-                            except Exception as nonce_err:
-                                print(f"[CONTROLLER] Warning: Could not extract nonce: {nonce_err}")
-                                
-                        except Exception as cookie_err:
-                            print(f"[CONTROLLER] Warning: Could not copy cookies: {cookie_err}")
-                    
-                    success, media_id, media_url = self.rest_client.upload_image(image_path)
-                    
-                    if success and media_url:
-                        print(f"[CONTROLLER] ✅ REST API upload successful: {media_url}")
-                        return media_id, media_url  # Return BOTH media_id and media_url
-                    else:
-                        print(f"[CONTROLLER] ⚠️ REST API upload failed, falling back to Selenium")
-                except Exception as rest_err:
-                    print(f"[CONTROLLER] REST API upload error: {rest_err}")
+                                # Extract nonce if needed (only on first attempt to save time)
+                                if attempt == 0 or not self.rest_client.nonce:
+                                    try:
+                                        nonce = self.selenium_client.driver.execute_script("""
+                                            if (window.wpApiSettings && window.wpApiSettings.nonce) return window.wpApiSettings.nonce;
+                                            if (window.wp && window.wp.api && window.wp.api.settings && window.wp.api.settings.nonce) return window.wp.api.settings.nonce;
+                                            return null;
+                                        """)
+                                        if nonce:
+                                            self.rest_client.nonce = nonce
+                                    except:
+                                        pass
+                            except Exception as cookie_err:
+                                print(f"[CONTROLLER] Warning: Could not sync cookies: {cookie_err}")
+                        
+                        success, media_id, media_url = self.rest_client.upload_image(image_path)
+                        
+                        if success and media_url:
+                            print(f"[CONTROLLER] ✅ REST API upload successful: {media_url}")
+                            return media_id, media_url  # Return BOTH media_id and media_url
+                        else:
+                            print(f"[CONTROLLER] ⚠️ REST API upload failed (Attempt {attempt+1})")
+                            import time
+                            time.sleep(1) # Wait before retry
+                    except Exception as rest_err:
+                        print(f"[CONTROLLER] REST API upload error: {rest_err}")
+                        import time
+                        time.sleep(1)
             
             # Fallback to Selenium (no media_id available)
             print(f"[CONTROLLER] Using Selenium upload for: {image_path}")
@@ -171,6 +163,7 @@ class AppController:
             # STEP 1: Upload FEATURED IMAGE as FIRST content image
             # ========================================
             content_image_urls = []  # Initialize here
+            featured_media_id = None # Initialize featured_media_id
             
             if data.image_url and data.image_url.strip():
                 # Check if it's a local file path (not a URL)
@@ -199,6 +192,10 @@ class AppController:
                     
                     if media_url:
                         content_image_urls.append(media_url)  # Add to content images
+                        data.image_url = media_url # CRITICAL: Update data.image_url to remote URL for SEO/Meta tags
+                        if media_id:
+                            featured_media_id = media_id
+                            print(f"[CONTROLLER] ✅ Captured featured_media_id: {featured_media_id}")
                         print(f"[CONTROLLER] ✅ Featured image uploaded - URL: {media_url}")
                         self.view.after(0, lambda url=media_url: self.view.log(f"✅ Đã upload ảnh đại diện: {url}"))
                     else:
@@ -240,7 +237,7 @@ class AppController:
                         # Download images to local folder
                         import os
                         import time
-                        os.makedirs("thumbnails", exist_ok=True)
+                        os.makedirs("downloaded_cars", exist_ok=True)
                         
                         # PARALLEL DOWNLOAD + OPTIMIZE - Download and optimize all images at once
                         import concurrent.futures
@@ -250,7 +247,7 @@ class AppController:
                             timestamp = time.strftime("%Y%m%d_%H%M%S")
                             import random
                             random_suffix = random.randint(1000, 9999)
-                            local_path = f"thumbnails/car_api_{timestamp}_{random_suffix}_{idx}.jpg"
+                            local_path = f"downloaded_cars/car_api_{timestamp}_{random_suffix}_{idx}.jpg"
                             download_tasks.append((idx, img_url, local_path))
                         
                         # Download all images in parallel
@@ -385,7 +382,9 @@ class AppController:
             
             # Create BlogPost WITHOUT featured_image_url and featured_media_id
             # Featured image is now part of content_images (first image)
-            post = BlogPost(data.title, data.video_url, "", raw_content, content_images=content_image_urls)
+            # Create BlogPost with featured_media_id (Critical for setting WordPress Featured Image)
+            # data.image_url passed as fallback image_url
+            post = BlogPost(data.title, data.video_url, data.image_url, raw_content, content_images=content_image_urls, featured_media_id=featured_media_id)
             
             # Set theme if provided
             if hasattr(data, 'theme') and data.theme:

@@ -61,7 +61,254 @@ class VimeoHelper:
         
         return False
 
-    def init_driver(self, headless=False, proxy=None, is_mobile=False):
+    def init_driver(self, headless=False, proxy=None, is_mobile=False, user_data_dir=None):
+        """Initialize Chrome Driver with Enhanced Anti-Detect, Mobile Option & Profile Support"""
+        import random
+        import os
+        self.is_headless = headless
+        
+        # Try to import UC
+        try:
+            import undetected_chromedriver as uc
+            HAS_UC = True
+        except ImportError:
+            HAS_UC = False
+            print("[VIMEO] 'undetected-chromedriver' not found. Using standard Selenium.")
+
+        # ... (User Agent Logic omitted for brevity, assuming existing) ...
+        # Lấy lại đoạn user agent cũ hoặc chỉ update đoạn options
+        # Để an toàn, tôi sẽ copy lại logic init_driver nhưng thêm user_data_dir xử lý
+        
+        # --- 1. ENHANCED USER AGENTS ---
+        if is_mobile:
+            user_agents = [
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1",
+                "Mozilla/5.0 (Linux; Android 14; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.178 Mobile Safari/537.36"
+            ]
+        else:
+            user_agents = [
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.178 Safari/537.36",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.178 Safari/537.36"
+            ]
+            
+        chosen_ua = random.choice(user_agents)
+        print(f"[VIMEO] Using User-Agent: {chosen_ua}")
+        
+        # Options setup
+        if HAS_UC:
+            options = uc.ChromeOptions()
+        else:
+            options = webdriver.ChromeOptions()
+            
+        # --- PROFILE SUPPORT (NEW) ---
+        if user_data_dir:
+            user_data_dir = os.path.abspath(user_data_dir)
+            options.add_argument(f"--user-data-dir={user_data_dir}")
+            print(f"[VIMEO] 📂 Loading Profile: {user_data_dir}")
+            
+        options.add_argument("--disable-gpu")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-notifications")
+        options.add_argument(f"user-agent={chosen_ua}")
+        
+        # ... (Rest of init_driver logic) ...
+        
+        if is_mobile:
+             options.add_argument("--enable-touch-events")
+             
+        # --- BLOCK WEBRTC ---
+        options.add_argument("--disable-webrtc")
+        prefs = {
+            "webrtc.ip_handling_policy": "disable_non_proxied_udp",
+            "webrtc.multiple_routes_enabled": False,
+            "webrtc.nonproxied_udp_enabled": False
+        }
+        
+        # Add password saving prefs to avoid popup
+        prefs["credentials_enable_service"] = False
+        prefs["profile.password_manager_enabled"] = False
+        
+        try:
+            options.add_experimental_option("prefs", prefs)
+        except:
+            pass
+
+        # Standard Selenium Flags
+        if not HAS_UC:
+            options.add_argument("--disable-blink-features=AutomationControlled")
+            options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            options.add_experimental_option('useAutomationExtension', False)
+        
+        # Headless optimizations
+        if headless:
+            options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--disable-extensions")
+            options.add_argument("--disable-plugins")
+            options.add_argument("--disable-images")
+        
+        # Proxy
+        if proxy:
+            try:
+                parts = proxy.strip().split(':')
+                if len(parts) == 4:
+                    PROXY_HOST, PROXY_PORT, PROXY_USER, PROXY_PASS = parts
+                    print(f"[VIMEO] Using Proxy: {PROXY_HOST}:{PROXY_PORT}")
+                    
+                    manifest_json = """
+                    {
+                        "version": "1.0.0",
+                        "manifest_version": 2,
+                        "name": "Chrome Proxy",
+                        "permissions": [
+                            "proxy",
+                            "tabs",
+                            "unlimitedStorage",
+                            "storage",
+                            "<all_urls>",
+                            "webRequest",
+                            "webRequestBlocking"
+                        ],
+                        "background": {
+                            "scripts": ["background.js"]
+                        },
+                        "minimum_chrome_version":"22.0.0"
+                    }
+                    """
+                    background_js = """
+                    var config = {
+                            mode: "fixed_servers",
+                            rules: {
+                              singleProxy: {
+                                scheme: "http",
+                                host: "%s",
+                                port: parseInt(%s)
+                              },
+                              bypassList: ["localhost"]
+                            }
+                          };
+
+                    chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
+
+                    function callbackFn(details) {
+                        return {
+                            authCredentials: {
+                                username: "%s",
+                                password: "%s"
+                            }
+                        };
+                    }
+
+                    chrome.webRequest.onAuthRequired.addListener(
+                                callbackFn,
+                                {urls: ["<all_urls>"]},
+                                ['blocking']
+                    );
+                    """ % (PROXY_HOST, PROXY_PORT, PROXY_USER, PROXY_PASS)
+                    
+                    import zipfile
+                    pluginfile = 'proxy_auth_plugin.zip'
+                    
+                    with zipfile.ZipFile(pluginfile, 'w') as zp:
+                        zp.writestr("manifest.json", manifest_json)
+                        zp.writestr("background.js", background_js)
+                    
+                    options.add_extension(pluginfile)
+                else:
+                    print(f"[VIMEO] Invalid Proxy Format (host:port:user:pass): {proxy}")
+            except Exception as e:
+                print(f"[VIMEO] Proxy Error: {e}")
+
+        # Driver Initialization
+        try:
+            print(f"[VIMEO] Initializing Driver ({'UC' if HAS_UC else 'Standard'} Mode)...")
+            
+            if HAS_UC:
+                # Fix for UC Mode session reuse issues
+                # FORCE VERSION 144 to avoid mismatch with Chrome 144
+                self.driver = uc.Chrome(options=options, headless=headless, use_subprocess=True, version_main=144)
+            else:
+                self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+            
+            # Additional mobile emulation via CDP if needed
+            if is_mobile:
+                self.driver.execute_cdp_cmd("Emulation.setTouchEmulationEnabled", {"enabled": True})
+                
+            self.driver.set_page_load_timeout(60)
+            print("[VIMEO] Browser initialized successfully.")
+            return True
+        except Exception as e:
+            print(f"[VIMEO] ❌ Init Driver Error: {e}")
+            return False
+
+    # ... (Rest of file) ...
+
+    def login_interactive(self, email, password):
+        """
+        Login with PERSISTENT PROFILE.
+        1. Creates a profile folder for this email.
+        2. Opens browser. If previously logged in, it will auto-login via cookies.
+        3. If not, it attempts to fill form (or user fills it).
+        """
+        import re
+        try:
+            # 1. Prepare Profile Path
+            safe_email = re.sub(r'[^a-zA-Z0-9]', '_', email)
+            profile_path = os.path.join(os.getcwd(), "browser_profiles", safe_email)
+            os.makedirs(profile_path, exist_ok=True)
+            
+            print(f"[VIMEO] 🚀 Starting session for: {email}")
+            print(f"[VIMEO] 📂 Profile stored at: {profile_path}")
+            
+            # 2. Start browser with Profile
+            self.init_driver(headless=False, user_data_dir=profile_path)
+            
+            # 3. Go to Vimeo
+            self.driver.get("https://vimeo.com/log_in")
+            time.sleep(3)
+            
+            # 4. Check if already logged in (by URL redirect or element)
+            current_url = self.driver.current_url
+            if "log_in" not in current_url and "join" not in current_url:
+                 print(f"[VIMEO] ✅ Detected PREVIOUS SESSION. Already logged in!")
+                 print(f"[VIMEO] 🎉 Bạn đã đăng nhập từ trước!")
+            else:
+                # Try auto-fill if on login page
+                try:
+                    print("[VIMEO] 🔐 Attempting to auto-fill credentials...")
+                    email_input = WebDriverWait(self.driver, 5).until(
+                        EC.presence_of_element_located((By.NAME, "email"))
+                    )
+                    email_input.clear()
+                    email_input.send_keys(email)
+                    email_input.send_keys(Keys.RETURN)
+                    time.sleep(2)
+                    
+                    pwd_input = WebDriverWait(self.driver, 5).until(
+                        EC.presence_of_element_located((By.NAME, "password"))
+                    )
+                    pwd_input.clear()
+                    pwd_input.send_keys(password)
+                    pwd_input.send_keys(Keys.RETURN)
+                    print("[VIMEO] ✅ Auto-filled credentials. Please solve CAPTCHA if asked.")
+                except Exception as e:
+                    print(f"[VIMEO] ⚠️ Could not auto-fill (maybe already logged in or changed layout): {e}")
+            
+            # 5. KEEP ALIVE LOOP
+            print(f"[VIMEO] 🛑 Browser is open. Close the window to end session.")
+            while True:
+                try:
+                    if not self.driver.window_handles:
+                        break
+                    time.sleep(1)
+                except:
+                    break
+                    
+            print(f"[VIMEO] Session ended for {email}")
+            
+        except Exception as e:
+            print(f"[VIMEO] Error in interactive session: {e}")
+        finally:
+            self.close()
         """Initialize Chrome Driver with Enhanced Anti-Detect & Mobile Option"""
         import random
         import os
@@ -1631,13 +1878,48 @@ class VimeoHelper:
                     
                     # Fallback to screenshot if smart thumbnail fails
                     if not thumbnail_path:
-                        print("[VIMEO] Using screenshot fallback...")
+                        print("[VIMEO] Smart thumbnail failed/skipped. Using screenshot fallback...")
                         filename = f"thumb_{video_id}_screen.png"
                         save_path = os.path.join(thumb_dir, filename)
-                        self.driver.save_screenshot(save_path)
-                        self.crop_vimeo_ui(save_path)
-                        thumbnail_path = save_path
-                        print(f"[VIMEO] ✅ Screenshot thumbnail: {os.path.basename(thumbnail_path)}")
+                        
+                        try:
+                            # 1. Try to capture the <video> element directly (Most Accurate)
+                            print("[VIMEO] Attempting to capture <video> element...")
+                            
+                            # Ensure video handles are visible usually inside shadow dom or iframes
+                            # But here we are on the upload/preview page.
+                            
+                            # Try to force video to play/seek a bit to ensure it's not black
+                            try:
+                                self.driver.execute_script("""
+                                    var v = document.querySelector('video');
+                                    if(v) { 
+                                        v.currentTime = 1; 
+                                        v.pause();
+                                    }
+                                """)
+                                time.sleep(1.0) # Wait for seek
+                            except: pass
+
+                            video_elems = self.driver.find_elements(By.TAG_NAME, "video")
+                            if video_elems:
+                                # Capture the specific video element
+                                video_elems[0].screenshot(save_path)
+                                thumbnail_path = save_path
+                                print(f"[VIMEO] ✅ Captured video element: {os.path.basename(thumbnail_path)}")
+                            else:
+                                raise Exception("No <video> element found")
+                                
+                        except Exception as screen_err:
+                            print(f"[VIMEO] Video element capture failed: {screen_err}. Using full page crop...")
+                            # 2. Fallback to old full page screenshot + crop
+                            try:
+                                self.driver.save_screenshot(save_path)
+                                self.crop_vimeo_ui(save_path)
+                                thumbnail_path = save_path
+                                print(f"[VIMEO] ✅ Full page screenshot (cropped): {os.path.basename(thumbnail_path)}")
+                            except Exception as e2:
+                                print(f"[VIMEO] Full screenshot failed: {e2}")
                         
                 except Exception as e:
                     print(f"[VIMEO] ⚠️ Thumbnail generation failed: {e}")
@@ -1951,71 +2233,167 @@ class VimeoHelper:
             return False
     
     def extract_smart_thumbnail(self, video_path, output_path):
-        """Extract best quality frame from video for thumbnail (optimized for speed)"""
+        """Extract best quality frame from video (Robust Unicode Support)"""
+        temp_video_path = None
         try:
             import cv2
             import numpy as np
-            cap = cv2.VideoCapture(video_path)
+            import shutil
+            import tempfile
+            
+            # 1. Handle Unicode Paths on Windows:
+            # OpenCV often fails with non-ASCII paths. We copy to a temp ASCII file.
+            if not os.path.exists(video_path):
+                print(f"[VIMEO] ❌ Video file not found: {video_path}")
+                return None
+
+            # Create temp file with simple name
+            fd, temp_video_path = tempfile.mkstemp(suffix=".mp4")
+            os.close(fd)
+            
+            print(f"[VIMEO] 📥 Creating temp copy for processing: {os.path.basename(temp_video_path)}...")
+            shutil.copy2(video_path, temp_video_path)
+            
+            # 2. Process with OpenCV
+            cap = cv2.VideoCapture(temp_video_path)
             if not cap.isOpened():
+                print("[VIMEO] ⚠️ OpenCV failed to open video.")
+                if os.path.exists(temp_video_path): os.remove(temp_video_path)
                 return None
             
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            duration = total_frames / fps if fps > 0 else 0
-            
-            # Analyze middle section of video (skip intro/outro)
-            start_frame = int(total_frames * 0.15)
-            end_frame = int(total_frames * 0.85)
-            if start_frame >= end_frame:
-                start_frame = 0
-                end_frame = total_frames
-            
-            # Reduced from 10 to 5 candidates for speed
-            num_candidates = 5
-            step = max(1, (end_frame - start_frame) // num_candidates)
+            if total_frames <= 0:
+                # Stream or error, try reading a few frames
+                total_frames = 100
+                
+            # Analyze middle section to avoid black intro/outro
+            start_frame = int(total_frames * 0.2)
+            end_frame = int(total_frames * 0.8)
+            step = max(1, (end_frame - start_frame) // 5) # Check 5 candidate frames
             
             best_score = -1.0
             best_frame = None
             
-            for i in range(0, num_candidates):
+            for i in range(5):
                 frame_idx = start_frame + (i * step)
                 cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
                 ret, frame = cap.read()
-                if not ret:
-                    continue
+                if not ret: continue
                 
-                # Quick quality analysis
+                # Quality Score: Sharpness + Contrast
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                blur_score = cv2.Laplacian(gray, cv2.CV_64F).var()
-                mean_brightness = np.mean(gray)
-                contrast_score = np.std(gray)
+                blur = cv2.Laplacian(gray, cv2.CV_64F).var()
+                contrast = np.std(gray)
                 
-                # Penalize too dark or too bright frames
-                if mean_brightness < 40 or mean_brightness > 220:
-                    penalty = 0.2
-                else:
-                    penalty = 1.0
+                # Penalize full black/white
+                mean_val = np.mean(gray)
+                penalty = 0.1 if (mean_val < 20 or mean_val > 235) else 1.0
                 
-                final_score = (blur_score * 0.7) + (contrast_score * 10 * 0.3)
-                final_score *= penalty
+                score = (blur * 0.6 + contrast * 0.4) * penalty
                 
-                if final_score > best_score:
-                    best_score = final_score
+                if score > best_score:
+                    best_score = score
                     best_frame = frame
             
             cap.release()
             
+            # 3. Save result
             if best_frame is not None:
-                cv2.imwrite(output_path, best_frame)
-                return output_path
+                # Ensure directory exists
+                os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                
+                # Write using cv2 (handle unicode output path via imencode)
+                is_success, buffer = cv2.imencode(".jpg", best_frame)
+                if is_success:
+                    with open(output_path, "wb") as f:
+                        f.write(buffer)
+                    print(f"[VIMEO] ✅ Extracted optimal thumbnail from video source")
+                    
+                    # Cleanup temp
+                    if temp_video_path and os.path.exists(temp_video_path):
+                        os.remove(temp_video_path)
+                    return output_path
+            
+            if temp_video_path and os.path.exists(temp_video_path):
+                os.remove(temp_video_path)
             return None
             
         except ImportError:
-            print("[VIMEO] ⚠️ OpenCV not installed. Install with: pip install opencv-python")
+            print("[VIMEO] ⚠️ OpenCV not installed (pip install opencv-python).")
+            if temp_video_path and os.path.exists(temp_video_path):
+                try: os.remove(temp_video_path)
+                except: pass
             return None
         except Exception as e:
             print(f"[VIMEO] Smart thumbnail error: {e}")
+            if temp_video_path and os.path.exists(temp_video_path):
+                try: os.remove(temp_video_path)
+                except: pass
             return None
+
+    def login_interactive(self, email, password):
+        """
+        Login and KEEP BROWSER OPEN for user interaction.
+        This runs in a loop monitoring the window until user closes it.
+        """
+        try:
+            print(f"[VIMEO] 🚀 Starting interactive login for: {email}")
+            
+            # 1. Start browser (VISIBLE MODE)
+            self.init_driver(headless=False)
+            
+            # 2. Perform login
+            self.driver.get("https://vimeo.com/log_in")
+            time.sleep(2)
+            
+            # Check for email input
+            try:
+                email_input = WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located((By.NAME, "email"))
+                )
+                email_input.clear()
+                email_input.send_keys(email)
+                email_input.send_keys(Keys.RETURN)
+                print("[VIMEO] Entered email")
+                time.sleep(2)
+                
+                # Check for password input
+                pwd_input = WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located((By.NAME, "password"))
+                )
+                pwd_input.clear()
+                pwd_input.send_keys(password)
+                pwd_input.send_keys(Keys.RETURN)
+                print("[VIMEO] Entered password")
+                
+                # Check for success (simple check)
+                time.sleep(5)
+                if "log_in" not in self.driver.current_url:
+                    print(f"[VIMEO] ✅ Login successful for {email}")
+                else:
+                    print(f"[VIMEO] ⚠️ Login might have failed or needs CAPTCHA")
+                    
+            except Exception as e:
+                print(f"[VIMEO] ❌ Login automation error: {e}")
+                print(f"[VIMEO] Please login manually in the opened window.")
+            
+            # 3. KEEP ALIVE LOOP
+            print(f"[VIMEO] 🛑 Browser is open. Close the window to end session.")
+            while True:
+                try:
+                    # Check if window is still open
+                    if not self.driver.window_handles:
+                        break
+                    time.sleep(1)
+                except:
+                    break
+                    
+            print(f"[VIMEO] Session ended for {email}")
+            
+        except Exception as e:
+            print(f"[VIMEO] Error in interactive session: {e}")
+        finally:
+            self.close()
 
     def close(self):
         if self.driver:

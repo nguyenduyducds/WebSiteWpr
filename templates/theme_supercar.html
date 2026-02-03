@@ -1,19 +1,10 @@
 <!-- Theme: Supercar News - CSS Only -->
-<!-- Featured Image for Facebook OG (must be first) -->
-{{FEATURED_IMAGE}}
-
-{{VIDEO_EMBED}}
-
-<h1>{{POST_TITLE}}</h1>
 
 <p class="lead">{{EXCERPT}}</p>
 
-{{MAIN_CONTENT}}
+{{VIDEO_EMBED}}
 
-<!-- Content Images (hidden from Facebook OG scraper) -->
-<div class="content-images-wrapper">
-{{CONTENT_IMAGES}}
-</div>
+{{MAIN_CONTENT}}
 
 <style>
 /* Supercar Theme - Clean CSS Only */
@@ -29,11 +20,6 @@
 /* Hide featured image in content (WordPress already shows it) */
 .entry-content > img:first-of-type {
     display: none !important;
-}
-
-/* Content images wrapper */
-.content-images-wrapper img {
-    display: block !important;
 }
 
 /* Video Responsive */

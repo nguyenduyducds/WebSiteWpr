@@ -8,6 +8,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import pickle # Cần thiết cho việc lưu/load cookie
+import requests  # For REST API login fallback
+from urllib.parse import urlparse
 
 class SeleniumWPClient:
     def __init__(self, site_url, username, password):
@@ -15,6 +17,87 @@ class SeleniumWPClient:
         self.username = username
         self.password = password
         self.driver = None
+    
+    def _login_via_rest_api(self):
+        """
+        FALLBACK METHOD: Login bằng REST API khi Selenium form filling fail
+        Trả về True nếu thành công, False nếu thất bại
+        """
+        try:
+            site_url = self.site_url.strip()
+            if not site_url.startswith('http'):
+                site_url = 'https://' + site_url
+            
+            parsed = urlparse(site_url)
+            base_url = f"{parsed.scheme}://{parsed.netloc}"
+            
+            print("[SELENIUM] 🔄 Trying REST API login fallback...")
+            
+            # Create session
+            session = requests.Session()
+            
+            # Get login page
+            login_url = f"{base_url}/wp-login.php"
+            response = session.get(login_url, timeout=10)
+            
+            # Submit login
+            login_data = {
+                'log': self.username,
+                'pwd': self.password,
+                'wp-submit': 'Log In',
+                'redirect_to': f'{base_url}/wp-admin/',
+                'testcookie': '1',
+                'rememberme': 'forever'
+            }
+            
+            response = session.post(login_url, data=login_data, allow_redirects=True, timeout=10)
+            
+            # Check success
+            if 'wp-admin' in response.url and 'wp-login.php' not in response.url:
+                print("[SELENIUM] ✅ REST API login successful!")
+                
+                # Convert cookies to Selenium format
+                selenium_cookies = []
+                for cookie in session.cookies:
+                    selenium_cookie = {
+                        'name': cookie.name,
+                        'value': cookie.value,
+                        'domain': cookie.domain if cookie.domain else parsed.netloc,
+                        'path': cookie.path if cookie.path else '/',
+                    }
+                    if cookie.expires:
+                        selenium_cookie['expiry'] = int(cookie.expires)
+                    
+                    selenium_cookies.append(selenium_cookie)
+                
+                # Save cookies
+                cookie_filename = f"cookies_{self.username}.pkl"
+                with open(cookie_filename, 'wb') as f:
+                    pickle.dump(selenium_cookies, f)
+                
+                print(f"[SELENIUM] Saved {len(selenium_cookies)} cookies")
+                
+                # Inject cookies into browser
+                self.driver.get(base_url)
+                time.sleep(1)
+                
+                for cookie in selenium_cookies:
+                    try:
+                        self.driver.add_cookie(cookie)
+                    except:
+                        pass
+                
+                print("[SELENIUM] Cookies injected into browser")
+                return True
+            
+            else:
+                print("[SELENIUM] ❌ REST API login failed")
+                return False
+                
+        except Exception as e:
+            print(f"[SELENIUM] REST API login error: {e}")
+            return False
+
 
     def _check_and_handle_popups(self):
         """
@@ -144,7 +227,7 @@ class SeleniumWPClient:
             print(f"[SELENIUM] Failed to initialize Chrome: {e}")
             raise Exception(f"Cannot initialize Chrome: {e}")
 
-    def login(self, destination_url=None):
+    def login(self, destination_url=None, retry_visible_on_fail=True):
         try:
             site_url = self.site_url.strip()
             if not site_url.startswith('http'):
@@ -162,39 +245,177 @@ class SeleniumWPClient:
             cookie_filename = f"cookies_{self.username}.pkl"
             
             if os.path.exists(cookie_filename):
-                print(f"[SELENIUM] Found cookies. Trying cookie login...")
+                # Check cookie age
+                import datetime
+                cookie_age_days = (time.time() - os.path.getmtime(cookie_filename)) / 86400
+                print(f"[SELENIUM] ✅ Found cookies (age: {cookie_age_days:.1f} days)")
+                
+                if cookie_age_days > 7:
+                    print(f"[SELENIUM] ⚠️  Cookies có thể đã hết hạn (>{int(cookie_age_days)} ngày)")
+                
+                print("[SELENIUM] Trying cookie login...")
                 self.driver.get(base_url) # Go to homepage first
+                time.sleep(1)  # Wait for page to load
+                
                 try:
                     cookies = pickle.load(open(cookie_filename, "rb"))
+                    print(f"[SELENIUM] Loading {len(cookies)} cookies...")
+                    
+                    cookies_added = 0
                     for cookie in cookies:
-                        if 'expiry' in cookie: del cookie['expiry']
-                        try: self.driver.add_cookie(cookie)
-                        except: pass
+                        if 'expiry' in cookie: 
+                            del cookie['expiry']
+                        try: 
+                            self.driver.add_cookie(cookie)
+                            cookies_added += 1
+                        except Exception as cookie_err:
+                            # Silently skip invalid cookies
+                            pass
+                    
+                    print(f"[SELENIUM] Added {cookies_added}/{len(cookies)} cookies")
                     
                     self.driver.get(final_dest)
+                    time.sleep(1)
                     
-                    # Quick check - reduced timeout from 5s to 2s
+                    # Check if login successful - increased timeout to 5s
                     try:
-                        WebDriverWait(self.driver, 2).until(EC.presence_of_element_located((By.ID, "wpadminbar")))
+                        WebDriverWait(self.driver, 5).until(
+                            EC.presence_of_element_located((By.ID, "wpadminbar"))
+                        )
                         print("[SELENIUM] ✅ Login via Cookies SUCCESSFUL!")
+                        print("[SELENIUM] 🎉 Không cần nhập username/password!")
                         return True
                     except:
-                        print("[SELENIUM] Cookies expired or invalid.")
+                        print("[SELENIUM] ⚠️  Cookies expired or invalid.")
+                        print("[SELENIUM] → Sẽ thử login bằng username/password...")
                 except Exception as e:
                     print(f"[SELENIUM] Cookie error: {e}")
+                    print("[SELENIUM] → Sẽ thử login bằng username/password...")
+
 
             # --- MANUAL LOGIN ---
             print(f"[SELENIUM] Navigating to login: {login_url}")
             self.driver.get(login_url)
             
-            # Reduced wait time from 10s to 5s
+            # Wait for login page to fully load
             print("[SELENIUM] Finding login fields...")
-            user_field = WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.ID, "user_login")))
+            user_field = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.ID, "user_login"))
+            )
+            pass_field = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.ID, "user_pass"))
+            )
             
-            # Fill both fields quickly without separate waits
-            user_field.send_keys(self.username)
-            pass_field = self.driver.find_element(By.ID, "user_pass")
-            pass_field.send_keys(self.password)
+            # CRITICAL FIX: Try multiple methods to fill fields
+            print(f"[SELENIUM] Filling username: {self.username}")
+            
+            # Method 1: JavaScript setAttribute (most reliable for value attribute)
+            self.driver.execute_script("""
+                var userField = arguments[0];
+                var username = arguments[1];
+                
+                // Set value attribute directly
+                userField.setAttribute('value', username);
+                userField.value = username;
+                
+                // Trigger events
+                userField.dispatchEvent(new Event('input', { bubbles: true }));
+                userField.dispatchEvent(new Event('change', { bubbles: true }));
+                userField.dispatchEvent(new Event('blur', { bubbles: true }));
+            """, user_field, self.username)
+            
+            print("[SELENIUM] Filling password...")
+            self.driver.execute_script("""
+                var passField = arguments[0];
+                var password = arguments[1];
+                
+                // Set value attribute directly
+                passField.setAttribute('value', password);
+                passField.value = password;
+                
+                // Trigger events
+                passField.dispatchEvent(new Event('input', { bubbles: true }));
+                passField.dispatchEvent(new Event('change', { bubbles: true }));
+                passField.dispatchEvent(new Event('blur', { bubbles: true }));
+            """, pass_field, self.password)
+            
+            # Wait for JavaScript to complete
+            time.sleep(1)
+            
+            # VERIFY: Check if fields are actually filled (check both .value and attribute)
+            username_value = self.driver.execute_script("return arguments[0].value;", user_field)
+            password_value = self.driver.execute_script("return arguments[0].value;", pass_field)
+            username_attr = self.driver.execute_script("return arguments[0].getAttribute('value');", user_field)
+            password_attr = self.driver.execute_script("return arguments[0].getAttribute('value');", pass_field)
+            
+            print(f"[SELENIUM] Verify - Username .value: '{username_value}', attribute: '{username_attr}'")
+            print(f"[SELENIUM] Verify - Password .value: {'*' * len(password_value) if password_value else 'EMPTY'}, attribute: {'*' * len(password_attr) if password_attr else 'EMPTY'}")
+            
+            # If JavaScript failed, try send_keys as fallback
+            if not username_value or not password_value:
+                print("[SELENIUM] ⚠️  JavaScript method failed, trying send_keys...")
+                
+                # Clear and refill with send_keys
+                user_field.clear()
+                time.sleep(0.3)
+                user_field.send_keys(self.username)
+                time.sleep(0.3)
+                
+                pass_field.clear()
+                time.sleep(0.3)
+                pass_field.send_keys(self.password)
+                time.sleep(0.5)
+                
+                # Verify again
+                username_value = user_field.get_attribute("value")
+                password_value = pass_field.get_attribute("value")
+                
+                print(f"[SELENIUM] After send_keys - Username: '{username_value}', Password: {'*' * len(password_value) if password_value else 'EMPTY'}")
+                
+                if not username_value or not password_value:
+                    # Last resort: Click and type character by character
+                    print("[SELENIUM] ⚠️  send_keys also failed, trying character-by-character...")
+                    
+                    user_field.click()
+                    time.sleep(0.2)
+                    user_field.clear()
+                    time.sleep(0.2)
+                    for char in self.username:
+                        user_field.send_keys(char)
+                        time.sleep(0.05)
+                    
+                    pass_field.click()
+                    time.sleep(0.2)
+                    pass_field.clear()
+                    time.sleep(0.2)
+                    for char in self.password:
+                        pass_field.send_keys(char)
+                        time.sleep(0.05)
+                    
+                    time.sleep(0.5)
+                    
+                    # Final verification
+                    username_value = user_field.get_attribute("value")
+                    password_value = pass_field.get_attribute("value")
+                    
+                    if not username_value or not password_value:
+                        raise Exception(f"CRITICAL: Cannot fill login credentials after all attempts! Username: '{username_value}', Password: {'filled' if password_value else 'EMPTY'}")
+            
+            print(f"[SELENIUM] ✅ Credentials filled successfully (Username: {username_value}, Password: {'*' * len(password_value)})")
+            
+            # FINAL CHECK: Verify in page source that values are there
+            page_source = self.driver.page_source
+            if f'value="{self.username}"' not in page_source and f"value='{self.username}'" not in page_source:
+                print("[SELENIUM] ⚠️  WARNING: Username not found in page source!")
+                print("[SELENIUM] This might cause login to fail. Trying one more time...")
+                
+                # One final attempt with form.submit() method
+                self.driver.execute_script("""
+                    document.getElementById('user_login').value = arguments[0];
+                    document.getElementById('user_pass').value = arguments[1];
+                """, self.username, self.password)
+                time.sleep(0.5)
+
             
             print("[SELENIUM] Submitting login form...")
             try:
@@ -318,7 +539,41 @@ class SeleniumWPClient:
                     # Check for specific issues
                     page_source = self.driver.page_source.lower()
                     
-                    if "captcha" in page_source or "recaptcha" in page_source:
+                    # CRITICAL: Check if form fields are empty (reauth=1 issue)
+                    if "reauth=1" in current_url:
+                        print("[SELENIUM] ⚠️  Detected reauth=1 - Form submission failed!")
+                        print("[SELENIUM] This usually means credentials weren't filled properly")
+                        print("[SELENIUM] 🔄 Trying REST API login fallback...")
+                        
+                        # Try REST API login
+                        if self._login_via_rest_api():
+                            print("[SELENIUM] ✅ REST API fallback successful!")
+                            # Navigate to admin
+                            site_url = self.site_url.strip()
+                            if not site_url.startswith('http'):
+                                site_url = 'https://' + site_url
+                            from urllib.parse import urlparse
+                            parsed = urlparse(site_url)
+                            base_url = f"{parsed.scheme}://{parsed.netloc}"
+                            admin_url = base_url + '/wp-admin/'
+                            
+                            self.driver.get(admin_url)
+                            time.sleep(2)
+                            
+                            # Verify login
+                            try:
+                                WebDriverWait(self.driver, 5).until(
+                                    EC.presence_of_element_located((By.ID, "wpadminbar"))
+                                )
+                                print("[SELENIUM] ✅ Login Complete via REST API!")
+                                return True
+                            except:
+                                print("[SELENIUM] ❌ REST API cookies didn't work either")
+                                raise Exception("Login failed even with REST API fallback")
+                        else:
+                            raise Exception("Both Selenium and REST API login failed. Check credentials.")
+                    
+                    elif "captcha" in page_source or "recaptcha" in page_source:
                         raise Exception("Login blocked by CAPTCHA. Please disable CAPTCHA for admin login or solve it manually.")
                     elif "cloudflare" in page_source:
                         raise Exception("Login blocked by Cloudflare. Please whitelist your IP or disable Cloudflare for wp-login.php")
@@ -328,6 +583,7 @@ class SeleniumWPClient:
                         raise Exception("Login timed out after 30s. Site might be slow, blocked, or requires manual verification. Check login_timeout.png for details.")
                 else:
                     raise Exception(f"Login timed out. Stuck at: {current_url}")
+
 
 
             print("[SELENIUM] Login Successful!")
@@ -340,7 +596,10 @@ class SeleniumWPClient:
 
             return True
         except Exception as e:
-            print(f"[SELENIUM] Login Failed: {e}")
+            error_msg = str(e)
+            print(f"[SELENIUM] Login Failed: {error_msg}")
+            
+            # Save debug info
             try:
                 self.driver.save_screenshot("debug_login_fail.png")
                 with open("debug_login_fail.html", "w", encoding="utf-8") as f:
@@ -350,7 +609,54 @@ class SeleniumWPClient:
             except Exception as debug_err:
                 print(f"[SELENIUM] Could not save debug info: {debug_err}")
             
-            raise Exception(f"Login Failed: {str(e)}")
+            # SMART RETRY: If headless failed due to security, retry with visible browser
+            if retry_visible_on_fail and self.driver:
+                # Check if it's a security-related failure
+                is_security_issue = any(keyword in error_msg.lower() for keyword in 
+                    ['captcha', 'cloudflare', 'blocked', 'rate limit', 'verification'])
+                
+                # Check if we're currently in headless mode
+                try:
+                    is_headless = self.driver.execute_script("return navigator.webdriver") or \
+                                 "--headless" in str(self.driver.capabilities)
+                except:
+                    is_headless = True  # Assume headless if we can't check
+                
+                if is_security_issue and is_headless:
+                    print("\n" + "="*60)
+                    print("🔄 PHÁT HIỆN VẤN ĐỀ BẢO MẬT!")
+                    print("="*60)
+                    print(f"Lỗi: {error_msg}")
+                    print("\n💡 GIẢI PHÁP: Tự động chuyển sang chế độ VISIBLE")
+                    print("   → Browser sẽ hiện ra để bạn có thể:")
+                    print("   → Giải CAPTCHA (nếu có)")
+                    print("   → Xem chính xác vấn đề gì")
+                    print("   → Can thiệp thủ công nếu cần")
+                    print("="*60)
+                    
+                    user_choice = input("\n❓ Bạn có muốn thử lại với VISIBLE browser? (y/n): ").strip().lower()
+                    
+                    if user_choice == 'y':
+                        print("\n[SELENIUM] 🔄 Đang khởi động lại với VISIBLE mode...")
+                        
+                        # Close current driver
+                        try:
+                            self.driver.quit()
+                        except:
+                            pass
+                        
+                        # Reinitialize with visible mode
+                        self.driver = None
+                        self.init_driver(headless=False)  # VISIBLE MODE
+                        
+                        # Retry login (without retry_visible to avoid infinite loop)
+                        print("[SELENIUM] 🔄 Đang thử login lại...")
+                        return self.login(destination_url=destination_url, retry_visible_on_fail=False)
+                    else:
+                        print("\n[SELENIUM] ❌ Người dùng từ chối retry. Dừng lại.")
+            
+            raise Exception(f"Login Failed: {error_msg}")
+
 
     def set_react_value(self, element, value):
         """
@@ -968,13 +1274,47 @@ class SeleniumWPClient:
                 except:
                     print("[SELENIUM] No success message, checking URL...")
                 
-                # Get post ID from URL
+                # Wait for URL to change if we started from post-new.php
+                try:
+                    if "post-new.php" in self.driver.current_url:
+                        print("[SELENIUM] Waiting for URL to change from post-new.php...")
+                        WebDriverWait(self.driver, 15).until(lambda d: "post.php" in d.current_url and "post=" in d.current_url)
+                except:
+                    print("[SELENIUM] ⚠️ Timeout waiting for URL change or not redirected yet.")
+
+                # 1. Try to extract permalink directly from page (Most Accurate)
+                try:
+                    # Classic Editor Permalink
+                    shortlink_btn = self.driver.find_elements(By.ID, "get-shortlink")
+                    sample_permalink = self.driver.find_elements(By.ID, "sample-permalink")
+                    view_post_link = self.driver.find_elements(By.XPATH, "//a[contains(text(), 'View Post') or contains(text(), 'Xem bài viết')]")
+                    
+                    final_link = None
+                    
+                    if view_post_link and view_post_link[0].is_displayed():
+                        final_link = view_post_link[0].get_attribute("href")
+                    elif sample_permalink:
+                        # Often inside an 'a' tag
+                        a_tags = sample_permalink[0].find_elements(By.TAG_NAME, "a")
+                        if a_tags:
+                            final_link = a_tags[0].get_attribute("href")
+                        else:
+                            final_link = sample_permalink[0].get_attribute("href")
+                            
+                    if final_link and "http" in final_link:
+                         print(f"[SELENIUM] ✅ Found Permalink on page: {final_link}")
+                         return True, final_link
+                except Exception as e_link:
+                    print(f"[SELENIUM] Could not get permalink from UI: {e_link}")
+                
+                # 2. Fallback to URL parsing
                 import re
                 current_url = self.driver.current_url
                 match = re.search(r'post=(\d+)', current_url)
                 
                 if match:
                     post_id = match.group(1)
+                    # Construct permalink manually
                     parsed_url = __import__('urllib.parse').parse.urlparse(current_url)
                     base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
                     public_url = f"{base_url}/?p={post_id}"

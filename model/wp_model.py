@@ -15,7 +15,7 @@ class BlogPost:
         self.raw_content = raw_content
         self.content_images = content_images or []
         self.content = ""
-        self.theme = "supercar"  # Default theme
+        self.theme = "none"  # Default theme: no theme (use WordPress default)
         self.featured_media_id = featured_media_id  # NEW: Media ID for REST API
     
     def generate_seo_content(self):
@@ -30,12 +30,36 @@ class BlogPost:
         print(f"[WP_MODEL] content_images: {len(self.content_images)}")
         
         # Get theme
-        theme_id = getattr(self, 'theme', 'supercar')
+        theme_id = getattr(self, 'theme', 'none')  # Default to 'none' instead of 'supercar'
         print(f"[WP_MODEL] Using theme: {theme_id}")
+
         
         # If theme is "none", use old raw HTML method
         if theme_id == 'none':
             print(f"[WP_MODEL] Theme is 'none', using raw HTML (no CSS)")
+            
+            # --- AUTO FORMATTING FIX ---
+            # Fix text merging issue: Convert single newlines to double newlines to force paragraphs
+            if self.raw_content and '<p>' not in self.raw_content and len(self.raw_content) > 0:
+                print(f"[WP_MODEL] Plain text detected. Auto-formatting paragraphs...")
+                
+                # 1. Normalize line endings
+                formatted_text = self.raw_content.replace('\r\n', '\n')
+                
+                # 2. Check if text has ANY double newlines (paragraphs)
+                if '\n\n' not in formatted_text:
+                     # 3. If NO double newlines exist, assume single newlines are meant to be paragraphs
+                     # Convert EVERY single newline to double newline
+                     print(f"[WP_MODEL] No double newlines found. Converting single newlines to paragraphs.")
+                     formatted_text = formatted_text.replace('\n', '\n\n')
+                else:
+                     # If mixed, ensure they represent paragraphs correctly
+                     print(f"[WP_MODEL] Double newlines detected. Preserving structure.")
+                     pass
+                
+                self.raw_content = formatted_text
+            # ---------------------------
+            
             self._generate_content_fallback()
             return
         
@@ -92,26 +116,22 @@ class BlogPost:
             content = self.raw_content
             
             if self.content_images and len(self.content_images) > 0:
-                # Extract first image as featured image
+                # Extract first image as featured image metadata, but DO NOT insert into body
+                # because WordPress themes usually display the Featured Image automatically at the top.
                 featured_img_url = self.content_images[0]
                 remaining_images = self.content_images[1:] if len(self.content_images) > 1 else []
                 
-                print(f"[WP_MODEL] Adding featured image (first image) to BEGINNING of content")
-                print(f"[WP_MODEL] Featured image URL: {featured_img_url}")
+                print(f"[WP_MODEL] Identified featured image: {featured_img_url}")
+                print(f"[WP_MODEL] NOT inserting into body to avoid duplication (Theme handles it)")
                 
-                # Add featured image at the beginning (full width)
-                featured_img_html = f'''<!-- wp:html -->
-<div style="margin: 30px auto; text-align: center;">
-    <img src="{featured_img_url}" alt="{self.title}" style="width: 100%; height: auto; max-width: 1200px; border-radius: 8px;" />
-</div>
-<!-- /wp:html -->
-
-<!-- wp:spacer {{"height":"30px"}} -->
-<div style="height:30px" aria-hidden="true" class="wp-block-spacer"></div>
-<!-- /wp:spacer -->
-
-'''
-                content = featured_img_html + content
+                # FIX: Inject OG Meta Tag for scrapers that look at body content
+                # This helps ensure the correct thumbnail is picked if they scan the body
+                meta_tag = f'<!-- SEO Hint --><meta property="og:image" content="{featured_img_url}" /><div style="display:none;"><img src="{featured_img_url}" alt="featured_hidden"></div>'
+                content = meta_tag + content 
+                
+                # Store remaining images for gallery insertion later
+                self.content_images = remaining_images
+                print(f"[WP_MODEL] Remaining images for gallery: {len(remaining_images)}")
                 
                 # IMPORTANT: Assign to self.content so it's preserved
                 self.content = content
@@ -129,73 +149,70 @@ class BlogPost:
                 video_block = self._generate_video_block(self.video_url)
                 if video_block:
                     print(f"[WP_MODEL] Video block generated: {len(video_block)} chars")
-                    # Tách nội dung thành các đoạn
-                    # IMPORTANT: Use self.content (which already has featured image), NOT self.raw_content
                     content = self.content
                     
-                    # Tìm 2 đoạn văn đầu tiên (tìm 2 lần xuất hiện của </p>)
-                    first_p_end = content.find('</p>')
-                    print(f"[WP_MODEL] First </p> at position: {first_p_end}")
+                    # Xác định điểm bắt đầu tìm kiếm (tránh Featured Image Block ở đầu)
+                    search_start_pos = 0
                     
-                    if first_p_end != -1:
-                        # Try to find the 5th paragraph to push video down (User request: "xuống tầm 3 dòng" from pos 2 -> pos 5)
-                        # Find 2nd
-                        p2 = content.find('</p>', first_p_end + 4)
-                        if p2 != -1:
-                            # Find 3rd
-                            p3 = content.find('</p>', p2 + 4)
-                            if p3 != -1:
-                                # Find 4th
-                                p4 = content.find('</p>', p3 + 4)
-                                if p4 != -1:
-                                    # Find 5th
-                                    p5 = content.find('</p>', p4 + 4)
-                                    if p5 != -1:
-                                        insert_pos = p5 + 4
-                                        self.content = content[:insert_pos] + "\n\n" + video_block + "\n\n" + content[insert_pos:]
-                                        print(f"[WP_MODEL] Inserted video after 5th paragraph")
-                                    else:
-                                        # Fallback to 4th
-                                        insert_pos = p4 + 4
-                                        self.content = content[:insert_pos] + "\n\n" + video_block + "\n\n" + content[insert_pos:]
-                                        print(f"[WP_MODEL] Inserted video after 4th paragraph")
-                                else:
-                                    insert_pos = p3 + 4
-                                    self.content = content[:insert_pos] + "\n\n" + video_block + "\n\n" + content[insert_pos:]
-                                    print(f"[WP_MODEL] Inserted video after 3rd paragraph")
-                            else:
-                                insert_pos = p2 + 4
-                                self.content = content[:insert_pos] + "\n\n" + video_block + "\n\n" + content[insert_pos:]
-                                print(f"[WP_MODEL] Inserted video after 2nd paragraph")
-                        else:
-                            insert_pos = first_p_end + 4
-                            self.content = content[:insert_pos] + "\n\n" + video_block + "\n\n" + content[insert_pos:]
-                            print(f"[WP_MODEL] Inserted video after 1st paragraph")
-                    else:
-                        # Fallback: Không tìm thấy thẻ </p> (có thể là plain text hoặc div)
-                        # Thử tìm dấu xuống dòng \n
-                        print(f"[WP_MODEL] No </p> found, trying newlines...")
-                        newlines = [i for i, char in enumerate(content) if char == '\n']
+                    # Tìm khối HTML đầu tiên (chính là Featured Image)
+                    first_html_end = content.find('<!-- /wp:html -->')
+                    
+                    target_pos = -1
+                    insert_method = "after_intro"
+                    
+                    if first_html_end != -1:
+                        # Bắt đầu tìm kiếm từ sau ảnh bìa
+                        search_start = first_html_end + len('<!-- /wp:html -->')
                         
-                        if len(newlines) >= 5:
-                            # Chèn sau dòng thứ 5 (xuống 3 dòng so với cũ)
-                            insert_pos = newlines[4] + 1
-                            self.content = content[:insert_pos] + "\n\n" + video_block + "\n\n" + content[insert_pos:]
-                            print(f"[WP_MODEL] Inserted video after 5th newline")
-                        elif len(newlines) >= 2:
-                            # Fallback nếu ít dòng hơn
-                            insert_pos = newlines[-1] + 1 # Last newline available
-                            self.content = content[:insert_pos] + "\n\n" + video_block + "\n\n" + content[insert_pos:]
-                            print(f"[WP_MODEL] Inserted video after last available newline")
+                        # Tìm điểm kết thúc đoạn văn đầu tiên (Intro)
+                        min_text_length = 50
+                        subset_content = content[search_start:]
+                        
+                        # Tìm các dấu hiệu ngắt đoạn
+                        p_end = subset_content.find('</p>')
+                        wp_p_end = subset_content.find('<!-- /wp:paragraph -->')
+                        double_newline = subset_content.find('\n\n')
+                        
+                        # Lấy vị trí nhỏ nhất (gần nhất) nhưng phải > min_text_length
+                        candidates = []
+                        if p_end != -1 and p_end > min_text_length: candidates.append(p_end + 4) # +4 cho </p>
+                        if wp_p_end != -1 and wp_p_end > min_text_length: candidates.append(wp_p_end + len('<!-- /wp:paragraph -->'))
+                        if double_newline != -1 and double_newline > min_text_length: candidates.append(double_newline + 2)
+                        
+                        if candidates:
+                            target_pos = search_start + min(candidates)
+                            print(f"[WP_MODEL] ✅ Found insertion point after first paragraph at pos: {target_pos}")
+                            insert_method = "after_paragraph"
                         else:
-                            # Không có xuống dòng, text liền mạch -> Chèn ở sâu hơn (khoảng ký tự 800)
-                            target_pos = min(800, len(content) // 2)
-                            # Tìm khoảng trắng gần nhất để không cắt đôi từ
-                            space_pos = content.find(' ', target_pos)
-                            if space_pos == -1: space_pos = target_pos
-                            
-                            self.content = content[:space_pos] + "\n\n" + video_block + "\n\n" + content[space_pos:]
-                            print(f"[WP_MODEL] Inserted video after approx {space_pos} chars")
+                            print("[WP_MODEL] ⚠️ No clear paragraph break found. Inserting after Featured Image.")
+                            target_pos = search_start
+                            insert_method = "after_image"
+                    else:
+                        # Fallback cũ
+                        if '<!-- /wp:spacer -->' in content:
+                           end_marker = '<!-- /wp:spacer -->'
+                           target_pos = content.find(end_marker) + len(end_marker)
+                        else:
+                           target_pos = min(len(content), 500)
+                           insert_method = "fallback_pos"
+
+                    # Thực hiện chèn video_block
+                    if target_pos != -1:
+                        content_before = content[:target_pos]
+                        content_after = content[target_pos:]
+                        
+                        # Đóng gói video vào block HTML nếu chưa có
+                        if "<!-- wp:html -->" not in video_block:
+                            final_video_html = f'\n\n<!-- wp:html -->\n{video_block}\n<!-- /wp:html -->\n\n'
+                        else:
+                             final_video_html = f'\n\n{video_block}\n\n'
+                        
+                        self.content = content_before + final_video_html + content_after
+                        print(f"[WP_MODEL] ✅ Video inserted successfully ({insert_method})!")
+                    else:
+                        print(f"[WP_MODEL] ⚠️ Could not determine video insertion point. Appending to end.")
+                        self.content = content + f'\n\n<!-- wp:html -->\n{video_block}\n<!-- /wp:html -->'
+
                 else:
                     print(f"[WP_MODEL] Video block generation failed")
                     self.content = self.raw_content
@@ -204,55 +221,109 @@ class BlogPost:
                 self.content = self.raw_content
             
             # Insert content images if provided (after video insertion)
+            # Insert each image SEPARATELY at different positions (not as a gallery)
             if self.content_images and len(self.content_images) > 0:
-                print(f"[WP_MODEL] Inserting {len(self.content_images)} content image(s) as gallery row...")
+                print(f"[WP_MODEL] Inserting {len(self.content_images)} content image(s) separately...")
                 
-                # Create a SINGLE gallery row with all 3 images (small, side by side)
-                gallery_html = '''
+                content = self.content
+                
+                # Find paragraph positions
+                paragraphs = []
+                pos = 0
+                while True:
+                    p_end = content.find('</p>', pos)
+                    if p_end == -1:
+                        break
+                    paragraphs.append(p_end + 4)  # Position after </p>
+                    pos = p_end + 4
+                
+                insertion_mode = 'char' # Default to char index insertion (for <p> tags or large text)
+                
+                if not paragraphs:
+                    # No <p> tags, try newlines
+                    print(f"[WP_MODEL] No </p> found, checking newlines...")
+                    lines = content.split('\n')
+                    
+                    # Check if text is a huge block without newlines (e.g. < 5 lines but long text)
+                    if len(lines) < 5 and len(content) > 500:
+                        print(f"[WP_MODEL] Text is a large block. Finding sentence endings to insert images...")
+                        # Strategy: Insert at 1/3, 2/3 positions at NEAREST PERIOD
+                        chunk_size = len(content) // (len(self.content_images) + 1)
+                        insert_positions = []
+                        
+                        current_pos = 0
+                        for _ in range(len(self.content_images)):
+                            target = current_pos + chunk_size
+                            # Find period near target
+                            period_pos = content.find('. ', target)
+                            if period_pos == -1: period_pos = content.find('.', target)
+                            
+                            if period_pos != -1:
+                                insert_positions.append(period_pos + 1) # Insert after period
+                                current_pos = period_pos
+                            else:
+                                # Fallback: just use length
+                                insert_positions.append(target)
+                                current_pos = target
+                        insertion_mode = 'char'
+                    else:
+                        # Normal newline splitting
+                        print(f"[WP_MODEL] Using newlines for image insertion")
+                        insert_positions = [
+                            len(lines) // 3,
+                            2 * len(lines) // 3,
+                            len(lines) - 1
+                        ]
+                        insertion_mode = 'line' # Use line insertion
+                else:
+                    # Insert images after paragraphs 2, 4, 6 (or available positions)
+                    insert_positions = []
+                    target_paragraphs = [2, 4, 6, 8, 10]  # After 2nd, 4th, 6th paragraph
+                    for target in target_paragraphs:
+                        if target < len(paragraphs):
+                            insert_positions.append(paragraphs[target])
+                        if len(insert_positions) >= len(self.content_images):
+                            break
+                    insertion_mode = 'char' # Paragraph positions are char indices
+                
+                # Insert images from back to front (to preserve positions)
+                for i in range(min(len(self.content_images), len(insert_positions)) - 1, -1, -1):
+                    img_url = self.content_images[i]
+                    if not img_url or not img_url.strip():
+                        continue
+                    
+                    # Create single image HTML (centered, medium size)
+                    img_html = f'''
 <!-- wp:html -->
-<div style="display: flex; gap: 10px; margin: 30px 0; flex-wrap: wrap; justify-content: center;">
-'''
-                
-                # Add each image as small thumbnail (max 30% width)
-                for img_url in self.content_images:
-                    if img_url and img_url.strip():
-                        gallery_html += f'''    <div style="flex: 0 1 30%; max-width: 300px;">
-        <img src="{img_url}" alt="" style="width: 100%; height: auto; border-radius: 8px;" />
-    </div>
-'''
-                
-                gallery_html += '''</div>
+<div style="text-align: center; margin: 60px 0 40px 0;">
+    <img src="{img_url}" alt="" style="width: 100%; height: auto; max-width: 600px; border-radius: 8px;" />
+</div>
 <!-- /wp:html -->
 
-<!-- wp:spacer {"height":"20px"} -->
+<!-- wp:spacer {{"height":"20px"}} -->
 <div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
 <!-- /wp:spacer -->
 '''
+                    
+                    if insertion_mode == 'char':
+                        # Insert at character position
+                        insert_pos = insert_positions[i]
+                        # Add double newline if inserting into text block to force break
+                        if not paragraphs:
+                             content = content[:insert_pos] + "\n\n" + img_html + "\n\n" + content[insert_pos:]
+                        else:
+                             content = content[:insert_pos] + img_html + content[insert_pos:]
+                        
+                        print(f"[WP_MODEL] Inserted image {i+1} at char position {insert_pos}")
+                    else:
+                        # Insert at line position (list of strings)
+                        lines = content.split('\n')
+                        insert_line = insert_positions[i]
+                        lines.insert(insert_line, img_html)
+                        content = '\n'.join(lines)
+                        print(f"[WP_MODEL] Inserted image {i+1} at line {insert_line}")
                 
-                # Insert gallery at 70% position (well after featured image and video)
-                content_len = len(self.content)
-                target_position = int(content_len * 0.70)
-                
-                # Ensure minimum position (after featured image ~400 chars)
-                min_position = 400
-                if target_position < min_position:
-                    target_position = min_position
-                
-                # Try to find paragraph end near this position
-                search_start = max(min_position, target_position - 300)
-                search_end = min(content_len, target_position + 300)
-                search_area = self.content[search_start:search_end]
-                
-                # Look for </p> tag to insert gallery after paragraph
-                p_end_pos = search_area.rfind('</p>')
-                if p_end_pos != -1:
-                    insert_pos = search_start + p_end_pos + 4
-                    self.content = self.content[:insert_pos] + "\n\n" + gallery_html + "\n\n" + self.content[insert_pos:]
-                    print(f"[WP_MODEL] Inserted gallery row at position {insert_pos}")
-                else:
-                    # Fallback: insert at target position
-                    self.content = self.content[:target_position] + "\n\n" + gallery_html + "\n\n" + self.content[target_position:]
-                    print(f"[WP_MODEL] Inserted gallery row at target position {target_position}")
+                self.content = content
             
             print(f"[WP_MODEL] Final content length: {len(self.content)}")
             return self.content
@@ -491,12 +562,13 @@ class BlogPost:
         # For Vimeo, add background=1 to hide thumbnail (prevent theme from using it as featured image)
         final_video_url = video_url
         if 'vimeo.com' in video_url:
-            separator = '&' if '?' in video_url else '?'
-            final_video_url = f"{video_url}{separator}background=1"
-            print(f"[WP_MODEL] Added background=1 to Vimeo URL to hide thumbnail")
+            # REMOVED background=1 because it mutes video and disables controls
+            # User wants sound and ability to pause
+            print(f"[WP_MODEL] Keeping original Vimeo URL (Controls enabled)")
+            pass
         
         return f"""<!-- wp:html -->
-<div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 30px auto;">
+<div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 30px auto 60px auto;">
     <iframe src="{final_video_url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
 </div>
 <!-- /wp:html -->
@@ -520,6 +592,7 @@ class WordPressClient:
 
 from model.selenium_wp import SeleniumWPClient
 from model.wp_rest_api import WordPressRESTClient
+from model.wp_rest_api_fast import WordPressRESTClientFast
 
 class WPAutoClient:
     """
@@ -617,3 +690,78 @@ class WPAutoClient:
         if self.client:
             self.client.close()
             print(f"[WP_AUTO] Closed {self.method} client")
+
+
+# ============================================================================
+# ULTRA-FAST CLIENT - For maximum speed (1 second target)
+# ============================================================================
+
+class WPFastClient:
+    """
+    Ultra-fast WordPress posting client
+    Uses optimized REST API with aggressive mode
+    Target: 1 second per API call
+    
+    Recommended for:
+    - Batch posting (multiple posts)
+    - Speed-critical operations
+    - Sites with REST API enabled
+    """
+    
+    def __init__(self, site_url, username, password):
+        self.site_url = site_url
+        self.username = username
+        self.password = password
+        self.client = None
+    
+    def post_article(self, blog_post, reuse_client=None):
+        """
+        Post article using ultra-fast REST API method
+        
+        Args:
+            blog_post: BlogPost object with title, content, image_url
+            reuse_client: Existing WordPressRESTClientFast to reuse (optional)
+            
+        Returns:
+            tuple: (success: bool, result: str)
+        """
+        try:
+            print("[WP_FAST] ========================================")
+            print("[WP_FAST] 🚀 ULTRA-FAST MODE ACTIVATED")
+            print("[WP_FAST] ========================================")
+            
+            # Reuse existing client if provided (avoid re-login)
+            if reuse_client:
+                print("[WP_FAST] Reusing existing fast client (already logged in)")
+                self.client = reuse_client
+            else:
+                print("[WP_FAST] Creating new fast client")
+                self.client = WordPressRESTClientFast(self.site_url, self.username, self.password)
+            
+            # Use fast posting method
+            success, result = self.client.post_article_fast(blog_post)
+            
+            if success:
+                print(f"[WP_FAST] ✅ FAST method successful!")
+                print(f"[WP_FAST] Post URL: {result}")
+            else:
+                print(f"[WP_FAST] ❌ FAST method failed: {result}")
+            
+            return success, result
+            
+        except Exception as e:
+            print(f"[WP_FAST] ❌ Critical error: {e}")
+            import traceback
+            traceback.print_exc()
+            return False, str(e)
+    
+    def get_client(self):
+        """Get the underlying fast client for reuse"""
+        return self.client
+    
+    def close(self):
+        """Close the active client"""
+        if self.client:
+            self.client.close()
+            print(f"[WP_FAST] Closed fast client")
+

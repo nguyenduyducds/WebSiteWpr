@@ -221,9 +221,9 @@ class ThemeManager:
     
     def generate_featured_image(self, image_url, alt_text):
         """Generate featured image HTML"""
-        if not image_url:
-            return ""
-        return f'<img src="{image_url}" alt="{alt_text}" loading="lazy">'
+        # Return EMPTY because WordPress theme handles Featured Image display
+        # We don't want to duplicate it in the content body
+        return ""
     
     def generate_og_meta_tags(self, title, description, image_url):
         """

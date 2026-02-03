@@ -2,10 +2,10 @@
 ; WordPress Auto Posting Tool with REST API & Chrome Portable
 
 #define MyAppName "WprTool"
-#define MyAppVersion "3.0.1"
-#define MyAppPublisher "NguyenDuyDuc"
+#define MyAppVersion "3.0.2"
+#define MyAppPublisher "NguyenDuyDuccute"
 #define MyAppExeName "WprTool.exe"
-#define MyAppURL "https://github.com/yourusername/WprTool"
+#define MyAppURL "https://github.com/nguyenduyducds"
 
 [Setup]
 ; Basic App Info
@@ -47,10 +47,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "quicklaunchicon"; Description: "Create a &Quick Launch icon"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1; Check: not IsAdminInstallMode
 
 [Files]
-; Main executable (built with PyInstaller)
+; Main executable (built with PyInstaller in OneFile mode)
 Source: "dist\WprTool.exe"; DestDir: "{app}"; Flags: ignoreversion
 
-; Chrome Portable (CRITICAL - Include all files)
+; Chrome Portable (CRITICAL - Include all files so app can assume it exists in CWD)
 Source: "chrome_portable\*"; DestDir: "{app}\chrome_portable"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; ChromeDriver (CRITICAL - Include driver)
@@ -62,10 +62,6 @@ Source: "sample_posts.csv"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Cookie template - Empty file for app to use (real cookies excluded for security)
 Source: "cookies_template.pkl"; DestDir: "{app}"; Flags: ignoreversion onlyifdoesntexist
-
-; Documentation (optional - user can choose to exclude)
-; Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
-; Source: "CHANGELOG.md"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Vimeo accounts template
 Source: "vimeo_accounts.txt"; DestDir: "{app}"; Flags: ignoreversion onlyifdoesntexist
