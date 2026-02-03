@@ -1,0 +1,6 @@
+{
+    "site_url": "YOUR_SITE_URL/wp-admin",
+    "username": "YOUR_USERNAME",
+    "password": "YOUR_PASSWORD",
+    "update_url": "https://raw.githubusercontent.com/nguyenduyducds/WebSiteWpr/main/version.json"
+}
