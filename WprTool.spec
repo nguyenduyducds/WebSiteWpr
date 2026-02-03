@@ -2,7 +2,6 @@
 from PyInstaller.utils.hooks import collect_all
 
 datas = [
-    ('config.json', '.'),
     ('requirements.txt', '.'),
     ('sample_posts.csv', '.'),
     ('chrome_portable', 'chrome_portable'),  # Bundle Chrome Portable

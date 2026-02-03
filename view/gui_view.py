@@ -64,27 +64,12 @@ class GUIView(ctk.CTk):
         # Initialize Update Checker
         try:
             from model.update_checker import UpdateChecker
-            # Replace checks URL with a real one. For now using a dummy.
-            # If user has a real URL, they can put it in config.json
-            update_url = self.initial_config.get('update_url', "https://raw.githubusercontent.com/nguyenduyducds/WebSiteWpr/main/version.json")
+            update_url = self.initial_config.get('update_url', "https://raw.githubusercontent.com/nguyenduyducds/WebSiteWpr/master/version.json");
             self.updater = UpdateChecker(self.app_version, update_url)
             self.after(3000, self.check_startup_update) # Check after 3s
         except Exception as e:
             print(f"Update init failed: {e}")
             
-    def check_startup_update(self):
-        """Check for updates silently on startup"""
-        if hasattr(self, 'updater'):
-            self.updater.check_for_updates(callback=self.on_update_found)
-            
-    def on_update_found(self, has_update, new_version, download_url):
-        if has_update:
-            msg = f"🎉 Có phiên bản mới: v{new_version}!\n\nBạn đang dùng: v{self.app_version}\n\nNhấn OK để tải về ngay."
-            if messagebox.askyesno("Cập nhật phần mềm", msg):
-                if download_url:
-                    webbrowser.open(download_url)
-                else:
-                    messagebox.showinfo("Thông tin", f"Vui lòng liên hệ Admin để nhận bản cập nhật v{new_version}.") 
         self.content_pool = []
         self.batch_data = None
         self.published_links = []
@@ -92,6 +77,71 @@ class GUIView(ctk.CTk):
 
         # Khởi tạo màn hình
         self.create_login_screen()
+
+    def check_startup_update(self):
+        """Check for updates silently on startup"""
+        if hasattr(self, 'updater'):
+            self.updater.check_for_updates(callback=self.on_update_found)
+            
+    def on_update_found(self, has_update, new_version, download_url):
+        if has_update:
+            msg = f"🔥 NGUYỄN DUY ĐỨC THÔNG BÁO:\n\nĐã có bản cập nhật v{new_version} !\n(Bản hiện tại: v{self.app_version})\n\n👉 Bấm OK để cập nhật ngay cho 'ngon' nhé!"
+            if messagebox.askyesno("Nguyễn Duy Đức Thông Báo Update", msg):
+                if download_url and download_url.endswith(".exe"):
+                    # Start auto-update flow
+                    self.perform_auto_update(download_url)
+                elif download_url:
+                    # Fallback for non-exe checks (e.g. zip)
+                    webbrowser.open(download_url)
+                else:
+                    messagebox.showinfo("Thông tin", f"Vui lòng liên hệ Admin để nhận bản cập nhật v{new_version}.")
+
+    def perform_auto_update(self, url):
+        """Show progress window and download"""
+        # Create Popup
+        self.update_window = ctk.CTkToplevel(self)
+        self.update_window.title("Đang cập nhật...")
+        self.update_window.geometry("400x150")
+        self.update_window.attributes("-topmost", True)
+        
+        ctk.CTkLabel(self.update_window, text="Đang tải bản cập nhật mới...", font=("Segoe UI", 14)).pack(pady=20)
+        
+        self.progress_bar = ctk.CTkProgressBar(self.update_window, width=300)
+        self.progress_bar.pack(pady=10)
+        self.progress_bar.set(0)
+        
+        self.lbl_progress = ctk.CTkLabel(self.update_window, text="0%")
+        self.lbl_progress.pack(pady=5)
+        
+        # Start download
+        self.updater.download_and_install(
+            url, 
+            progress_callback=self.on_update_progress,
+            completion_callback=self.on_update_complete
+        )
+
+    def on_update_progress(self, current, total):
+        try:
+            percent = current / total
+            self.progress_bar.set(percent)
+            self.lbl_progress.configure(text=f"{int(percent*100)}%")
+            self.update_window.update()
+        except: pass
+
+    def on_update_complete(self, success, result):
+        if success:
+            bat_path = result
+            # Run batch file and exit
+            try:
+                import subprocess, sys
+                subprocess.Popen([bat_path], shell=True)
+                self.quit()
+                sys.exit()
+            except Exception as e:
+                messagebox.showerror("Lỗi", f"Không thể khởi động lại: {e}")
+        else:
+            self.update_window.destroy()
+            messagebox.showerror("Lỗi Cập Nhật", f"Tải xuống thất bại:\n{result}") 
 
     # =========================================================================
     # PHẦN 1: LOGIN SCREEN (Giữ nguyên vì đã ổn)
