@@ -11,3 +11,4 @@ undetected-chromedriver
 pyperclip
 playwright
 PyVimeo
+numpy

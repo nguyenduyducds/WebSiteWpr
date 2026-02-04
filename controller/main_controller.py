@@ -2,6 +2,7 @@ from model.wp_model import BlogPost, WordPressClient
 from model.config_manager import ConfigManager
 from view.gui_view import GUIView
 import threading
+import os
 
 class AppController:
     def __init__(self):
@@ -168,23 +169,32 @@ class AppController:
             if data.image_url and data.image_url.strip():
                 # Check if it's a local file path (not a URL)
                 if not data.image_url.startswith('http'):
-                    self.view.after(0, lambda: self.view.log(f"🖼️ Đang upload ảnh đại diện..."))
+                    self.view.after(0, lambda: self.view.log(f"🖼️ Đang tối ưu hóa ảnh đại diện cho Facebook..."))
                     
-                    # Optimize featured image before upload (SAME as content images)
+                    # FACEBOOK OPTIMIZATION: Use high-quality optimization for featured image
                     image_to_upload = data.image_url  # Default to original
                     try:
-                        from model.image_api import ImageAPI
-                        img_api = ImageAPI()
-                        # Use SAME quality as content images (800px, 70%)
-                        optimized_path = img_api.optimize_image_for_upload(data.image_url, max_width=800, quality=70)
+                        import os  # Import here to avoid scope issues
+                        from model.facebook_thumbnail_optimizer import FacebookThumbnailOptimizer
+                        fb_optimizer = FacebookThumbnailOptimizer()
+                        
+                        # Optimize for Facebook (1200x630px, 95% quality, enhanced sharpness)
+                        optimized_path = fb_optimizer.optimize_for_facebook(
+                            data.image_url, 
+                            enhance=True  # Tăng độ nét, tương phản, màu sắc
+                        )
+                        
                         if optimized_path and os.path.exists(optimized_path):
-                            image_to_upload = optimized_path  # Use optimized version
-                            print(f"[CONTROLLER] Using optimized image: {optimized_path}")
+                            image_to_upload = optimized_path  # Use Facebook-optimized version
+                            print(f"[CONTROLLER] ✅ Using Facebook-optimized image: {optimized_path}")
+                            self.view.after(0, lambda: self.view.log(f"✅ Đã tối ưu ảnh cho Facebook (1200x630px, chất lượng cao)"))
                         else:
-                            print(f"[CONTROLLER] Optimization failed, using original: {data.image_url}")
+                            print(f"[CONTROLLER] Facebook optimization failed, using original: {data.image_url}")
+                            self.view.after(0, lambda: self.view.log(f"⚠️ Tối ưu thất bại, dùng ảnh gốc"))
                     except Exception as opt_err:
-                        print(f"[CONTROLLER] Warning: Could not optimize featured image: {opt_err}")
+                        print(f"[CONTROLLER] Warning: Could not optimize for Facebook: {opt_err}")
                         print(f"[CONTROLLER] Using original image: {data.image_url}")
+                        self.view.after(0, lambda: self.view.log(f"⚠️ Lỗi tối ưu, dùng ảnh gốc"))
                     
                     # Upload as FIRST content image
                     print(f"[CONTROLLER] 📤 Uploading featured image as content image: {image_to_upload}")
@@ -259,8 +269,9 @@ class AppController:
                             success = image_api.download_image(img_url, local_path)
                             if success and os.path.exists(local_path):
                                 # Optimize immediately after download
-                                # Use SMALLER size for content images (so featured image is prioritized)
-                                optimized_path = image_api.optimize_image_for_upload(local_path, max_width=800, quality=70)
+                                # Use LOW quality for content images (so featured image is prioritized)
+                                # Featured: 1200x630 @ 95% | Content: 360p @ 55% (intentionally lower)
+                                optimized_path = image_api.optimize_image_for_upload(local_path, max_width=360, quality=55)
                                 return optimized_path
                             return None
                         
@@ -349,8 +360,9 @@ class AppController:
                         try:
                             from model.image_api import ImageAPI
                             img_api = ImageAPI()
-                            # Use SMALLER size for content images (so featured image is prioritized)
-                            optimized_path = img_api.optimize_image_for_upload(content_image, max_width=800, quality=70)
+                            # Use LOW quality for content images (so featured image is prioritized by Facebook)
+                            # Featured: 1200x630 @ 95% | Content: 360p @ 55% (intentionally lower)
+                            optimized_path = img_api.optimize_image_for_upload(content_image, max_width=360, quality=55)
                             content_image = optimized_path  # Use optimized version
                         except Exception as opt_err:
                             print(f"[CONTROLLER] Warning: Could not optimize image: {opt_err}")

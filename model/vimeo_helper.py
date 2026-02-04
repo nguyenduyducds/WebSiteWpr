@@ -1924,6 +1924,35 @@ class VimeoHelper:
                 except Exception as e:
                     print(f"[VIMEO] ⚠️ Thumbnail generation failed: {e}")
                     thumbnail_path = None
+                
+                # FACEBOOK OPTIMIZATION: Optimize thumbnail for Facebook after generation
+                if thumbnail_path and os.path.exists(thumbnail_path):
+                    try:
+                        print(f"[VIMEO] 🎨 Tối ưu hóa thumbnail cho Facebook...")
+                        from model.facebook_thumbnail_optimizer import FacebookThumbnailOptimizer
+                        
+                        fb_optimizer = FacebookThumbnailOptimizer()
+                        optimized_thumb = fb_optimizer.optimize_for_facebook(
+                            thumbnail_path,
+                            enhance=True  # Tăng độ nét, tương phản, màu sắc
+                        )
+                        
+                        if optimized_thumb and os.path.exists(optimized_thumb):
+                            # Replace original thumbnail with optimized version
+                            import shutil
+                            shutil.copy2(optimized_thumb, thumbnail_path)
+                            print(f"[VIMEO] ✅ Thumbnail đã tối ưu cho Facebook (1200x630px, chất lượng cao)")
+                            
+                            # Clean up optimized file (we copied it to original path)
+                            try:
+                                os.remove(optimized_thumb)
+                            except:
+                                pass
+                        else:
+                            print(f"[VIMEO] ⚠️ Facebook optimization failed, using original thumbnail")
+                    except Exception as opt_err:
+                        print(f"[VIMEO] ⚠️ Could not optimize for Facebook: {opt_err}")
+                        # Continue with original thumbnail
 
                 return True, "Upload thành công!", {
                     "video_link": video_link,
@@ -2269,12 +2298,17 @@ class VimeoHelper:
             # Analyze middle section to avoid black intro/outro
             start_frame = int(total_frames * 0.2)
             end_frame = int(total_frames * 0.8)
-            step = max(1, (end_frame - start_frame) // 5) # Check 5 candidate frames
+            # IMPROVED: Check more frames for better quality (10 instead of 5)
+            num_candidates = 10
+            step = max(1, (end_frame - start_frame) // num_candidates)
             
             best_score = -1.0
             best_frame = None
+            best_frame_idx = -1
             
-            for i in range(5):
+            print(f"[VIMEO] 🎬 Analyzing {num_candidates} frames for best quality...")
+            
+            for i in range(num_candidates):
                 frame_idx = start_frame + (i * step)
                 cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
                 ret, frame = cap.read()
@@ -2294,20 +2328,31 @@ class VimeoHelper:
                 if score > best_score:
                     best_score = score
                     best_frame = frame
+                    best_frame_idx = frame_idx
             
             cap.release()
             
-            # 3. Save result
+            if best_frame_idx >= 0:
+                print(f"[VIMEO] ✅ Best frame: #{best_frame_idx} (score: {best_score:.2f})")
+            
+            # 3. Save result with MAXIMUM QUALITY
             if best_frame is not None:
                 # Ensure directory exists
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
                 
-                # Write using cv2 (handle unicode output path via imencode)
-                is_success, buffer = cv2.imencode(".jpg", best_frame)
+                # CRITICAL: Save with MAXIMUM JPEG quality (100%)
+                # cv2.imencode parameters: [quality_flag, quality_value]
+                encode_params = [cv2.IMWRITE_JPEG_QUALITY, 100]  # 100 = maximum quality
+                is_success, buffer = cv2.imencode(".jpg", best_frame, encode_params)
+                
                 if is_success:
                     with open(output_path, "wb") as f:
                         f.write(buffer)
-                    print(f"[VIMEO] ✅ Extracted optimal thumbnail from video source")
+                    
+                    # Get file size for verification
+                    file_size = len(buffer) / 1024  # KB
+                    print(f"[VIMEO] ✅ Extracted HIGHEST QUALITY thumbnail from video")
+                    print(f"[VIMEO]    Quality: 100% JPEG | Size: {file_size:.1f} KB")
                     
                     # Cleanup temp
                     if temp_video_path and os.path.exists(temp_video_path):
