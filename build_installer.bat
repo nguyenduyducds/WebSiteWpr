@@ -1,50 +1,36 @@
 @echo off
-echo ========================================
-echo WprTool Installer Builder
-echo ========================================
+echo ============================================
+echo   BUILDING INSTALLER FOR WPRTOOL v2.0.3
+echo ============================================
 echo.
 
-REM Check if Inno Setup is installed
-set INNO_PATH="C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-if not exist %INNO_PATH% (
-    echo ERROR: Inno Setup not found!
-    echo.
-    echo Please install Inno Setup 6 from:
-    echo https://jrsoftware.org/isdl.php
-    echo.
-    echo Default installation path: C:\Program Files (x86)\Inno Setup 6\
+set ISCC_PATH="C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+
+if not exist %ISCC_PATH% (
+    echo ❌ Inno Setup compiler (ISCC.exe) not found at default location!
+    echo    Please install Inno Setup 6 or check your installation path.
     echo.
     pause
     exit /b 1
 )
 
-echo [1/3] Checking WprTool.exe...
-if not exist "dist\WprTool.exe" (
-    echo ERROR: WprTool.exe not found in dist folder!
-    echo Please run: pyinstaller --clean WprTool.spec
-    echo.
-    pause
-    exit /b 1
-)
-echo OK - WprTool.exe found
-
+echo Found Inno Setup at: %ISCC_PATH%
 echo.
-echo [2/3] Compiling Inno Setup script...
-%INNO_PATH% "WprTool_Installer.iss"
+echo Compiling WprTool_v2.0.1.iss ...
+%ISCC_PATH% "WprTool_v2.0.1.iss"
 
-if %ERRORLEVEL% NEQ 0 (
+if %errorlevel% neq 0 (
     echo.
-    echo ERROR: Inno Setup compilation failed!
+    echo ❌ Compilation FAILED!
     pause
     exit /b 1
 )
 
 echo.
-echo [3/3] Build complete!
+echo ============================================
+echo   ✅ INSTALLER CREATED SUCCESSFULLY!
+echo ============================================
 echo.
-echo Installer created at: dist\WprTool_Setup_v2.0.exe
+echo Location: Output\WP_Auto_Tool_Setup_v2.0.3.exe
 echo.
-echo ========================================
-echo SUCCESS!
-echo ========================================
 pause

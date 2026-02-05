@@ -203,21 +203,35 @@ class WordPressRESTClient:
         try:
             print("[REST_API] Extracting nonce from dashboard...")
             dashboard_url = f"{self.site_url}/wp-admin/"
-            response = self.session.get(dashboard_url)
+            response = self.session.get(dashboard_url, timeout=15)
             
-            # Try to find nonce in page source
-            # Pattern 1: wpApiSettings.nonce
-            match = re.search(r'"nonce":"([a-f0-9]+)"', response.text)
+            # Try multiple patterns to find nonce
+            # Pattern 1: wpApiSettings.nonce (Most common in modern WP)
+            match = re.search(r'wpApiSettings["\']?\s*[=:]\s*\{[^}]*["\']nonce["\']\s*:\s*["\']([a-zA-Z0-9]+)["\']', response.text)
             if match:
                 self.nonce = match.group(1)
-                print(f"[REST_API] ✅ Found nonce: {self.nonce[:20]}...")
+                print(f"[REST_API] ✅ Found nonce (wpApiSettings): {self.nonce[:10]}...")
                 return True
             
-            # Pattern 2: _wpnonce hidden field
-            match = re.search(r'name="_wpnonce"\s+value="([^"]+)"', response.text)
+            # Pattern 2: "nonce":"..." in JSON (Generic)
+            match = re.search(r'["\']nonce["\']\s*:\s*["\']([a-zA-Z0-9]+)["\']', response.text)
             if match:
                 self.nonce = match.group(1)
-                print(f"[REST_API] ✅ Found nonce from field: {self.nonce[:20]}...")
+                print(f"[REST_API] ✅ Found nonce (JSON): {self.nonce[:10]}...")
+                return True
+            
+            # Pattern 3: _wpnonce hidden field (Forms)
+            match = re.search(r'name=["\']_wpnonce["\']\s+value=["\']([^"\']+)["\']', response.text)
+            if match:
+                self.nonce = match.group(1)
+                print(f"[REST_API] ✅ Found nonce (form field): {self.nonce[:10]}...")
+                return True
+            
+            # Pattern 4: window.wpApiSettings (Alternative JS)
+            match = re.search(r'window\.wpApiSettings\s*=\s*\{[^}]*nonce["\']?\s*:\s*["\']([a-zA-Z0-9]+)["\']', response.text)
+            if match:
+                self.nonce = match.group(1)
+                print(f"[REST_API] ✅ Found nonce (window.wpApiSettings): {self.nonce[:10]}...")
                 return True
             
             print("[REST_API] ⚠️ Could not extract nonce (will try without it)")
@@ -329,6 +343,11 @@ class WordPressRESTClient:
         try:
             print(f"[REST_API] Creating post: {title[:50]}...")
             
+            # CRITICAL FIX: Refresh nonce before creating post (nonce can expire)
+            if self.cookies_loaded:
+                print("[REST_API] Refreshing nonce before post creation...")
+                self._extract_nonce()
+            
             # Prepare post data
             post_data = {
                 'title': title,
@@ -353,6 +372,7 @@ class WordPressRESTClient:
             
             if self.nonce:
                 headers['X-WP-Nonce'] = self.nonce
+                print(f"[REST_API] Using nonce: {self.nonce[:10]}...")
             
             # Create post
             response = self.session.post(

@@ -512,10 +512,11 @@ class BlogPost:
         Generate WordPress Gutenberg video embed block
         Supports:
         1. Full Vimeo embed code (with <div> wrapper and <script>)
-        2. Facebook URL (plain URL - let WordPress handle oEmbed)
-        3. Facebook iframe (if provided)
-        4. Facebook SDK embed (with script)
-        5. Simple iframe URL
+        2. Vimeo iframe code (preserve as-is to keep hash parameters)
+        3. Facebook URL (plain URL - let WordPress handle oEmbed)
+        4. Facebook iframe (if provided)
+        5. Facebook SDK embed (with script)
+        6. Simple iframe URL
         """
         
         # Check if this is full Vimeo embed code (with div wrapper)
@@ -524,6 +525,37 @@ class BlogPost:
             # Wrap in WordPress HTML block
             return f"""<!-- wp:html -->
 {video_url}
+<!-- /wp:html -->
+
+<!-- wp:spacer {{"height":"20px"}} -->
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->"""
+
+        # Check if this is Facebook iframe or SDK embed (MOVED UP PRIORITY)
+        # This prevents Facebook iframes from being caught by the generic iframe check and wrapped in ID 16:9 container
+        if 'facebook.com/plugins/video.php' in video_url or 'fb-video' in video_url or 'facebook-jssdk' in video_url:
+            print("[WP_MODEL] Using Facebook embed code (iframe or SDK) - Preserving vertical aspect ratio")
+            
+            # Simple wrapper to center it but allow native height
+            return f"""<!-- wp:html -->
+<div class="fb-video-container" style="display: flex; justify-content: center; margin: 30px 0;">
+{video_url}
+</div>
+<!-- /wp:html -->
+
+<!-- wp:spacer {{"height":"20px"}} -->
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->"""
+
+        # CRITICAL FIX: If this is already a complete iframe (Vimeo or other), preserve it as-is
+        # This ensures hash parameters like ?h=xxxxx are not lost
+        if '<iframe' in video_url and '</iframe>' in video_url:
+            print("[WP_MODEL] Using complete iframe code (preserving all parameters)")
+            # Wrap iframe in responsive container
+            return f"""<!-- wp:html -->
+<div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 30px auto 60px auto;">
+    {video_url}
+</div>
 <!-- /wp:html -->
 
 <!-- wp:spacer {{"height":"20px"}} -->
@@ -544,28 +576,13 @@ class BlogPost:
 <div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
 <!-- /wp:spacer -->"""
         
-        # Check if this is Facebook iframe or SDK embed
-        if 'facebook.com/plugins/video.php' in video_url or 'fb-video' in video_url or 'facebook-jssdk' in video_url:
-            print("[WP_MODEL] Using Facebook embed code (iframe or SDK)")
-            # Use as-is, NO wrapper, NO modification
-            return f"""<!-- wp:html -->
-{video_url}
-<!-- /wp:html -->
-
-<!-- wp:spacer {{"height":"20px"}} -->
-<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
-<!-- /wp:spacer -->"""
-        
-        # Otherwise, use simple iframe embed with responsive wrapper (for Vimeo, YouTube, etc.)
+        # Otherwise, use simple iframe embed with responsive wrapper (for plain URLs)
         print("[WP_MODEL] Using simple iframe embed with responsive wrapper")
         
-        # For Vimeo, add background=1 to hide thumbnail (prevent theme from using it as featured image)
+        # For Vimeo, keep URL as-is (including hash parameters)
         final_video_url = video_url
         if 'vimeo.com' in video_url:
-            # REMOVED background=1 because it mutes video and disables controls
-            # User wants sound and ability to pause
-            print(f"[WP_MODEL] Keeping original Vimeo URL (Controls enabled)")
-            pass
+            print(f"[WP_MODEL] Keeping original Vimeo URL (with all parameters)")
         
         return f"""<!-- wp:html -->
 <div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 30px auto 60px auto;">

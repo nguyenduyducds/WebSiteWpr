@@ -28,6 +28,7 @@ vimeo_cookies.txt
 vimeo_api_accounts.json
 vimeo_api_config.json
 cookies_*.pkl
+facebook_cookies.txt
 
 # Documentation (exclude as requested)
 *.md
@@ -37,6 +38,11 @@ cookies_*.pkl
 *.log
 tmp/
 thumbnails/
+thumbnails_optimized/
+downloaded_cars/
 saved_car_images/
 debug_*.html
 debug_*.png
+*.png
+build_log.txt
+login_timeout.html

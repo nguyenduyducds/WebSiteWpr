@@ -6,17 +6,28 @@ import os
 import random
 
 class ImageAPI:
-    """Fetch high-quality car images from Unsplash API"""
+    """Fetch high-quality car images from multiple APIs (Unsplash, Pexels, Pixabay)"""
     
     def __init__(self):
-        # Unsplash API Access Key (Demo key - replace with your own for production)
+        # Unsplash API Access Key
         # Get free key at: https://unsplash.com/developers
-        self.access_key = "KOWQbbcCZUyx0kkh27r0VgMZhBBx5Aba1riXrYzosLc"  # User needs to get their own key
-        self.base_url = "https://api.unsplash.com"
+        self.unsplash_key = "KOWQbbcCZUyx0kkh27r0VgMZhBBx5Aba1riXrYzosLc"
+        self.unsplash_url = "https://api.unsplash.com"
+        
+        # Pexels API Key (Free: 200 requests/hour)
+        # Get free key at: https://www.pexels.com/api/
+        self.pexels_key = "K4ZuklaOzH9RlKWP0BZ24nPJYQD5ZPZRTS9KrzWMfy2g2EWIGOPCRvz7"  # Demo key
+        self.pexels_url = "https://api.pexels.com/v1"
+        
+        # Pixabay API Key (Free: 100 requests/minute)
+        # Get free key at: https://pixabay.com/api/docs/
+        self.pixabay_key = "54519937-ad665dd8ae77ce4f1055115e9"
+        self.pixabay_url = "https://pixabay.com/api/"
         
         # Cache to track used images and avoid duplicates
         self.used_images = set()
         self.image_pool = []  # Pool of available images
+        self.current_api_index = 0  # Rotate between APIs
     
     def optimize_image_for_upload(self, image_path, max_width=1200, quality=85):
         """
@@ -105,17 +116,17 @@ class ImageAPI:
         """
         try:
             # If no API key set, return empty list
-            if self.access_key == "YOUR_UNSPLASH_ACCESS_KEY":
+            if self.unsplash_key == "YOUR_UNSPLASH_ACCESS_KEY":
                 print("[IMAGE_API] ⚠️ Unsplash API key not configured. Skipping image fetch.")
                 return []
             
-            url = f"{self.base_url}/search/photos"
+            url = f"{self.unsplash_url}/search/photos"
             params = {
                 'query': query,
                 'per_page': 30,  # Get 30 results per page (max allowed)
                 'page': page,
                 'orientation': 'landscape',
-                'client_id': self.access_key
+                'client_id': self.unsplash_key
             }
             
             response = requests.get(url, params=params, timeout=10)
@@ -137,18 +148,137 @@ class ImageAPI:
                         if optimized_url not in self.used_images:
                             image_urls.append(optimized_url)
                 
-                print(f"[IMAGE_API] ✅ Found {len(image_urls)} new images for '{query}' (page {page})")
+                print(f"[IMAGE_API] ✅ Unsplash: Found {len(image_urls)} new images for '{query}' (page {page})")
                 return image_urls
             elif response.status_code == 403:
-                print(f"[IMAGE_API] ❌ API key invalid or rate limit exceeded")
+                print(f"[IMAGE_API] ❌ Unsplash API key invalid or rate limit exceeded")
                 return []
             else:
-                print(f"[IMAGE_API] ❌ API error: {response.status_code}")
+                print(f"[IMAGE_API] ❌ Unsplash API error: {response.status_code}")
                 return []
                 
         except Exception as e:
-            print(f"[IMAGE_API] ❌ Error fetching images: {e}")
+            print(f"[IMAGE_API] ❌ Unsplash error: {e}")
             return []
+    
+    def search_pexels_images(self, query, count=3, page=1):
+        """
+        Search for car images on Pexels
+        Returns list of image URLs
+        """
+        try:
+            if not self.pexels_key or self.pexels_key == "YOUR_PEXELS_API_KEY":
+                print("[IMAGE_API] ⚠️ Pexels API key not configured.")
+                return []
+            
+            url = f"{self.pexels_url}/search"
+            headers = {'Authorization': self.pexels_key}
+            params = {
+                'query': query,
+                'per_page': 30,
+                'page': page,
+                'orientation': 'landscape'
+            }
+            
+            response = requests.get(url, headers=headers, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                photos = data.get('photos', [])
+                
+                # Extract large image URLs
+                image_urls = []
+                for photo in photos:
+                    if 'src' in photo and 'large2x' in photo['src']:
+                        img_url = photo['src']['large2x']
+                        if img_url not in self.used_images:
+                            image_urls.append(img_url)
+                
+                print(f"[IMAGE_API] ✅ Pexels: Found {len(image_urls)} new images for '{query}' (page {page})")
+                return image_urls
+            else:
+                print(f"[IMAGE_API] ❌ Pexels API error: {response.status_code}")
+                return []
+                
+        except Exception as e:
+            print(f"[IMAGE_API] ❌ Pexels error: {e}")
+            return []
+    
+    def search_pixabay_images(self, query, count=3, page=1):
+        """
+        Search for car images on Pixabay
+        Returns list of image URLs
+        """
+        try:
+            if not self.pixabay_key or self.pixabay_key == "YOUR_PIXABAY_API_KEY":
+                print("[IMAGE_API] ⚠️ Pixabay API key not configured.")
+                return []
+            
+            url = self.pixabay_url
+            params = {
+                'key': self.pixabay_key,
+                'q': query,
+                'image_type': 'photo',
+                'orientation': 'horizontal',
+                'category': 'transportation',
+                'per_page': 30,
+                'page': page,
+                'safesearch': 'true'
+            }
+            
+            response = requests.get(url, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                hits = data.get('hits', [])
+                
+                # Extract large image URLs
+                image_urls = []
+                for hit in hits:
+                    if 'largeImageURL' in hit:
+                        img_url = hit['largeImageURL']
+                        if img_url not in self.used_images:
+                            image_urls.append(img_url)
+                
+                print(f"[IMAGE_API] ✅ Pixabay: Found {len(image_urls)} new images for '{query}' (page {page})")
+                return image_urls
+            else:
+                print(f"[IMAGE_API] ❌ Pixabay API error: {response.status_code}")
+                return []
+                
+        except Exception as e:
+            print(f"[IMAGE_API] ❌ Pixabay error: {e}")
+            return []
+    
+    def search_multi_source(self, query, count=3, page=1):
+        """
+        Search for images from multiple sources (Unsplash, Pexels, Pixabay) with rotation
+        Returns list of image URLs from the current API source
+        """
+        apis = [
+            ('Unsplash', self.search_car_images),
+            ('Pexels', self.search_pexels_images),
+            ('Pixabay', self.search_pixabay_images)
+        ]
+        
+        # Try current API first
+        api_name, api_func = apis[self.current_api_index]
+        print(f"[IMAGE_API] 🔄 Using {api_name} API (rotation index: {self.current_api_index})")
+        
+        results = api_func(query, count, page)
+        
+        # If no results, try next API
+        if not results:
+            print(f"[IMAGE_API] ⚠️ {api_name} returned no results, trying next API...")
+            self.current_api_index = (self.current_api_index + 1) % len(apis)
+            api_name, api_func = apis[self.current_api_index]
+            results = api_func(query, count, page)
+        
+        # Rotate to next API for next request
+        self.current_api_index = (self.current_api_index + 1) % len(apis)
+        
+        return results
+
     
     def get_car_images_from_title(self, title, count=3):
         """
@@ -190,7 +320,7 @@ class ImageAPI:
         if len(self.image_pool) < count * 2:
             # Fetch from multiple pages for more variety
             page = random.randint(1, 3)  # Random page 1-3
-            new_images = self.search_car_images(query, count, page=page)
+            new_images = self.search_multi_source(query, count, page=page)
             
             # Add to pool
             self.image_pool.extend(new_images)
@@ -199,7 +329,7 @@ class ImageAPI:
             if len(self.image_pool) < count and len(queries) > 1:
                 alt_query = random.choice([q for q in queries if q != query])
                 print(f"[IMAGE_API] 🔍 Trying alternative query: '{alt_query}'")
-                alt_images = self.search_car_images(alt_query, count, page=1)
+                alt_images = self.search_multi_source(alt_query, count, page=1)
                 self.image_pool.extend(alt_images)
         
         # Shuffle pool for randomness
@@ -548,13 +678,13 @@ class PexelsImageAPI:
     
     def __init__(self):
         # Pexels API Key (get free at: https://www.pexels.com/api/)
-        self.api_key = "YOUR_PEXELS_API_KEY"
+        self.api_key = "K4ZuklaOzH9RlKWP0BZ24nPJYQD5ZPZRTS9KrzWMfy2g2EWIGOPCRvz7"
         self.base_url = "https://api.pexels.com/v1"
     
     def search_car_images(self, query, count=3):
         """Search for car images on Pexels"""
         try:
-            if self.api_key == "YOUR_PEXELS_API_KEY":
+            if not self.api_key or self.api_key == "YOUR_PEXELS_API_KEY":
                 print("[PEXELS_API] ⚠️ Pexels API key not configured.")
                 return []
             

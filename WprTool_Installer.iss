@@ -2,7 +2,7 @@
 ; WordPress Auto Posting Tool with REST API & Chrome Portable
 
 #define MyAppName "WprTool"
-#define MyAppVersion "3.0.2"
+#define MyAppVersion "3.0.3"
 #define MyAppPublisher "NguyenDuyDuccute"
 #define MyAppExeName "WprTool.exe"
 #define MyAppURL "https://github.com/nguyenduyducds"
@@ -94,12 +94,12 @@ Type: filesandordirs; Name: "{app}\logs"
 procedure InitializeWizard;
 begin
   WizardForm.WelcomeLabel2.Caption := 
-    'This will install WprTool v3.0 - WordPress Auto Posting Tool on your computer.' + #13#10 + #13#10 +
-    '🚀 NEW in v3.0:' + #13#10 +
+    'This will install WprTool v3.0.3 - WordPress Auto Posting Tool on your computer.' + #13#10 + #13#10 +
+    '🚀 NEW in v3.0.3:' + #13#10 +
+    '• ✅ FIXED: Vimeo Embeds (Page Not Found fix)' + #13#10 +
+    '• ✅ FIXED: Vertical Facebook Video 9:16 Support' + #13#10 +
     '• REST API Direct Method (10x faster!)' + #13#10 +
-    '• Auto-fallback to Selenium if REST API blocked' + #13#10 +
-    '• 100% reliable title, content, image saving' + #13#10 +
-    '• Smart video embed extraction (iframe support)' + #13#10 +
+    '• Smart video embed extraction (Vimeo/Facebook/YouTube)' + #13#10 +
     '• Enhanced car image API with no duplicates' + #13#10 + #13#10 +
     '✨ Features:' + #13#10 +
     '• Auto post to WordPress with video embed' + #13#10 +

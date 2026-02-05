@@ -1,9 +1,9 @@
 ; ============================================
-; WprTool - Complete Installer Script v2.0.1
+; WprTool - Complete Installer Script v2.0.3
 ; ============================================
 
 #define MyAppName "WprTool"
-#define MyAppVersion "2.0.1"
+#define MyAppVersion "2.0.3"
 #define MyAppPublisher "NguyenDuyDuc"
 #define MyAppExeName "WprTool.exe"
 #define MyAppURL "https://github.com/nguyenduyducds/WebSiteWpr"
@@ -45,6 +45,9 @@ VersionInfoProductVersion={#MyAppVersion}
 ; Uninstall
 UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName} {#MyAppVersion}
+
+; Custom Icons
+SetupIconFile=app_icon.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -113,16 +116,16 @@ Type: filesandordirs; Name: "{app}\downloaded_cars"
 procedure InitializeWizard;
 begin
   WizardForm.WelcomeLabel2.Caption := 
-    'This will install WprTool v2.0.1 - WordPress Auto Posting Tool.' + #13#10 + #13#10 +
-    '🚀 NEW in v2.0.1:' + #13#10 +
-    '• ✅ Facebook Thumbnail Optimizer (1200x630px @ 95% quality)' + #13#10 +
-    '• ✅ Vimeo Thumbnail Quality Boost (100% JPEG, 10 frames analysis)' + #13#10 +
-    '• ✅ Content Image Optimization (360p @ 55% - balanced quality)' + #13#10 +
-    '• ✅ Chrome Process Cleanup (kill_chrome.bat utility)' + #13#10 +
-    '• Enhanced sharpness, contrast, and color for featured images' + #13#10 +
-    '• Smart frame selection algorithm for Vimeo thumbnails' + #13#10 +
-    '• Automatic quality differentiation (Featured vs Content)' + #13#10 +
-    '• Fixed import errors in Facebook optimizer' + #13#10 + #13#10 +
+    'This will install WprTool v2.0.3 - WordPress Auto Posting Tool.' + #13#10 + #13#10 +
+    '🚀 NEW in v2.0.3:' + #13#10 +
+    '• ✅ Custom App Icon (unique identity, no conflicts)' + #13#10 +
+    '• ✅ Version Display in UI (always know your version)' + #13#10 +
+    '• ✅ About Dialog (view version info and features)' + #13#10 +
+    '• ✅ Copy All Links (export titles + links easily)' + #13#10 +
+    '• ✅ Improved UX and interface polish' + #13#10 + #13#10 +
+    '📝 Previous Updates (v2.0.2):' + #13#10 +
+    '• 3 Image APIs (Unsplash + Pexels + Pixabay)' + #13#10 +
+    '• Auto Vimeo aspect ratio detection (9:16 / 16:9)' + #13#10 + #13#10 +
     '✨ Features:' + #13#10 +
     '• Auto post to WordPress with video embed' + #13#10 +
     '• Batch posting from CSV/Facebook links' + #13#10 +

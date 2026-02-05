@@ -54,7 +54,11 @@ class GUIView(ctk.CTk):
         ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")
         
-        self.app_version = "2.0.1" # Current Version
+        try:
+            from version import get_version
+            self.app_version = get_version()
+        except ImportError:
+            self.app_version = "2.0.3"
 
         # Biến dữ liệu
         self.login_frame = None
@@ -73,6 +77,7 @@ class GUIView(ctk.CTk):
         self.content_pool = []
         self.batch_data = None
         self.published_links = []
+        self.published_posts = []  # Store {title, link} pairs for copy function
         self.current_link = ""
 
         # Khởi tạo màn hình
@@ -482,6 +487,20 @@ class GUIView(ctk.CTk):
             font=("Segoe UI", 12), 
             text_color=self.colors['text_secondary']
         ).pack(anchor="w", pady=(2, 0))
+        
+        # Version info
+        version_text = f"v{self.app_version}"
+        
+        ctk.CTkLabel(
+            title_frame,
+            text=version_text,
+            font=("Segoe UI", 10, "bold"),
+            text_color=self.colors['primary'],
+            fg_color=self.colors['bg_dark'],
+            corner_radius=6,
+            padx=10,
+            pady=4
+        ).pack(anchor="w", pady=(5, 0))
 
         # User Info & Logout with better styling
         user_frame = ctk.CTkFrame(header, fg_color="transparent")
@@ -518,6 +537,20 @@ class GUIView(ctk.CTk):
             corner_radius=10,
             command=self.logout
         ).pack(side="left")
+        
+        # About/Version button in header
+        ctk.CTkButton(
+            user_frame,
+            text="ℹ️ Thông Tin",
+            width=110,
+            height=36,
+            font=("Segoe UI", 11),
+            fg_color=self.colors['bg_dark'],
+            hover_color=self.colors['border'],
+            text_color=self.colors['text_primary'],
+            corner_radius=10,
+            command=self.show_about_dialog
+        ).pack(side="left", padx=(0, 10))
 
     def create_tabs(self):
         self.tabview = ctk.CTkTabview(
@@ -573,6 +606,20 @@ class GUIView(ctk.CTk):
         )
         self.status_label.pack(side="left", padx=20, pady=8)
         
+        # Kill Chrome button
+        ctk.CTkButton(
+            self.status_frame,
+            text="🔪 Kill Chrome",
+            width=110,
+            height=28,
+            font=("Segoe UI", 10, "bold"),
+            fg_color="#dc2626",
+            hover_color="#b91c1c",
+            text_color="white",
+            corner_radius=8,
+            command=self.kill_chrome_processes
+        ).pack(side="left", padx=10, pady=8)
+        
         # Connection indicator
         connection_frame = ctk.CTkFrame(self.status_frame, fg_color="transparent")
         connection_frame.pack(side="right", padx=20, pady=8)
@@ -591,272 +638,244 @@ class GUIView(ctk.CTk):
         ).pack(side="left")
 
     # =========================================================================
-    # TAB 1: ĐĂNG BÀI LẺ (Post Form)
+    # TAB 1: ĐĂNG BÀI LẺ (Post Form) - WEB LAYOUT STYLE
     # =========================================================================
     def create_post_tab_content(self):
         container = ctk.CTkScrollableFrame(
             self.tab_post, 
             fg_color="transparent"
         )
-        container.pack(fill="both", expand=True, padx=15, pady=15)
+        container.pack(fill="both", expand=True, padx=0, pady=0)
 
-        # Form Group - Single Post with card design
-        frm = ctk.CTkFrame(
-            container,
-            corner_radius=16,
-            fg_color=self.colors['bg_card'],
-            border_width=2,
-            border_color=self.colors['border']
-        )
-        frm.pack(fill="x", pady=(0, 15))
+        # Header Title
+        title_frame = ctk.CTkFrame(container, fg_color="transparent")
+        title_frame.pack(fill="x", padx=20, pady=(15, 10))
+        ctk.CTkLabel(title_frame, text="📝 Soạn Thảo Bài Viết", font=("Segoe UI", 20, "bold")).pack(side="left")
+        ctk.CTkLabel(title_frame, text=" | Editor Mode", font=("Segoe UI", 12), text_color="gray").pack(side="left", padx=5, pady=(5,0))
+
+        # === GRID LAYOUT CONTAINER ===
+        grid = ctk.CTkFrame(container, fg_color="transparent")
+        grid.pack(fill="both", expand=True, padx=10, pady=5)
         
-        # Header
-        header_frame = ctk.CTkFrame(frm, fg_color="transparent")
-        header_frame.pack(fill="x", padx=25, pady=(20, 15))
-        
-        ctk.CTkLabel(
-            header_frame, 
-            text="📝 Đăng Bài Mới", 
-            font=("Segoe UI", 18, "bold"),
-            text_color=self.colors['text_primary']
-        ).pack(side="left")
-        
-        ctk.CTkLabel(
-            header_frame, 
-            text="Tạo và đăng bài viết lên WordPress", 
-            font=("Segoe UI", 11),
-            text_color=self.colors['text_secondary']
-        ).pack(side="left", padx=(10, 0))
-        
-        # Form inputs with better spacing
-        form_container = ctk.CTkFrame(frm, fg_color="transparent")
-        form_container.pack(fill="x", padx=25, pady=(0, 20))
-        
-        # Theme Selector - NEW!
-        theme_section = ctk.CTkFrame(form_container, fg_color="transparent")
-        theme_section.pack(fill="x", pady=10)
-        
-        ctk.CTkLabel(
-            theme_section, 
-            text="🎨 Chọn Theme Giao Diện", 
-            font=("Segoe UI", 13, "bold"), 
-            anchor="w",
-            text_color=self.colors['text_primary']
-        ).pack(fill="x", pady=(0, 8))
-        
-        # Theme dropdown
-        self.theme_var = ctk.StringVar(value="⚪ Không dùng theme (Raw HTML)")
-        theme_dropdown = ctk.CTkOptionMenu(
-            theme_section,
-            values=[
-                "⚪ Không dùng theme (Raw HTML)",
-                "🏎️ Supercar News (Premium)",
-                "📰 Breaking News",
-                "📝 Classic Blog",
-                "✨ Minimal Clean",
-                "💻 Tech Modern",
-                "📖 Magazine",
-                "💼 Business Pro",
-                "🌸 Lifestyle",
-                "🌙 Dark Mode"
-            ],
-            variable=self.theme_var,
-            height=45,
-            font=("Segoe UI", 12),
-            fg_color=self.colors['primary'],
-            button_color=self.colors['primary_hover'],
-            button_hover_color=self.colors['primary'],
-            dropdown_fg_color=self.colors['bg_card'],
-            dropdown_hover_color=self.colors['bg_dark'],
-            corner_radius=12,
-            command=self.on_theme_changed
-        )
-        theme_dropdown.pack(fill="x")
-        
-        # Theme description
-        self.theme_desc_label = ctk.CTkLabel(
-            theme_section,
-            text="💡 Premium automotive design with luxury styling (English content)",
-            font=("Segoe UI", 11),
-            text_color=self.colors['text_secondary'],
-            anchor="w"
-        )
-        self.theme_desc_label.pack(fill="x", pady=(5, 0))
+        # Configure grid weights
+        grid.columnconfigure(0, weight=3) # Left column (Main) 70%
+        grid.columnconfigure(1, weight=1) # Right column (Sidebar) 30%
+
+        # ================= LEFT COLUMN: MAIN CONTENT =================
+        left_col = ctk.CTkFrame(grid, fg_color="transparent")
+        left_col.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+
+        # 1. Main Info Card
+        main_card = ctk.CTkFrame(left_col, fg_color=self.colors['bg_card'], corner_radius=12, border_width=1, border_color=self.colors['border'])
+        main_card.pack(fill="both", expand=True, pady=(0, 15))
+
+        # Title Input
+        input_container = ctk.CTkFrame(main_card, fg_color="transparent")
+        input_container.pack(fill="x", padx=20, pady=20)
         
         self.entry_title = self.create_form_input(
-            form_container, 
+            input_container, 
             "📌 Tiêu đề bài viết", 
-            "Nhập tiêu đề hấp dẫn...",
-            height=48
+            "Nhập tiêu đề hấp dẫn vào đây...",
+            height=50
         )
-        # Add paste handler to prevent freeze with Unicode characters
+        # Bind paste handlers
         self.entry_title.bind('<Control-v>', self._handle_title_paste)
-        self.entry_title.bind('<Control-V>', self._handle_title_paste)
         
-        # Video Input - Changed to Textbox for Bulk Support
-        video_container = ctk.CTkFrame(form_container, fg_color="transparent")
-        video_container.pack(fill="x", pady=10)
+        # Link Video (More space)
+        vid_container = ctk.CTkFrame(main_card, fg_color="transparent")
+        vid_container.pack(fill="x", padx=20, pady=(0, 20))
         
-        ctk.CTkLabel(
-            video_container, 
-            text="🎬 Link nhúng video embed Code (Nhập nhiều dòng để thêm hàng loạt)", 
-            font=("Segoe UI", 13, "bold"), 
-            anchor="w",
-            text_color=self.colors['text_primary']
-        ).pack(fill="x", pady=(0, 8))
-        
+        ctk.CTkLabel(vid_container, text="🎬 Link Video / Embed Code", font=("Segoe UI", 13, "bold"), text_color=self.colors['text_primary']).pack(anchor="w", pady=(0, 5))
+        ctk.CTkLabel(vid_container, text="Hỗ trợ nhiều dòng (Facebook, Youtube, Vimeo...)", font=("Segoe UI", 11), text_color="gray").pack(anchor="w", pady=(0, 5))
+
         self.entry_video = ctk.CTkTextbox(
-            video_container,
+            vid_container,
             height=120,
-            font=("Segoe UI", 12),
-            corner_radius=12,
+            font=("Consolas", 12),
+            corner_radius=10,
             border_width=2,
             border_color=self.colors['border'],
             fg_color=self.colors['bg_light'],
             text_color=self.colors['text_primary'],
         )
         self.entry_video.pack(fill="x")
-        self.entry_video.insert("1.0", "") # Empty start
         
-        # Custom Image Input with Browse Button
-        self.create_image_input_section(form_container)
+        # Content Editor
+        content_container = ctk.CTkFrame(main_card, fg_color="transparent")
+        content_container.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
-        img_row = ctk.CTkFrame(frm, fg_color="transparent")
-        img_row.pack(fill="x", padx=30, pady=(5, 0))
+        ctk.CTkLabel(content_container, text="📝 Nội dung chi tiết (HTML)", font=("Segoe UI", 13, "bold"), text_color=self.colors['text_primary']).pack(anchor="w", pady=(0, 5))
         
-        self.entry_image = ctk.CTkEntry(img_row, placeholder_text="Đường dẫn file hoặc URL... (hoặc nhấn Ctrl+V để paste ảnh)", height=40)
-        self.entry_image.pack(side="left", fill="x", expand=True)
-        
-        # Bind Ctrl+V to paste image from clipboard
-        self.entry_image.bind('<Control-v>', self.paste_image_from_clipboard)
-        
-        ctk.CTkButton(img_row, text="📂 Chọn Ảnh", width=100, height=40, command=self.browse_thumbnail).pack(side="left", padx=(5, 0))
-        
-        # Content Images (Insert in middle of post)
-        ctk.CTkLabel(frm, text="Link Ảnh Content (Chèn vào giữa bài)", font=("Segoe UI", 12, "bold"), anchor="w").pack(fill="x", padx=30, pady=(15, 0))
-        
-        # Hint label for content images
-        hint_frame2 = ctk.CTkFrame(frm, fg_color="transparent")
-        hint_frame2.pack(fill="x", padx=30, pady=(0, 0))
-        ctk.CTkLabel(hint_frame2, text="💡 Các ảnh này sẽ được chèn vào giữa nội dung bài viết (tùy chọn, tối đa 3 ảnh) - Hỗ trợ Ctrl+V", 
-                    font=("Segoe UI", 10), text_color="#10b981", anchor="w").pack(side="left")
-        
-        # Auto-fetch car images checkbox
-        self.chk_auto_fetch_images = ctk.CTkCheckBox(frm, text="🚗 Tự động lấy ảnh xe từ API (nếu để trống)", font=("Segoe UI", 11))
-        self.chk_auto_fetch_images.pack(anchor="w", padx=30, pady=(5, 0))
-        
-        # Content Image 1
-        content_img_row = ctk.CTkFrame(frm, fg_color="transparent")
-        content_img_row.pack(fill="x", padx=30, pady=(5, 0))
-        
-        self.entry_content_image = ctk.CTkEntry(content_img_row, placeholder_text="Ảnh content 1 (tùy chọn) - Ctrl+V để paste...", height=40)
-        self.entry_content_image.pack(side="left", fill="x", expand=True)
-        # Bind Ctrl+V for content image 1
-        self.entry_content_image.bind('<Control-v>', lambda e: self.paste_image_from_clipboard_to_field(e, self.entry_content_image, "content1"))
-        
-        ctk.CTkButton(content_img_row, text="📂 Chọn", width=80, height=40, command=self.browse_content_image).pack(side="left", padx=(5, 0))
-        
-        # Content Image 2
-        content_img_row2 = ctk.CTkFrame(frm, fg_color="transparent")
-        content_img_row2.pack(fill="x", padx=30, pady=(5, 0))
-        
-        self.entry_content_image2 = ctk.CTkEntry(content_img_row2, placeholder_text="Ảnh content 2 (tùy chọn) - Ctrl+V để paste...", height=40)
-        self.entry_content_image2.pack(side="left", fill="x", expand=True)
-        # Bind Ctrl+V for content image 2
-        self.entry_content_image2.bind('<Control-v>', lambda e: self.paste_image_from_clipboard_to_field(e, self.entry_content_image2, "content2"))
-        
-        ctk.CTkButton(content_img_row2, text="📂 Chọn", width=80, height=40, command=self.browse_content_image2).pack(side="left", padx=(5, 0))
-        
-        # Content Image 3
-        content_img_row3 = ctk.CTkFrame(frm, fg_color="transparent")
-        content_img_row3.pack(fill="x", padx=30, pady=(5, 0))
-        
-        self.entry_content_image3 = ctk.CTkEntry(content_img_row3, placeholder_text="Ảnh content 3 (tùy chọn) - Ctrl+V để paste...", height=40)
-        self.entry_content_image3.pack(side="left", fill="x", expand=True)
-        # Bind Ctrl+V for content image 3
-        self.entry_content_image3.bind('<Control-v>', lambda e: self.paste_image_from_clipboard_to_field(e, self.entry_content_image3, "content3"))
-        
-        ctk.CTkButton(content_img_row3, text="📂 Chọn", width=80, height=40, command=self.browse_content_image3).pack(side="left", padx=(5, 0))
-        
-        # Content
-        ctk.CTkLabel(frm, text="Nội dung bài viết (HTML)", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=30, pady=(15, 5))
-        self.textbox_content = ctk.CTkTextbox(frm, height=150)
-        self.textbox_content.pack(fill="x", padx=30, pady=(0, 15))
+        self.textbox_content = ctk.CTkTextbox(
+            content_container, 
+            height=250, # Taller for writing
+            font=("Segoe UI", 12),
+            corner_radius=10,
+            border_width=2,
+            border_color=self.colors['border']
+        )
+        self.textbox_content.pack(fill="both", expand=True)
 
-        # Actions Row
-        action_row = ctk.CTkFrame(container, fg_color="transparent")
-        action_row.pack(fill="x", pady=10)
+        # Bulk Import Section (Bototm of Left Col)
+        bulk_card = ctk.CTkFrame(left_col, fg_color=self.colors['bg_card'], corner_radius=12, border_width=1, border_color=self.colors['border'])
+        bulk_card.pack(fill="x", pady=(0, 20))
         
-        ctk.CTkButton(action_row, text="➕ Thêm vào Hàng Chờ", fg_color=self.colors['warning'], width=150, command=self.add_to_queue).pack(side="left", padx=5)
-        self.btn_post = ctk.CTkButton(action_row, text="🚀 ĐĂNG NGAY", fg_color=self.colors['primary'], width=150, command=self.on_post_click)
-        self.btn_post.pack(side="right", padx=5)
-
-        # Separator
-        ctk.CTkLabel(container, text="", height=20).pack()
-        separator = ctk.CTkFrame(container, height=2, fg_color="gray")
-        separator.pack(fill="x", padx=30, pady=10)
-
-        # Multi-platform Import Section (Split Layout)
-        bulk_container = ctk.CTkFrame(container)
-        bulk_container.pack(fill="both", expand=True, pady=10)
+        # Header for Bulk
+        ctk.CTkLabel(bulk_card, text="🔌 Công cụ Import Facebook Hàng Loạt", font=("Segoe UI", 14, "bold"), text_color=self.colors['text_primary']).pack(anchor="w", padx=20, pady=15)
         
-        # --- Left Column: Input ---
-        left_panel = ctk.CTkFrame(bulk_container, fg_color="transparent")
-        left_panel.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+        bulk_content = ctk.CTkFrame(bulk_card, fg_color="transparent")
+        bulk_content.pack(fill="x", padx=20, pady=(0, 20))
         
-        # Header Row with Count
-        header_row = ctk.CTkFrame(left_panel, fg_color="transparent")
-        header_row.pack(fill="x", pady=(0, 5))
-        ctk.CTkLabel(header_row, text="🎬 Nhập Link Video", font=("Segoe UI", 16, "bold")).pack(side="left")
-        self.lbl_link_count = ctk.CTkLabel(header_row, text="(0 link)", text_color="#10b981", font=("Segoe UI", 12, "bold"))
-        self.lbl_link_count.pack(side="left", padx=10)
-
-        ctk.CTkLabel(left_panel, text="Hỗ trợ Facebook, YouTube, Vimeo (Mỗi dòng 1 link)", font=("Segoe UI", 11), text_color="gray").pack(anchor="w")
-        
-        self.textbox_fb_links = ctk.CTkTextbox(left_panel, height=300, font=("Consolas", 11))
-        self.textbox_fb_links.pack(fill="both", expand=True, pady=10)
-        self.textbox_fb_links.insert("1.0", "# Nhập link video vào đây:\n")
+        # Layout for Bulk: Input Left, Options Right
+        self.textbox_fb_links = ctk.CTkTextbox(bulk_content, height=150, font=("Consolas", 11))
+        self.textbox_fb_links.pack(side="left", fill="both", expand=True, padx=(0, 10))
+        self.textbox_fb_links.insert("1.0", "# Paste danh sách link FB vào đây (mỗi dòng 1 link)...\n")
         self.textbox_fb_links.bind("<KeyRelease>", self.update_link_count_display)
+
+        bulk_actions = ctk.CTkFrame(bulk_content, fg_color="transparent")
+        bulk_actions.pack(side="right", fill="y")
         
-        # Options
-        bulk_options = ctk.CTkFrame(left_panel, fg_color="transparent")
-        bulk_options.pack(fill="x", pady=5)
-        self.chk_auto_title_fb = ctk.CTkCheckBox(bulk_options, text="Auto Title", font=("Segoe UI", 11))
-        self.chk_auto_title_fb.pack(side="left")
+        self.lbl_link_count = ctk.CTkLabel(bulk_actions, text="(0 link)", text_color="#10b981", font=("Segoe UI", 12, "bold"))
+        self.lbl_link_count.pack(anchor="e")
+        
+        self.chk_auto_title_fb = ctk.CTkCheckBox(bulk_actions, text="Auto-Title", font=("Segoe UI", 11))
+        self.chk_auto_title_fb.pack(anchor="e", pady=5)
         self.chk_auto_title_fb.select()
         
-        # Buttons
-        action_buttons = ctk.CTkFrame(left_panel, fg_color="transparent")
-        action_buttons.pack(fill="x", pady=10)
-        self.btn_import_fb = ctk.CTkButton(action_buttons, text="🚀 Phân Tích & Lấy Embed", 
-                                          height=45, fg_color="#d97706", font=("Segoe UI", 13, "bold"),
+        self.btn_import_fb = ctk.CTkButton(bulk_actions, text="⚡ Phân Tích & Lấy Embed", 
+                                          height=40, width=180,
+                                          fg_color="#d97706", hover_color="#b45309",
+                                          font=("Segoe UI", 12, "bold"),
                                           command=self.import_fb_bulk)
-        self.btn_import_fb.pack(fill="x")
+        self.btn_import_fb.pack(anchor="e", pady=(10, 0))
 
-        # --- Right Column: Results List ---
-        right_panel = ctk.CTkFrame(bulk_container, width=500) # Wider for details
-        right_panel.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+
+        # ================= RIGHT COLUMN: SIDEBAR =================
+        right_col = ctk.CTkFrame(grid, fg_color="transparent")
+        right_col.grid(row=0, column=1, sticky="nsew", padx=(0, 0))
         
-        # Header with Title and Bulk Actions
-        header_frame = ctk.CTkFrame(right_panel, fg_color="transparent")
-        header_frame.pack(fill="x", padx=10, pady=(0, 5))
+        # 1. Action Panel (Sticky Top)
+        action_card = ctk.CTkFrame(right_col, fg_color=self.colors['bg_card'], corner_radius=12, border_width=1, border_color=self.colors['border'])
+        action_card.pack(fill="x", pady=(0, 15))
         
-        ctk.CTkLabel(header_frame, text="📊 Kết Quả Phân Tích AI", font=("Segoe UI", 16, "bold")).pack(side="left")
+        ctk.CTkLabel(action_card, text="🚀 Tác Vụ", font=("Segoe UI", 14, "bold")).pack(anchor="w", padx=15, pady=15)
         
-        # Bulk Toolbar
-        bulk_tools = ctk.CTkFrame(right_panel, fg_color="#2b2b2b", height=40)
-        bulk_tools.pack(fill="x", padx=5, pady=5)
+        self.btn_post = ctk.CTkButton(
+            action_card, 
+            text="ĐĂNG BÀI NGAY", 
+            height=45,
+            font=("Segoe UI", 13, "bold"),
+            fg_color=self.colors['primary'], 
+            hover_color=self.colors['primary_hover'],
+            command=self.on_post_click
+        )
+        self.btn_post.pack(fill="x", padx=15, pady=(0, 10))
         
-        self.chk_select_all = ctk.CTkCheckBox(bulk_tools, text="Chọn tất cả", width=100, command=self.toggle_select_all_results)
-        self.chk_select_all.pack(side="left", padx=10, pady=5)
+        ctk.CTkButton(
+            action_card, 
+            text="➕ Thêm vào Queue", 
+            height=35,
+            font=("Segoe UI", 12, "bold"),
+            fg_color=self.colors['warning'], 
+            hover_color="#d97706", 
+            text_color="white",
+            command=self.add_to_queue
+        ).pack(fill="x", padx=15, pady=(0, 15))
+
+        # 2. Settings Card
+        settings_card = ctk.CTkFrame(right_col, fg_color=self.colors['bg_card'], corner_radius=12, border_width=1, border_color=self.colors['border'])
+        settings_card.pack(fill="x", pady=(0, 15))
         
-        ctk.CTkButton(bulk_tools, text="➕ Thêm vào Hàng Chờ", 
-                      fg_color="#10b981", hover_color="#059669", 
-                      width=150, height=30,
-                      command=self.add_selected_results_to_queue).pack(side="right", padx=10, pady=5)
+        ctk.CTkLabel(settings_card, text="⚙️ Cấu Hình", font=("Segoe UI", 14, "bold")).pack(anchor="w", padx=15, pady=(15, 10))
         
-        self.results_scroll = ctk.CTkScrollableFrame(right_panel, label_text="Danh sách Video")
+        # Theme
+        ctk.CTkLabel(settings_card, text="Giao diện (Theme):", font=("Segoe UI", 12)).pack(anchor="w", padx=15, pady=(0, 5))
+        
+        self.theme_var = ctk.StringVar(value="⚪ Không dùng theme (Raw HTML)")
+        theme_dropdown = ctk.CTkOptionMenu(
+            settings_card,
+            values=[ "⚪ Không dùng theme (Raw HTML)", "🏎️ Supercar News (Premium)", "📰 Breaking News", "📝 Classic Blog", "✨ Minimal Clean", "💻 Tech Modern", "📖 Magazine", "💼 Business Pro", "🌸 Lifestyle", "🌙 Dark Mode" ],
+            variable=self.theme_var,
+            height=35,
+            font=("Segoe UI", 11),
+            fg_color=self.colors['bg_dark'],
+            button_color=self.colors['border'],
+            button_hover_color=self.colors['primary'],
+            text_color=self.colors['text_primary'],
+            dropdown_fg_color=self.colors['bg_card'],
+            dropdown_hover_color=self.colors['bg_dark'],
+            command=self.on_theme_changed
+        )
+        theme_dropdown.pack(fill="x", padx=15, pady=(0, 5))
+        
+        self.theme_desc_label = ctk.CTkLabel(settings_card, text="💡 Basic HTML mode", font=("Segoe UI", 10), text_color="gray", anchor="w", wraplength=250)
+        self.theme_desc_label.pack(fill="x", padx=15, pady=(0, 15))
+
+        # 3. Media Card
+        media_card = ctk.CTkFrame(right_col, fg_color=self.colors['bg_card'], corner_radius=12, border_width=1, border_color=self.colors['border'])
+        media_card.pack(fill="x", pady=(0, 15))
+        
+        ctk.CTkLabel(media_card, text="🖼️ Media & Ảnh", font=("Segoe UI", 14, "bold")).pack(anchor="w", padx=15, pady=(15, 10))
+        
+        # Thumbnail
+        ctk.CTkLabel(media_card, text="Ảnh Đại Diện (Thumbnail):", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=15, pady=(0, 5))
+        
+        thumb_row = ctk.CTkFrame(media_card, fg_color="transparent")
+        thumb_row.pack(fill="x", padx=15, pady=(0, 15)) 
+        
+        self.entry_image = ctk.CTkEntry(thumb_row, placeholder_text="URL hoặc Paste...", height=35)
+        self.entry_image.pack(side="left", fill="x", expand=True, padx=(0, 5))
+        self.entry_image.bind('<Control-v>', self.paste_image_from_clipboard)
+        
+        ctk.CTkButton(thumb_row, text="📂", width=40, height=35, command=self.browse_thumbnail).pack(side="right")
+        
+        # Content Images
+        ctk.CTkLabel(media_card, text="Ảnh Content (Chèn giữa):", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=15, pady=(0, 5))
+        
+        self.chk_auto_fetch_images = ctk.CTkCheckBox(media_card, text="Tự động lấy ảnh API", font=("Segoe UI", 11), checkbox_height=18, checkbox_width=18)
+        self.chk_auto_fetch_images.pack(anchor="w", padx=15, pady=(0, 8))
+        
+        # Helper to create mini image row
+        def create_mini_img_input(parent, placeholder, bind_cmd, browse_cmd):
+            r = ctk.CTkFrame(parent, fg_color="transparent")
+            r.pack(fill="x", padx=15, pady=(0, 8))
+            e = ctk.CTkEntry(r, placeholder_text=placeholder, height=30, font=("Segoe UI", 11))
+            e.pack(side="left", fill="x", expand=True, padx=(0, 5))
+            e.bind('<Control-v>', bind_cmd)
+            ctk.CTkButton(r, text="📂", width=35, height=30, command=browse_cmd).pack(side="right")
+            return e
+
+        self.entry_content_image = create_mini_img_input(media_card, "Ảnh 1...", lambda e: self.paste_image_from_clipboard_to_field(e, self.entry_content_image, "content1"), self.browse_content_image)
+        self.entry_content_image2 = create_mini_img_input(media_card, "Ảnh 2...", lambda e: self.paste_image_from_clipboard_to_field(e, self.entry_content_image2, "content2"), self.browse_content_image2)
+        self.entry_content_image3 = create_mini_img_input(media_card, "Ảnh 3...", lambda e: self.paste_image_from_clipboard_to_field(e, self.entry_content_image3, "content3"), self.browse_content_image3)
+        
+        ctk.CTkLabel(media_card, text="", height=5).pack() # Spacer
+
+        # 4. Result List (Sidebar)
+        # Re-using the result list idea but making it compact in sidebar
+        res_card = ctk.CTkFrame(right_col, fg_color=self.colors['bg_card'], corner_radius=12, border_width=1, border_color=self.colors['border'])
+        res_card.pack(fill="both", expand=True, pady=(0, 10))
+        
+        head = ctk.CTkFrame(res_card, fg_color="transparent")
+        head.pack(fill="x", padx=15, pady=10)
+        ctk.CTkLabel(head, text="📊 Kết quả (Chờ xử lý)", font=("Segoe UI", 14, "bold")).pack(side="left")
+        
+        self.chk_select_all = ctk.CTkCheckBox(head, text="All", width=50, font=("Segoe UI", 11), command=self.toggle_select_all_results)
+        self.chk_select_all.pack(side="right")
+        
+        ctk.CTkButton(head, text="➕ Thêm vào hàng chờ", 
+                     width=140, 
+                     height=28,
+                     font=("Segoe UI", 11, "bold"),
+                     fg_color=self.colors['warning'], 
+                     hover_color="#d97706",
+                     command=self.add_selected_results_to_queue).pack(side="right", padx=5)
+        
+        # Use existing name for compatibility
+        self.results_scroll = ctk.CTkScrollableFrame(res_card, fg_color="transparent") 
         self.results_scroll.pack(fill="both", expand=True, padx=5, pady=5)
+
 
         # Result Area
 
@@ -910,7 +929,17 @@ class GUIView(ctk.CTk):
         self.lbl_queue_count = ctk.CTkLabel(q_header, text="(0 bài)", text_color="gray")
         self.lbl_queue_count.pack(side="left", padx=5)
         
-        ctk.CTkButton(q_header, text="🗑️ Xóa All", width=60, fg_color=self.colors['danger'], command=self.clear_queue).pack(side="right")
+        # Copy All Links button
+        ctk.CTkButton(
+            q_header, 
+            text="📋 Copy Tất Cả Link", 
+            width=130, 
+            fg_color=self.colors['primary'],
+            hover_color=self.colors['primary_hover'],
+            command=self.copy_all_links_with_titles
+        ).pack(side="right", padx=5)
+        
+        ctk.CTkButton(q_header, text="🗑️ Xóa All", width=80, fg_color=self.colors['danger'], command=self.clear_queue).pack(side="right")
 
         # Listbox replacement with Scrollable Frame for Cards
         self.queue_scroll = ctk.CTkScrollableFrame(right_col, label_text="Danh sách Video đang chờ")
@@ -1357,11 +1386,91 @@ class GUIView(ctk.CTk):
         frm = ctk.CTkFrame(self.tab_settings)
         frm.pack(fill="both", expand=True, padx=20, pady=20)
         
+        # --- UI Settings ---
         ctk.CTkLabel(frm, text="Cài đặt giao diện", font=("Segoe UI", 14, "bold")).pack(anchor="w", padx=20, pady=10)
-        
         ctk.CTkOptionMenu(frm, values=["Dark", "Light", "System"], command=lambda v: ctk.set_appearance_mode(v)).pack(padx=20, anchor="w")
         
+        # --- Facebook Cookie Settings ---
+        ctk.CTkLabel(frm, text="Facebook Cookies (Fix lỗi Reel/Video)", font=("Segoe UI", 14, "bold")).pack(anchor="w", padx=20, pady=(30, 10))
+        
+        cookie_frame = ctk.CTkFrame(frm, fg_color="transparent")
+        cookie_frame.pack(anchor="w", padx=20, fill="x")
+        
+        # Status Label
+        self.lbl_fb_cookie_status = ctk.CTkLabel(cookie_frame, text="Checking...", font=("Segoe UI", 12))
+        self.lbl_fb_cookie_status.pack(side="left", padx=(0, 15))
+        
+        # Import Button
+        ctk.CTkButton(
+            cookie_frame, 
+            text="📂 Chọn File Cookie (.txt)", 
+            command=self.browse_fb_cookie,
+            fg_color="#3b82f6",
+            width=150
+        ).pack(side="left")
+        
+        # Paste Button (NEW)
+        ctk.CTkButton(
+            cookie_frame, 
+            text="📋 Paste từ Clipboard", 
+            command=self.paste_fb_cookie_from_clipboard,
+            fg_color="#8b5cf6", # Purple
+            width=150
+        ).pack(side="left", padx=10)
+        
+        # Help Text
+        ctk.CTkLabel(
+            frm, 
+            text="💡 Hướng dẫn: Dùng extension 'Get cookies.txt LOCALLY' -> Copy -> Bấm nút Paste ở trên.",
+            text_color="gray",
+            font=("Segoe UI", 11)
+        ).pack(anchor="w", padx=20, pady=5)
+        
+        # Initial check
+        self.check_fb_cookie_status()
+        
         ctk.CTkLabel(frm, text="Thông tin phiên bản: v2.0 Refactored", text_color="gray").pack(side="bottom", pady=20)
+
+    def check_fb_cookie_status(self):
+        if hasattr(self, 'lbl_fb_cookie_status'):
+             if os.path.exists("facebook_cookies.txt"):
+                 self.lbl_fb_cookie_status.configure(text="✅ Đã có cookie", text_color="#4ade80") # Green
+             else:
+                 self.lbl_fb_cookie_status.configure(text="❌ Chưa có cookie", text_color="#ef4444") # Red
+
+    def browse_fb_cookie(self):
+        filename = filedialog.askopenfilename(title="Chọn file cookie Facebook", filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")])
+        if filename:
+            try:
+                import shutil
+                shutil.copy2(filename, "facebook_cookies.txt")
+                self.log(f"✅ Đã import cookie từ: {os.path.basename(filename)}")
+                self.check_fb_cookie_status()
+                messagebox.showinfo("Thành công", "Đã nạp Facebook Cookie thành công!")
+            except Exception as e:
+                self.log(f"❌ Lỗi copy cookie: {e}")
+                
+    def paste_fb_cookie_from_clipboard(self):
+        try:
+            content = self.clipboard_get()
+            if not content or len(content) < 10:
+                messagebox.showwarning("Clipboard Trống", "Vui lòng copy nội dung cookie trước!")
+                return
+            
+            # Simple check for netscape format
+            if ".facebook.com" not in content and "c_user" not in content:
+                res = messagebox.askyesno("Cảnh báo", "Nội dung không giống cookie Facebook. Bạn có chắc muốn lưu?")
+                if not res: return
+                
+            with open("facebook_cookies.txt", "w", encoding="utf-8") as f:
+                f.write(content)
+                
+            self.check_fb_cookie_status()
+            self.log("✅ Đã paste cookie từ clipboard.")
+            messagebox.showinfo("Thành công", "Đã lưu nội dung cookie!")
+            
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể lấy nội dung clipboard: {e}")
 
     # =========================================================================
     # LOGIC HELPERS & EVENT HANDLERS
@@ -1502,15 +1611,17 @@ class GUIView(ctk.CTk):
             info_frame.pack(side="left", fill="both", expand=True, padx=10, pady=5)
             
             # Title
-            ctk.CTkLabel(info_frame, text=f"{idx}. {title}", font=("Segoe UI", 12, "bold"), anchor="w").pack(fill="x")
+            ctk.CTkLabel(info_frame, text=f"{idx}. {title}", font=("Segoe UI", 12, "bold"), text_color="white", anchor="w").pack(fill="x")
             
             # AI Analysis Result
-            ai_color = "#3b82f6" # default blue
-            if "Phát hiện" in analysis_text or "Face Detected" in analysis_text: ai_color = "#22c55e" # Green
+            ai_color = "#9ca3af" # default light gray for neutral/error
+            if "Phát hiện" in analysis_text or "Face Detected" in analysis_text: ai_color = "#4ade80" # Screen Green (Brighter)
+            elif "No Image" in analysis_text or "Failed" in analysis_text: ai_color = "#ef4444" # Red for obvious error
+            
             ctk.CTkLabel(info_frame, text=f"🧠 AI: {analysis_text}", font=("Segoe UI", 11), text_color=ai_color, anchor="w").pack(fill="x")
             
             # Embed Code (Entry for easy copying)
-            embed_entry = ctk.CTkEntry(info_frame, font=("Consolas", 10), height=25)
+            embed_entry = ctk.CTkEntry(info_frame, font=("Consolas", 10), height=25, text_color="white", fg_color="#374151")
             embed_entry.pack(fill="x", pady=2)
             embed_entry.insert(0, embed_code)
             
@@ -1640,108 +1751,202 @@ class GUIView(ctk.CTk):
             
             def _analyze_face(img_path):
                 try:
+                    # Import here to avoid global crash if missing
+                    try:
+                        import cv2
+                        import numpy as np
+                    except ImportError:
+                        return "OpenCV Missing"
+
+                    # Check file exists
+                    if not os.path.exists(img_path):
+                        return "Image Missing"
+
                     # Load Haar Cascade (Fastest)
                     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+                    
+                    # Read image with error handling (supports unicode paths better via frombuffer if needed, but imread is default)
+                    # Use standard imread for now
                     img = cv2.imread(img_path)
+                    
+                    if img is None:
+                        return "Read Error"
+                        
                     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                     faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+                    
                     if len(faces) > 0:
-                        return f"✅ Phát hiện {len(faces)} khuôn mặt"
-                    return "❌ Không thấy mặt"
+                        return f"Face Detected ({len(faces)})"
+                    return "No Face"
+                    
                 except Exception as e:
-                    return f"Lỗi: {str(e)[:20]}"
+                    return f"Analysis Error: {str(e)[:20]}"
 
             def _process_links():
                 processed_count = 0
+                shared_driver = None
                 
-                for idx, link in enumerate(video_links):
+                # Check for FB links to init One Shared Driver
+                has_fb = any(('facebook.com' in x or 'fb.watch' in x) for x in video_links)
+                
+                if has_fb:
                     try:
-                        title = None
-                        img_remote = None
-                        video_url_final = link
-                        platform = "Video"
-
-                        # 1. FACEBOOK
-                        if 'facebook.com' in link or 'fb.watch' in link:
-                            platform = "Facebook"
-                            self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] FB: Đang lấy dữ liệu..."))
-                            title = self.get_facebook_title(link)
-                            
-                            # Get Image too if possible
-                            _, img_remote = _get_meta(link)
-                            
-                            # Convert to embed (Iframe)
-                            video_url_final = self.create_facebook_embed(link, use_sdk=False)
+                        self.log("🚀 Đang khởi động trình duyệt ẩn danh (Shared) để quét Facebook...")
+                        import undetected_chromedriver as uc
+                        options = uc.ChromeOptions()
                         
-                        # 2. YOUTUBE
-                        elif 'youtube.com' in link or 'youtu.be' in link:
-                            platform = "YouTube"
-                            self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] YT: Đang lấy dữ liệu..."))
-                            
-                            # Get ID
-                            import re
-                            vid_id = None
-                            if 'youtu.be' in link:
-                                match = re.search(r'youtu\.be/([\w-]+)', link)
-                                if match: vid_id = match.group(1)
-                            else:
-                                match = re.search(r'v=([\w-]+)', link)
-                                if match: vid_id = match.group(1)
-                            
-                            if vid_id:
-                                # Embed Code
-                                video_url_final = f'<iframe width="560" height="315" src="https://www.youtube.com/embed/{vid_id}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
-                                
-                                # Thumbnail (High Quality)
-                                img_remote = f"https://img.youtube.com/vi/{vid_id}/maxresdefault.jpg"
-                                
-                                # Title via oEmbed
-                                try:
-                                    oembed_url = f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={vid_id}&format=json"
-                                    res = requests.get(oembed_url, timeout=3)
-                                    if res.status_code == 200:
-                                        title = res.json().get('title')
-                                except: pass
-                            
-                            if not title:
-                                title, _ = _get_meta(link) # Fallback
-
-                        # 3. OTHERS
-                        else:
-                            self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] Đang lấy dữ liệu..."))
-                            title, img_remote = _get_meta(link)
-                            video_url_final = link
-
-                        if not title: title = f"Video {idx+1}"
-
-                        # Download Image for Analysis
-                        local_img_path = None
-                        analysis_result = "No Image"
+                        # Re-enable Headless to avoid annoying popups
+                        options.add_argument("--headless=new") 
                         
-                        if img_remote:
-                            try:
-                                timestamp = time.strftime("%Y%m%d_%H%M%S")
-                                if not os.path.exists("temp_analysis"): os.makedirs("temp_analysis")
-                                local_img_path = f"temp_analysis/thumb_{timestamp}_{idx}.jpg"
-                                urllib.request.urlretrieve(img_remote, local_img_path)
-                                
-                                # Analyze
-                                analysis_result = _analyze_face(local_img_path)
-                            except:
-                                analysis_result = "Download Failed"
-
-                        # Add card to UI
-                        self.after(0, lambda i=idx+1, t=title, e=video_url_final, img=local_img_path, a=analysis_result: 
-                                   self.add_result_card(i, t, e, img, a))
+                        # Use Mobile User Agent
+                        options.add_argument('--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1')
                         
-                        processed_count += 1
+                        options.add_argument("--disable-gpu")
+                        options.add_argument("--mute-audio")
+                        options.add_argument("--window-size=375,812") # Mobile dimensions
                         
+                        chrome_path = os.path.join(os.getcwd(), "chrome_portable", "chrome.exe")
+                        if os.path.exists(chrome_path): options.binary_location = chrome_path
+                        
+                        shared_driver = uc.Chrome(options=options, version_main=None)
+                        shared_driver.set_page_load_timeout(45)
                     except Exception as e:
-                        print(e)
-                        continue
+                        print(f"Failed to init shared driver: {e}")
+
+                try:
+                    for idx, link in enumerate(video_links):
+                        try:
+                            title = None
+                            img_remote = None
+                            video_url_final = link
+                            platform = "Video"
+
+                            # 1. FACEBOOK
+                            if 'facebook.com' in link or 'fb.watch' in link:
+                                platform = "Facebook"
+                                self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] FB: Đang lấy dữ liệu..."))
+                                
+                                # Use shared driver!
+                                title = self.get_facebook_title(link, driver=shared_driver)
+                                
+                                # Get Image (Prefer cached from get_facebook_title, fallback to _get_meta)
+                                img_remote = None
+                                if hasattr(self, '_last_fb_image') and self._last_fb_image:
+                                    img_remote = self._last_fb_image
+                                else:
+                                    _, img_remote = _get_meta(link)
+                                
+                                # Convert to embed (Iframe)
+                                video_url_final = self.create_facebook_embed(link, use_sdk=False)
+                            
+                            # 2. YOUTUBE
+                            elif 'youtube.com' in link or 'youtu.be' in link:
+                                platform = "YouTube"
+                                self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] YT: Đang lấy dữ liệu..."))
+                                
+                                # Get ID
+                                import re
+                                vid_id = None
+                                if 'youtu.be' in link:
+                                    match = re.search(r'youtu\.be/([\w-]+)', link)
+                                    if match: vid_id = match.group(1)
+                                else:
+                                    match = re.search(r'v=([\w-]+)', link)
+                                    if match: vid_id = match.group(1)
+                                
+                                if vid_id:
+                                    # Embed Code
+                                    video_url_final = f'<iframe width="560" height="315" src="https://www.youtube.com/embed/{vid_id}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+                                    
+                                    # Thumbnail (High Quality)
+                                    img_remote = f"https://img.youtube.com/vi/{vid_id}/maxresdefault.jpg"
+                                    
+                                    # Title via oEmbed
+                                    try:
+                                        oembed_url = f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={vid_id}&format=json"
+                                        res = requests.get(oembed_url, timeout=3)
+                                        if res.status_code == 200:
+                                            title = res.json().get('title')
+                                    except: pass
+                                
+                                if not title:
+                                    title, _ = _get_meta(link) # Fallback
+
+                            # 3. VIMEO
+                            elif 'vimeo.com' in link:
+                                platform = "Vimeo"
+                                self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] Vimeo: Đang lấy dữ liệu..."))
+                                
+                                # Convert to Player URL / Embed
+                                # Default to keeping it as is, but we will try to make it an embed if possible
+                                video_url_final = link 
+                                
+                                # Extract ID
+                                import re
+                                vid_id = None
+                                match = re.search(r'vimeo\.com/(\d+)', link)
+                                if match:
+                                    vid_id = match.group(1)
+                                    # Use helper function for proper aspect ratio
+                                    video_url_final = self.create_vimeo_embed(vid_id, title or "Vimeo Video")
+                                    
+                                    # Fetch oEmbed Title
+                                    try:
+                                        oembed_url = f"https://vimeo.com/api/oembed.json?url=https://vimeo.com/{vid_id}"
+                                        res = requests.get(oembed_url, timeout=3)
+                                        if res.status_code == 200:
+                                            data = res.json()
+                                            title = data.get('title')
+                                            img_remote = data.get('thumbnail_url')
+                                    except: pass
+                                
+                                if not title:
+                                    title, img_remote_meta = _get_meta(link)
+                                    if not img_remote: img_remote = img_remote_meta
+
+                            # 4. OTHERS
+                            else:
+                                self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] Đang lấy dữ liệu..."))
+                                title, img_remote = _get_meta(link)
+                                video_url_final = link
+
+                            if not title: title = f"Video {idx+1}"
+
+                            # Download Image for Analysis
+                            local_img_path = None
+                            analysis_result = "No Image"
+                            
+                            if img_remote:
+                                try:
+                                    timestamp = time.strftime("%Y%m%d_%H%M%S")
+                                    if not os.path.exists("temp_analysis"): os.makedirs("temp_analysis")
+                                    local_img_path = f"temp_analysis/thumb_{timestamp}_{idx}.jpg"
+                                    urllib.request.urlretrieve(img_remote, local_img_path)
+                                    
+                                    # Analyze
+                                    analysis_result = _analyze_face(local_img_path)
+                                except:
+                                    analysis_result = "Download Failed"
+
+                            # Add card to UI
+                            self.after(0, lambda i=idx+1, t=title, e=video_url_final, img=local_img_path, a=analysis_result: 
+                                       self.add_result_card(i, t, e, img, a))
+                            
+                            processed_count += 1
+                            
+                        except Exception as e:
+                            print(e)
+                            continue
+                finally:
+                    # Clean up shared driver
+                    if shared_driver:
+                        try:
+                            shared_driver.quit()
+                        except: pass
                 
                 self.after(0, lambda: self.log(f"🏁 Hoàn tất phân tích {processed_count} link."))
                 self.after(0, lambda: self.btn_import_fb.configure(state="normal", text="🚀 Phân Tích & Lấy Embed"))
+
 
             # Start thread
             threading.Thread(target=_process_links, daemon=True).start()
@@ -1750,140 +1955,365 @@ class GUIView(ctk.CTk):
             self.log(f"❌ Lỗi xử lý: {e}")
             self.btn_import_fb.configure(state="normal", text="🚀 Phân Tích & Lấy Embed")
 
-    def get_facebook_title(self, fb_url):
-        """Get title from Facebook video page using requests first, then Selenium fallback"""
+    def get_facebook_title(self, fb_url, driver=None):
+        """Get title from Facebook video page using undetected_chromedriver to bypass detection"""
         fetched_title = None
+        self._last_fb_image = None # Reset image cache
         
-        # --- Method 1: Requests (Fast) ---
+        # --- Method 1: Try yt-dlp Dictionary / Library (Python Native) ---
+        # Đây là cách TỐT NHẤT & CHUẨN NHẤT như bạn yêu cầu 
         try:
-            import requests
-            from bs4 import BeautifulSoup
+            import yt_dlp
             
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5'
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'simulate': True,
+                'extract_flat': False,
+                'noplaylist': True,
+                'ignoreerrors': True,
+                # FIX CHÍNH: Dùng 'chrome' để auto-pick version mới nhất khớp với curl-cffi
+                'impersonate': 'chrome', 
+                'extractor_args': {'facebook': {'impersonate': 'chrome'}},
             }
             
-            # Switch to m.facebook.com for easier scraping sometimes
-            req_url = fb_url.replace("www.facebook.com", "m.facebook.com")
+            # --- COOKIE SUPPORT (Tính năng mới) ---
+            # Nếu có file facebook_cookies.txt, load vào để đăng nhập & lấy tin chuẩn 100%
+            cookie_path = "facebook_cookies.txt"
+            if os.path.exists(cookie_path):
+                ydl_opts['cookiefile'] = cookie_path
+                print(f"[FB] 🍪 Đã tìm thấy facebook_cookies.txt -> Đang sử dụng cookie!")
+            else:
+                print(f"[FB] ℹ️ Không thấy facebook_cookies.txt -> Chạy chế độ Guest (có thể bị hạn chế)")
             
-            response = requests.get(req_url, headers=headers, timeout=5)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                # Tải metadata
+                info = ydl.extract_info(fb_url, download=False)
                 
-                # Strategy: title tag
-                title_tag = soup.find('title')
-                if title_tag:
-                    t = title_tag.text.replace(' | Facebook', '').strip()
-                    # Filter out generic titles including "Log in" variations
-                    invalid_titles = ['facebook', 'log into facebook', 'login', 'log in', 'video', 'watch', 'welcome to facebook']
-                    if t and t.lower() not in invalid_titles and "log in" not in t.lower():
-                        fetched_title = t
-                
-                # Strategy: og:description (Often contains the caption/title for Reels)
-                if not fetched_title or fetched_title.lower() in ['facebook', 'facebook video', 'watch']:
-                    og_desc = soup.find('meta', property='og:description')
-                    if og_desc and og_desc.get('content'):
-                        d = og_desc.get('content').strip()
-                        # Filter out generic descriptions
-                        if d and "log in" not in d.lower() and "sign up" not in d.lower():
-                            fetched_title = d
-                
-                # Strategy: og:title
-                if not fetched_title:
-                    og_title = soup.find('meta', property='og:title')
-                    if og_title and og_title.get('content'):
-                        t = og_title.get('content').strip()
-                        invalid_titles = ['facebook', 'watch', 'video', 'log into facebook', 'login', 'log in']
-                        if t and t.lower() not in invalid_titles:
-                            fetched_title = t
-                            
+                # Trích xuất thông tin (info có thể None nếu lỗi)
+                if info:
+                    title = info.get('title')
+                    if title:
+                        fetched_title = title.strip()
+                        self._last_fb_image = info.get('thumbnail')
+                        print(f"[FB] yt_dlp Lib extracted: {fetched_title[:50]}...")
+                        return fetched_title
+
+        except ImportError:
+            print("[FB] Python module 'yt_dlp' lỗi import.")
         except Exception as e:
-            print(f"[FB] Requests error: {e}")
+            # Lỗi này thường do FB đổi cấu trúc, không sao cả -> fallback
+            print(f"[FB] yt-dlp chưa support video này, đang chuyển sang chạy Browser... ({e})")
 
-        # --- Method 2: Selenium (Fallback - Slower but Reliable) ---
-        # Only use if Requests failed or returned generic title or "Log in"
-        invalid_titles = ["facebook video", "facebook", "log into facebook", "log in", "login"]
-        if not fetched_title or fetched_title.lower() in invalid_titles or "log in" in fetched_title.lower():
-            print("[FB] Switching to Selenium for title extraction...")
+        # --- Method 1.5: Try yt-dlp Subprocess (Fallback nếu không import được lib) ---
+        try:
+            import subprocess
+            import json
+            
+            cmd = ['yt-dlp', '--dump-json', '--no-download', '--no-warnings', '--quiet', fb_url]
+            
+            startupinfo = None
+            if os.name == 'nt':
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=15, startupinfo=startupinfo)
+            if result.returncode == 0 and result.stdout:
+                data = json.loads(result.stdout)
+                title = data.get('title') or data.get('fulltitle')
+                if title and title.strip():
+                    fetched_title = title.strip()
+                    self._last_fb_image = data.get('thumbnail') 
+                    print(f"[FB] yt-dlp.exe extracted: {fetched_title[:50]}...")
+                    return fetched_title
+        except: pass
+        
+        # --- Method 2: Requests (Only if no driver provided) ---
+        if not driver:
             try:
-                from selenium import webdriver
-                from selenium.webdriver.chrome.options import Options
-                from selenium.webdriver.chrome.service import Service
-                from webdriver_manager.chrome import ChromeDriverManager
+                import requests
+                from bs4 import BeautifulSoup
                 
-                options = Options()
-                options.add_argument("--headless=new") # Run in background
-                options.add_argument("--disable-gpu")
-                options.add_argument("--no-sandbox")
-                options.add_argument("--mute-audio")
-                options.add_argument("--log-level=3")
+                headers = {
+                    'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                }
                 
-                if os.name == 'nt':
-                     options.add_argument("--disable-logging")
-                
-                # Check for cached driver to speed up if possible (not implemented yet, creating new)
-                service = Service(ChromeDriverManager().install())
-                driver = webdriver.Chrome(service=service, options=options)
-                
-                try:
-                    driver.get(fb_url)
-                    time.sleep(5) # Wait for load
+                response = requests.get(fb_url, headers=headers, timeout=5, allow_redirects=True)
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    t = None
+                    og_title = soup.find('meta', property='og:title')
+                    if og_title: t = og_title.get('content')
                     
-                    # 1. Try Page Title again
-                    page_title = driver.title
-                    if page_title:
-                        page_title = page_title.replace(' | Facebook', '')
-                        # Remove notification count
-                        import re
-                        page_title = re.sub(r'^\(\d+\)\s*', '', page_title)
-                        
-                        if page_title.lower() not in invalid_titles and "log in" not in page_title.lower():
-                             fetched_title = page_title.strip()
+                    invalid_titles = ['facebook', 'watch', 'video', 'log into facebook', 'login', 'log in', 
+                                     'this page isn', 'content not found', 'unavailable', 'facebook video']
                     
-                    # 2. Try looking for the post caption/content (Better than title)
-                    if not fetched_title or "log in" in fetched_title.lower():
-                        # Try multiple selectors for post text
-                        selectors = [
-                             "//div[@data-ad-preview='message']", # Classic Text
-                             "//span[contains(@class, 'x193iq5w')]", # Common text class
-                             "//div[@dir='auto']", # Generic text container
-                             "//h3", 
-                             "//h2",
-                             "//span" # Last resort: Longest span
-                        ]
-                        
-                        longest_text = ""
-                        for xpath in selectors:
-                            try:
-                                elems = driver.find_elements("xpath", xpath)
-                                for elem in elems:
-                                    text = elem.text.strip()
-                                    # Candidate must be reasonable length (10-200 chars)
-                                    if text and 10 < len(text) < 300: 
-                                        # Prefer text that is NOT a button label
-                                        if text.lower() not in ["like", "comment", "share", "follow", "log in"]:
-                                             # Keep the longest valid text found - likely to be the caption
-                                             if len(text) > len(longest_text):
-                                                 longest_text = text
-                            except: pass
-                        
-                        if longest_text:
-                            fetched_title = longest_text.split('\n')[0]
+                    if t:
+                        is_invalid = any(inv in t.lower() for inv in invalid_titles)
+                        if not is_invalid:
+                            fetched_title = t.strip()
+                            og_image = soup.find('meta', property='og:image')
+                            if og_image: self._last_fb_image = og_image.get('content')
+            except: pass
 
-                finally:
-                    if 'driver' in locals():
-                        driver.quit()
+        # --- Method 2: undetected_chromedriver (Fallback Mạnh Mẽ) ---
+        invalid_titles = ["facebook video", "facebook", "log into facebook", "log in", "login", "watch",
+                         "this page isn", "content not found", "page not found", "unavailable"]
+        
+        is_invalid_title = False
+        if fetched_title:
+             is_invalid_title = any(inv in fetched_title.lower() for inv in invalid_titles)
+             
+        if not fetched_title or is_invalid_title:
+            print("[FB] Using undetected_chromedriver for title extraction...")
+            
+            # Helper for safe import
+            try:
+                import undetected_chromedriver as uc
+            except ImportError:
+                print("[FB] Could not import undetected_chromedriver")
+                return "Facebook Video"
+
+            use_driver = None
+            should_quit = False
+            
+            # Reuse driver if possible
+            if driver and isinstance(driver, uc.Chrome):
+                use_driver = driver
+                print("[FB] Reusing existing driver")
+            else:
+                try:
+                    # import undetected_chromedriver as uc # Already imported above
+                    options = uc.ChromeOptions()
+                    # Re-enable Headless
+                    options.add_argument("--headless=new") 
                     
+                    # Mobile UA
+                    options.add_argument('--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1')
+                    
+                    options.add_argument("--disable-gpu")
+                    options.add_argument("--mute-audio")
+                    options.add_argument("--window-size=375,812") 
+                    # Chống detect bot
+                    options.add_argument("--disable-blink-features=AutomationControlled")
+                    
+                    chrome_path = os.path.join(os.getcwd(), "chrome_portable", "chrome.exe")
+                    if os.path.exists(chrome_path): options.binary_location = chrome_path
+                    
+                    use_driver = uc.Chrome(options=options, version_main=None)
+                    use_driver.set_page_load_timeout(45)
+                    should_quit = True
+                    
+                    # --- LOAD COOKIES INTO DRIVER ---
+                    if os.path.exists(cookie_path):
+                        try:
+                            # Use mobile site for cookies too
+                            use_driver.get("https://m.facebook.com/")
+                            with open(cookie_path, 'r', encoding='utf-8') as f:
+                                for line in f:
+                                    if line.strip() and not line.strip().startswith('#'):
+                                        parts = line.split('\t')
+                                        if len(parts) >= 7:
+                                            cookie = {
+                                                'name': parts[5],
+                                                'value': parts[6].strip(),
+                                                'domain': parts[0],
+                                                'path': parts[2]
+                                            }
+                                            try: use_driver.add_cookie(cookie)
+                                            except: pass
+                            print("[FB] 🍪 Đã nạp Cookies vào Browser Fallback!")
+                            time.sleep(1) # Chờ cookie ăn
+                        except Exception as e:
+                            print(f"[FB] Lỗi nạp cookie: {e}")
+
+                except Exception as e:
+                    print(f"[FB] Failed to create driver: {e}")
+                    return "Facebook Video" 
+
+            try:
+                use_driver.get(fb_url)
+                
+                # Scroll nhẹ
+                try: use_driver.execute_script("window.scrollTo(0, 300);")
+                except: pass
+                
+                # --- NEW: Dùng WebDriverWait thay vì sleep cứng ---
+                from selenium.webdriver.common.by import By # Ensure imports
+                from selenium.webdriver.support.ui import WebDriverWait
+                from selenium.webdriver.support import expected_conditions as EC
+                
+                wait = WebDriverWait(use_driver, 15) # Chờ tối đa 15s
+                
+                # 1. Image Strategy (Wait for og:image)
+                try:
+                    # Chờ thẻ meta og:image xuất hiện
+                    og_img_el = wait.until(EC.presence_of_element_located((By.XPATH, "//meta[@property='og:image']")))
+                    if og_img_el:
+                        img_url = og_img_el.get_attribute("content")
+                        if img_url:
+                            self._last_fb_image = img_url
+                            print(f"[FB] Selenium found og:image: {img_url[:30]}...")
+                except: 
+                    # Last resort: Ảnh to nhất
+                    if not self._last_fb_image:
+                        try:
+                            largest_img = use_driver.execute_script("""
+                                let maxArea = 0; let bestSrc = null;
+                                document.querySelectorAll('img').forEach(img => {
+                                    let rect = img.getBoundingClientRect();
+                                    let area = rect.width * rect.height;
+                                    if (area > maxArea && rect.width > 200) { maxArea = area; bestSrc = img.src; }
+                                });
+                                return bestSrc;
+                            """)
+                            if largest_img: self._last_fb_image = largest_img
+                        except: pass
+
+                # 2. Title Strategy
+                try:
+                    # a. Thử lấy og:title (Title chuẩn của bài post)
+                    og_title_el = use_driver.find_elements(By.XPATH, "//meta[@property='og:title']")
+                    if og_title_el:
+                        og_title = og_title_el[0].get_attribute("content")
+                        if og_title and "Facebook" not in og_title:
+                            fetched_title = og_title
+                            print(f"[FB] Selenium found og:title: {fetched_title}")
+                    
+                    # b. Nếu không có, thử lấy Page Title
+                except Exception as e:
+                    print(f"[FB] Selenium getting og:title error: {e}")
+
+                try:
+                    # Wait for title in <title> tag
+                    import time
+                    time.sleep(3)
+                    
+                    # Try getting title from document.title
+                    t = use_driver.title
+                    
+                    # Clean up title
+                    if t:
+                        if "Log in" in t or "Đăng nhập" in t:
+                             self.log("⚠️ Facebook yêu cầu đăng nhập (Login Wall) - Vui lòng nhập Cookie!")
+                             fetched_title = "Facebook Login Required"
+                        else:
+                             t = t.replace(" | Facebook", "").replace("Facebook", "").strip()
+                    
+                    # If empty or generic, try finding h1 or video label
+                    if not t or len(t) < 5:
+                         try:
+                             # Try to find user status/caption
+                             # Ensure uc is imported for By if not already in scope
+                             if 'uc' not in locals() and 'uc' not in globals():
+                                 import undetected_chromedriver as uc
+                             elem = use_driver.find_element(uc.By.CSS_SELECTOR, 'div[data-ad-preview="message"]')
+                             if elem: t = elem.text
+                         except: pass
+
+                    if t and len(t) > 3:
+                        fetched_title = t
+                        print(f"[FB] Browser extracted: {fetched_title[:50]}...")
+                    else:
+                        fetched_title = "Facebook Video"
+
+                except Exception as e:
+                     print(f"[FB] Browser error: {e}")
+                     fetched_title = "Facebook Video"
+                
             except Exception as e:
-                print(f"[FB] Selenium error: {e}")
- 
-        # Final sanity check to NEVER return "Log in"
-        if fetched_title and ("log in" in fetched_title.lower() or "login" in fetched_title.lower()):
-            fetched_title = None
+                print(f"[FB] Driver fallback error: {e}")
+            finally:
+                if should_quit and use_driver:
+                    try: 
+                        use_driver.quit()
+                    except: pass
+
+
+        if fetched_title:
+            fetched_title = fetched_title.replace(' | Facebook', '').replace('Facebook', '').strip()
+            if any(inv in fetched_title.lower() for inv in invalid_titles): fetched_title = None
 
         return fetched_title or "Facebook Video"
+    
+    def create_vimeo_embed(self, video_id, title="Vimeo Video"):
+        """
+        Create Vimeo embed code with automatic aspect ratio detection
+        
+        Args:
+            video_id: Vimeo video ID
+            title: Video title for accessibility
+            
+        Returns:
+            str: HTML embed code with responsive wrapper
+        """
+        try:
+            import requests
+            
+            # Get video info from Vimeo oEmbed API
+            oembed_url = f"https://vimeo.com/api/oembed.json?url=https://vimeo.com/{video_id}"
+            response = requests.get(oembed_url, timeout=5)
+            
+            if response.status_code == 200:
+                data = response.json()
+                width = data.get('width', 640)
+                height = data.get('height', 360)
+                
+                # Calculate aspect ratio
+                aspect_ratio = width / height if height > 0 else 16/9
+                
+                # Determine if vertical (9:16) or horizontal (16:9)
+                is_vertical = aspect_ratio < 1  # width < height
+                
+                if is_vertical:
+                    # Vertical video (9:16) - Use max-width and center
+                    padding_percent = (height / width) * 100  # e.g., 177.78% for 9:16
+                    
+                    embed_code = f'''<div style="max-width:400px;margin:0 auto;">
+<div style="padding:{padding_percent:.2f}% 0 0 0;position:relative;">
+<iframe src="https://player.vimeo.com/video/{video_id}?badge=0&autopause=0&player_id=0&app_id=58479" 
+frameborder="0" 
+allow="autoplay; fullscreen; picture-in-picture; clipboard-write" 
+style="position:absolute;top:0;left:0;width:100%;height:100%;" 
+title="{title}"></iframe>
+</div>
+</div>
+<script src="https://player.vimeo.com/api/player.js"></script>'''
+                    
+                    print(f"[VIMEO] 📱 Vertical video detected: {width}x{height} (aspect: {aspect_ratio:.2f})")
+                else:
+                    # Horizontal video (16:9) - Full width responsive
+                    padding_percent = (height / width) * 100  # e.g., 56.25% for 16:9
+                    
+                    embed_code = f'''<div style="padding:{padding_percent:.2f}% 0 0 0;position:relative;">
+<iframe src="https://player.vimeo.com/video/{video_id}?badge=0&autopause=0&player_id=0&app_id=58479" 
+frameborder="0" 
+allow="autoplay; fullscreen; picture-in-picture; clipboard-write" 
+style="position:absolute;top:0;left:0;width:100%;height:100%;" 
+title="{title}"></iframe>
+</div>
+<script src="https://player.vimeo.com/api/player.js"></script>'''
+                    
+                    print(f"[VIMEO] 🖥️ Horizontal video detected: {width}x{height} (aspect: {aspect_ratio:.2f})")
+                
+                return embed_code
+            else:
+                print(f"[VIMEO] ⚠️ Could not fetch video info, using default 16:9")
+                
+        except Exception as e:
+            print(f"[VIMEO] ❌ Error detecting aspect ratio: {e}")
+        
+        # Fallback to standard 16:9 embed
+        return f'''<div style="padding:56.25% 0 0 0;position:relative;">
+<iframe src="https://player.vimeo.com/video/{video_id}?badge=0&autopause=0&player_id=0&app_id=58479" 
+frameborder="0" 
+allow="autoplay; fullscreen; picture-in-picture; clipboard-write" 
+style="position:absolute;top:0;left:0;width:100%;height:100%;" 
+title="{title}"></iframe>
+</div>
+<script src="https://player.vimeo.com/api/player.js"></script>'''
+
 
     def create_facebook_embed(self, fb_url, use_sdk=False):
         """Convert Facebook URL to embed code (267x591 - 9:16 ratio for portrait video)
@@ -2006,8 +2436,28 @@ class GUIView(ctk.CTk):
                                          oembed_url = f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={video_id}&format=json"
                                          res = requests.get(oembed_url, timeout=2)
                                          if res.status_code == 200:
-                                              yt_data = res.json()
-                                              current_post.title = yt_data.get('title', '')
+                                             yt_data = res.json()
+                                             current_post.title = yt_data.get('title', '')
+                                     except: pass
+
+                    # --- Vimeo Logic ---
+                    elif 'vimeo.com' in vid_line:
+                        if not vid_line.strip().startswith('<') and 'player.vimeo.com' not in vid_line:
+                             import re
+                             match = re.search(r'vimeo\.com/(\d+)', vid_line)
+                             if match:
+                                 vid_id = match.group(1)
+                                 # Use new helper function for proper aspect ratio
+                                 current_post.video_url = self.create_vimeo_embed(vid_id, current_post.title or "Vimeo Video")
+                                 
+                                 if not current_post.title:
+                                     try:
+                                          import requests
+                                          oembed_url = f"https://vimeo.com/api/oembed.json?url=https://vimeo.com/{vid_id}"
+                                          res = requests.get(oembed_url, timeout=2)
+                                          if res.status_code == 200:
+                                              data = res.json()
+                                              current_post.title = data.get('title', '')
                                      except: pass
                     
                     # Add to queue
@@ -2027,7 +2477,14 @@ class GUIView(ctk.CTk):
             
             self.log(f"✅ Đã thêm {added_count} bài viết vào hàng chờ!")
             self.update_queue_display()
+            # Clear ALL inputs after bulk add
             self.entry_video.delete("1.0", "end")
+            self.entry_title.delete(0, "end")
+            self.entry_image.delete(0, "end")
+            if hasattr(self, 'entry_content_image'): self.entry_content_image.delete(0, "end")
+            if hasattr(self, 'entry_content_image2'): self.entry_content_image2.delete(0, "end")
+            if hasattr(self, 'entry_content_image3'): self.entry_content_image3.delete(0, "end")
+            self.textbox_content.delete("1.0", "end")
             return
 
         # SINGLE MODE (Original Logic)
@@ -2092,6 +2549,31 @@ class GUIView(ctk.CTk):
                     except Exception as e:
                         self.log(f"⚠️ Lỗi tạo embed FB: {e}")
 
+        # --- Vimeo Processing for Single Post (If not handled by _extract_video_url) ---
+        if data.video_url and 'vimeo.com' in data.video_url:
+             # Check if it is a raw link that needs conversion to full embed code
+             if not data.video_url.strip().startswith('<') and 'player.vimeo.com' not in data.video_url:
+                  import re
+                  match = re.search(r'vimeo\.com/(\d+)', data.video_url)
+                  if match:
+                      vid_id = match.group(1)
+                      # Use new helper function for proper aspect ratio
+                      data.video_url = self.create_vimeo_embed(vid_id, data.title or "Vimeo Video")
+                      self.log(f"✅ Đã chuyển link Vimeo sang Embed Code (tự động phát hiện tỷ lệ)")
+                      
+                      # Fetch title if missing
+                      if not data.title:
+                          try:
+                              import requests
+                              oembed_url = f"https://vimeo.com/api/oembed.json?url=https://vimeo.com/{vid_id}"
+                              res = requests.get(oembed_url, timeout=2)
+                              if res.status_code == 200:
+                                  data.title = res.json().get('title', '')
+                                  self.entry_title.delete(0, "end")
+                                  self.entry_title.insert(0, data.title)
+                          except: pass
+
+
         # Auto-generate title if missing but has video
         if not data.title and data.video_url:
             if "youtube" in data.video_url.lower():
@@ -2118,11 +2600,11 @@ class GUIView(ctk.CTk):
         
         # Clear inputs
         self.entry_title.delete(0, "end")
-        self.entry_video.delete(0, "end")
+        self.entry_video.delete("1.0", "end")
         self.entry_image.delete(0, "end")
-        self.entry_content_image.delete(0, "end")  # Clear content image 1
-        self.entry_content_image2.delete(0, "end")  # Clear content image 2
-        self.entry_content_image3.delete(0, "end")  # Clear content image 3
+        if hasattr(self, 'entry_content_image'): self.entry_content_image.delete(0, "end")  # Clear content image 1
+        if hasattr(self, 'entry_content_image2'): self.entry_content_image2.delete(0, "end")  # Clear content image 2
+        if hasattr(self, 'entry_content_image3'): self.entry_content_image3.delete(0, "end")  # Clear content image 3
         self.textbox_content.delete("1.0", "end")
 
     def update_queue_display(self):
@@ -2178,7 +2660,8 @@ class GUIView(ctk.CTk):
                         ctk_img = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=pil_img.size)
                         ctk.CTkLabel(thumb_frame, text="", image=ctk_img).pack(expand=True)
                         has_img = True
-                    except: pass
+                    except Exception as e:
+                        print(f"Error loading thumbnail for {image_url}: {e}")
                 
                 if not has_img:
                     ctk.CTkLabel(thumb_frame, text="No Img", font=("Arial", 9)).pack(expand=True)
@@ -2312,14 +2795,14 @@ class GUIView(ctk.CTk):
             else:
                 # Method 1: Direct iframe (default) - CRITICAL: NO SPACES between attributes!
                 fb_iframe = (
-                    f'<iframe src="https://www.facebook.com/plugins/video.php?height=476&href={encoded_url}&show_text=true&width=267&t=0"'
-                    f'width="267"'
-                    f'height="591"'
-                    f'style="border:none;overflow:hidden"'
-                    f'scrolling="no"'
-                    f'frameborder="0"'
-                    f'allowfullscreen="true"'
-                    f'allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"'
+                    f'<iframe src="https://www.facebook.com/plugins/video.php?height=591&href={encoded_url}&show_text=false&width=267&t=0" '
+                    f'width="267" '
+                    f'height="591" '
+                    f'style="border:none;overflow:hidden" '
+                    f'scrolling="no" '
+                    f'frameborder="0" '
+                    f'allowfullscreen="true" '
+                    f'allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" '
                     f'allowFullScreen="true">'
                     f'</iframe>'
                 )
@@ -3380,6 +3863,227 @@ class GUIView(ctk.CTk):
             )
         except Exception as e:
             print(f"[GUI] Error showing popup: {e}")
+    
+    def show_about_dialog(self):
+        """Show About dialog with version info and changelog"""
+        try:
+            # Import version info
+            try:
+                from version import get_version_info, __app_name__, __author__, __build_date__
+                version_info = get_version_info()
+            except:
+                version_info = {
+                    "version": "2.0.2",
+                    "app_name": "WprTool - WordPress Auto Posting",
+                    "author": "NguyenDuyDuc",
+                    "build_date": "2026-02-05",
+                    "features": []
+                }
+            
+            # Create popup window
+            popup = ctk.CTkToplevel(self)
+            popup.title("Thông Tin Phiên Bản")
+            popup.geometry("500x400")
+            popup.resizable(False, False)
+            
+            # Center window
+            popup.update_idletasks()
+            x = (popup.winfo_screenwidth() // 2) - (500 // 2)
+            y = (popup.winfo_screenheight() // 2) - (400 // 2)
+            popup.geometry(f"500x400+{x}+{y}")
+            
+            # Main container
+            main_frame = ctk.CTkFrame(popup, fg_color=self.colors['bg_light'])
+            main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+            
+            # Header with icon and title
+            header = ctk.CTkFrame(main_frame, fg_color=self.colors['primary'], corner_radius=12)
+            header.pack(fill="x", pady=(0, 20))
+            
+            ctk.CTkLabel(
+                header,
+                text="🚀",
+                font=("Segoe UI", 48)
+            ).pack(pady=(20, 5))
+            
+            ctk.CTkLabel(
+                header,
+                text=version_info['app_name'],
+                font=("Segoe UI", 20, "bold"),
+                text_color="white"
+            ).pack(pady=(0, 5))
+            
+            ctk.CTkLabel(
+                header,
+                text=f"Version {version_info['version']}",
+                font=("Segoe UI", 14),
+                text_color="white"
+            ).pack(pady=(0, 20))
+            
+            # Info section
+            info_frame = ctk.CTkFrame(main_frame, fg_color=self.colors['bg_card'], corner_radius=12)
+            info_frame.pack(fill="x", pady=(0, 15))
+            
+            info_items = [
+                ("👤 Tác giả", version_info['author']),
+                ("📅 Ngày phát hành", version_info['build_date']),
+                ("🔧 Build", version_info['version']),
+            ]
+            
+            for label, value in info_items:
+                row = ctk.CTkFrame(info_frame, fg_color="transparent")
+                row.pack(fill="x", padx=15, pady=8)
+                
+                ctk.CTkLabel(
+                    row,
+                    text=label,
+                    font=("Segoe UI", 11, "bold"),
+                    text_color=self.colors['text_secondary']
+                ).pack(side="left")
+                
+                ctk.CTkLabel(
+                    row,
+                    text=value,
+                    font=("Segoe UI", 11),
+                    text_color=self.colors['text_primary']
+                ).pack(side="right")
+            
+            # Footer with close button
+            footer = ctk.CTkFrame(main_frame, fg_color="transparent")
+            footer.pack(fill="x", pady=(20, 0))
+            
+            ctk.CTkButton(
+                footer,
+                text="Đóng",
+                width=150,
+                height=36,
+                font=("Segoe UI", 12, "bold"),
+                fg_color=self.colors['primary'],
+                hover_color=self.colors['primary_hover'],
+                corner_radius=10,
+                command=popup.destroy
+            ).pack(pady=5)
+            
+            # Make popup modal
+            popup.transient(self)
+            popup.grab_set()
+            
+        except Exception as e:
+            print(f"[GUI] Error showing about dialog: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def copy_all_links_with_titles(self):
+        """Copy all published posts with titles in format: Title - Link"""
+        try:
+            import pyperclip
+            
+            if not self.published_posts:
+                messagebox.showinfo("Thông Báo", "Chưa có bài viết nào được đăng!")
+                return
+            
+            # Format: Title - Link (one per line)
+            formatted_text = ""
+            for post in self.published_posts:
+                title = post.get('title', 'Untitled')
+                link = post.get('link', '')
+                formatted_text += f"{title} - {link}\n"
+            
+            # Copy to clipboard
+            pyperclip.copy(formatted_text.strip())
+            
+            # Show success message
+            count = len(self.published_posts)
+            messagebox.showinfo(
+                "Thành Công", 
+                f"✅ Đã copy {count} bài viết!\n\nĐịnh dạng:\nTiêu đề - Link"
+            )
+            
+            print(f"[COPY] Copied {count} posts to clipboard")
+            
+        except Exception as e:
+            print(f"[COPY] Error: {e}")
+            messagebox.showerror("Lỗi", f"Không thể copy: {e}")
+    
+    def kill_chrome_processes(self):
+        """Kill all Chrome and ChromeDriver processes to free up resources"""
+        try:
+            import subprocess
+            import os
+            
+            # Update status
+            self.status_label.configure(text="🔪 Đang kill Chrome...", text_color=self.colors['warning'])
+            self.update()
+            
+            # Method 1: Use batch file if exists
+            bat_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "kill_chrome.bat")
+            if os.path.exists(bat_file):
+                try:
+                    subprocess.run([bat_file], shell=True, capture_output=True, timeout=5)
+                except:
+                    pass
+            
+            # Method 2: Direct taskkill commands
+            processes = ['chrome.exe', 'chromedriver.exe', 'msedge.exe', 'msedgedriver.exe']
+            killed_count = 0
+            
+            for process in processes:
+                try:
+                    result = subprocess.run(
+                        ['taskkill', '/F', '/IM', process, '/T'],
+                        capture_output=True,
+                        text=True,
+                        timeout=3
+                    )
+                    if result.returncode == 0:
+                        killed_count += 1
+                        print(f"[KILL] Killed: {process}")
+                except Exception as e:
+                    print(f"[KILL] Error killing {process}: {e}")
+            
+            # Show result
+            if killed_count > 0:
+                self.status_label.configure(
+                    text=f"✅ Đã kill {killed_count} process Chrome!", 
+                    text_color=self.colors['success']
+                )
+                messagebox.showinfo(
+                    "Thành Công",
+                    f"✅ Đã kill {killed_count} Chrome processes!\n\nMáy sẽ mượt hơn rồi đó! 🚀"
+                )
+            else:
+                self.status_label.configure(
+                    text="ℹ️ Không có Chrome process nào đang chạy",
+                    text_color=self.colors['text_secondary']
+                )
+                messagebox.showinfo(
+                    "Thông Báo",
+                    "Không tìm thấy Chrome process nào đang chạy."
+                )
+            
+            # Reset status after 3s
+            self.after(3000, lambda: self.status_label.configure(
+                text="✅ Sẵn sàng", 
+                text_color=self.colors['success']
+            ))
+            
+            print(f"[KILL] Chrome cleanup completed. Killed {killed_count} processes.")
+            
+        except Exception as e:
+            print(f"[KILL] Error: {e}")
+            self.status_label.configure(text="❌ Lỗi kill Chrome", text_color=self.colors['danger'])
+            messagebox.showerror("Lỗi", f"Không thể kill Chrome:\n{e}")
+    
+    def add_published_post(self, title, link):
+        """Add a published post to the list for copying"""
+        try:
+            self.published_posts.append({
+                'title': title,
+                'link': link
+            })
+            print(f"[PUBLISHED] Added: {title} - {link}")
+        except Exception as e:
+            print(f"[PUBLISHED] Error adding post: {e}")
 
     def logout(self):
         self.destroy()

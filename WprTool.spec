@@ -4,6 +4,7 @@ from PyInstaller.utils.hooks import collect_all, collect_submodules, collect_dat
 datas = [
     ('requirements.txt', '.'),
     ('sample_posts.csv', '.'),
+    ('kill_chrome.bat', '.'),
     ('chrome_portable', 'chrome_portable'),
     ('driver', 'driver'),
 ]
@@ -151,6 +152,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='app_icon.ico',  # Custom icon for the application
 )
 coll = COLLECT(
     exe,

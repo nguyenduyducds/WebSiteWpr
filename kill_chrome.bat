@@ -1,22 +1,18 @@
 @echo off
 echo ========================================
-echo   Kill All Chrome Processes
+echo   KILL ALL CHROME PROCESSES
 echo ========================================
 echo.
 
-echo Killing all Chrome processes...
+echo Killing Chrome processes...
 taskkill /F /IM chrome.exe /T 2>nul
-
-if %errorlevel% equ 0 (
-    echo.
-    echo ✅ All Chrome processes killed successfully!
-) else (
-    echo.
-    echo ⚠️ No Chrome processes found or already closed.
-)
+taskkill /F /IM chromedriver.exe /T 2>nul
+taskkill /F /IM msedge.exe /T 2>nul
+taskkill /F /IM msedgedriver.exe /T 2>nul
 
 echo.
 echo ========================================
-echo   Done!
+echo   DONE! All Chrome processes killed.
 echo ========================================
-pause
+echo.
+timeout /t 2 >nul

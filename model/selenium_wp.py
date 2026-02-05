@@ -998,14 +998,55 @@ class SeleniumWPClient:
                     time.sleep(1)
                     
                     # Wait for title field to be ready
-                    title_field = WebDriverWait(self.driver, 10).until(
-                        EC.element_to_be_clickable((By.CSS_SELECTOR, ".editor-post-title__input"))
-                    )
+                    # TRY NEW GUTENBERG SELECTORS (2024+)
+                    try:
+                        title_field = WebDriverWait(self.driver, 10).until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, 
+                                ".editor-post-title__input, textarea.editor-post-title__input, h1.wp-block-post-title, h1[aria-label='Add title']"))
+                        )
+                    except:
+                        # Fallback: Find any H1 in editor
+                        title_field = self.driver.find_element(By.CSS_SELECTOR, "h1.editor-post-title")
+                    
                     time.sleep(0.5)
                     
                     # Click on title field to focus (important!)
                     print("[SELENIUM] Clicking title field to focus...")
-                    title_field.click()
+                    try:
+                        self.driver.execute_script("arguments[0].click();", title_field)
+                    except: pass
+                    time.sleep(0.5)
+                    
+                    # Use WORDPRESS DATA API (The most reliable way)
+                    # This bypasses the UI entirely and sets the title in the editor's state
+                    print("[SELENIUM] Dispatching title via wp.data API...")
+                    result = self.driver.execute_script("""
+                        const title = arguments[0];
+                        var success = false;
+                        
+                        // Method 1: WP Data API (Best)
+                        if (window.wp && window.wp.data) {
+                            try {
+                                window.wp.data.dispatch('core/editor').editPost({ title: title });
+                                success = true;
+                                return 'Success via wp.data';
+                            } catch(e) {
+                                console.log('wp.data error:', e);
+                            }
+                        }
+                        
+                        // Method 2: DOM Manipulation
+                        const titleInput = document.querySelector('.editor-post-title__input, h1.wp-block-post-title');
+                        if (titleInput) {
+                            titleInput.innerHTML = title; // For contenteditable h1
+                            titleInput.value = title;     // For textarea
+                            titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            titleInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            return 'Success via DOM';
+                        }
+                        
+                        return 'Failed';
+                    """, blog_post.title)
                     time.sleep(0.5)
                     
                     # Use React's setValue method (most reliable for React components)
@@ -1134,14 +1175,47 @@ class SeleniumWPClient:
             # ---------------------------------------------------------
             # STEP 3: SET FEATURED IMAGE (Works for both Classic and Gutenberg)
             # ---------------------------------------------------------
+            # ---------------------------------------------------------
+            # STEP 3: SET FEATURED IMAGE (Works for both Classic and Gutenberg)
+            # ---------------------------------------------------------
             if blog_post.image_url:
                 print(f"[SELENIUM] Setting Featured Image: {blog_post.image_url}")
-                img_path_abs = os.path.abspath(blog_post.image_url)
+                
+                # FIX: Handle remote URLs by downloading to temp file first
+                real_image_path = blog_post.image_url
+                is_temp_file = False
+                
+                if blog_post.image_url.startswith("http"):
+                    try:
+                        import requests
+                        print(f"[SELENIUM] Downloading remote image to temp file...")
+                        response = requests.get(blog_post.image_url, stream=True, timeout=10)
+                        if response.status_code == 200:
+                            # Create a valid filename from URL or default
+                            import tempfile
+                            temp_dir = tempfile.gettempdir()
+                            ext = ".jpg"
+                            if ".png" in blog_post.image_url: ext = ".png"
+                            elif ".webp" in blog_post.image_url: ext = ".webp"
+                            
+                            temp_path = os.path.join(temp_dir, f"wp_upload_temp{ext}")
+                            
+                            with open(temp_path, 'wb') as f:
+                                for chunk in response.iter_content(1024):
+                                    f.write(chunk)
+                            
+                            real_image_path = temp_path
+                            is_temp_file = True
+                            print(f"[SELENIUM] ✅ Downloaded to: {real_image_path}")
+                        else:
+                            print(f"[SELENIUM] ❌ Failed to download image header: {response.status_code}")
+                    except Exception as dl_err:
+                        print(f"[SELENIUM] ❌ Download error: {dl_err}")
+
+                img_path_abs = os.path.abspath(real_image_path)
                 
                 if not os.path.exists(img_path_abs):
-                    print(f"[SELENIUM] ❌ Image not found: {img_path_abs}")
-                else:
-                    print(f"[SELENIUM] Image file exists: {os.path.basename(img_path_abs)}")
+                    print(f"[SELENIUM] ❌ Image file not found: {img_path_abs}")
                     
                     try:
                         # Try Classic Editor first
