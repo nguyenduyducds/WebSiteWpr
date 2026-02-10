@@ -156,76 +156,148 @@ class SeleniumWPClient:
             pass
 
     def init_driver(self, headless=False):
-        options = uc.ChromeOptions()
+        import subprocess
         
-        if headless:
-            options.add_argument("--headless=new")
-            print("[SELENIUM] Running in HEADLESS mode (Background)")
-        
-        # Anti-detection options (CRITICAL) - Compatible with undetected-chromedriver
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_argument("--disable-infobars")
-        options.add_argument("--start-maximized")
-        
-        # Stability options (IMPORTANT - prevent crashes)
-        options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-notifications")
-        options.add_argument("--disable-popup-blocking")  # NEW: Allow popups
-        options.add_argument("--disable-extensions")  # NEW: Disable extensions
-        options.add_argument("--disable-software-rasterizer")  # NEW: Stability
-        options.add_argument("--disable-web-security")  # NEW: Avoid CORS issues
-        options.add_argument("--window-size=1920,1080")
-        options.add_argument("--log-level=3")
-        
-        # Memory and performance options (NEW - prevent crashes)
-        options.add_argument("--disable-background-timer-throttling")
-        options.add_argument("--disable-backgrounding-occluded-windows")
-        options.add_argument("--disable-renderer-backgrounding")
-        
-        # Check for Chrome Portable
+        # 1. AGGRESSIVE CLEANUP (DISABLED per user request: "Sao cứ đăng nhập là đóng Chrome")
+        # The user complained this kills their active session or browser.
+        # We process without killing for now.
+        print("[SELENIUM] 🧹 Pre-flight: PROCESS KILLING DISABLED (User Request)")
+        # try:
+        #     # Kill chromedriver first
+        #     subprocess.run("taskkill /F /IM chromedriver.exe /T", shell=True, capture_output=True)
+            
+        #     # Kill chrome processes
+        #     subprocess.run("taskkill /F /IM chrome.exe /T", shell=True, capture_output=True)
+            
+        #     time.sleep(1) # Wait for cleanup
+        # except Exception as kill_err:
+        #     print(f"[SELENIUM] Cleanup warning: {kill_err}")
+
+        # Paths
         chrome_portable_path = None
         driver_portable_path = None
         
         if os.path.exists("chrome_portable/chrome.exe"):
             chrome_portable_path = os.path.abspath("chrome_portable/chrome.exe")
-            
         if os.path.exists("driver/chromedriver.exe"):
             driver_portable_path = os.path.abspath("driver/chromedriver.exe")
         
-        # Check bundled (PyInstaller)
         if getattr(sys, 'frozen', False):
             base_path = sys._MEIPASS
             bundled_chrome = os.path.join(base_path, "chrome_portable", "chrome.exe")
             bundled_driver = os.path.join(base_path, "driver", "chromedriver.exe")
-            
-            if os.path.exists(bundled_chrome):
-                chrome_portable_path = bundled_chrome
-            if os.path.exists(bundled_driver):
-                driver_portable_path = bundled_driver
+            if os.path.exists(bundled_chrome): chrome_portable_path = bundled_chrome
+            if os.path.exists(bundled_driver): driver_portable_path = bundled_driver
         
-        try:
-            if chrome_portable_path:
-                print(f"[SELENIUM] Using Chrome Portable: {chrome_portable_path}")
-                options.binary_location = chrome_portable_path
+        # Profile
+        safe_username = "".join([c for c in self.username if c.isalnum() or c in ('-','_')]) or "default_user"
+        profile_dir = os.path.join(os.getcwd(), "chrome_profiles", safe_username)
+        os.makedirs(profile_dir, exist_ok=True)
+        print(f"[SELENIUM] Using profile: {profile_dir}")
+        print(f"[SELENIUM] Headless Mode: {headless}")
+
+        # RETRY LOGIC for Initialization
+        # Try multiple versions and cleanup strategies
+        versions_to_try = [133, 132, 131, None] 
+        last_error = None
+        
+        # NOTE: We loop through versions and Create NEW OPTIONS each time 
+        # to avoid "you cannot reuse the ChromeOptions object" error
+        
+        for version in versions_to_try:
+            try:
+                # 1. Create Fresh Options (CRITICAL FIX)
+                options = uc.ChromeOptions()
                 
-                if driver_portable_path:
-                    self.driver = uc.Chrome(options=options, driver_executable_path=driver_portable_path, use_subprocess=True)
+                if headless:
+                    options.add_argument("--headless=new")
+                
+                # Anti-detection options
+                options.add_argument("--disable-blink-features=AutomationControlled")
+                options.add_argument("--disable-infobars")
+                options.add_argument("--start-maximized")
+                
+                # Stability options
+                options.add_argument("--disable-gpu")
+                options.add_argument("--no-sandbox")
+                options.add_argument("--disable-dev-shm-usage")
+                options.add_argument("--disable-notifications")
+                options.add_argument("--disable-popup-blocking")
+                options.add_argument("--disable-extensions")
+                options.add_argument("--disable-web-security")
+                options.add_argument("--window-size=1920,1080")
+                options.add_argument("--log-level=3")
+                
+                # Performance
+                options.add_argument("--disable-background-timer-throttling")
+                options.add_argument("--disable-backgrounding-occluded-windows")
+                options.add_argument("--disable-renderer-backgrounding")
+
+                if chrome_portable_path:
+                    options.binary_location = chrome_portable_path
+                
+                ver_str = str(version) if version else "Auto"
+                print(f"[SELENIUM] Initializing Driver (Version: {ver_str})...")
+                
+                # 2. Initialize
+                if chrome_portable_path:
+                    # Portable
+                     self.driver = uc.Chrome(
+                        options=options, 
+                        driver_executable_path=driver_portable_path, 
+                        user_data_dir=profile_dir, 
+                        use_subprocess=True, 
+                        version_main=version
+                    )
                 else:
-                    self.driver = uc.Chrome(options=options, use_subprocess=True, version_main=None)
-            else:
-                print("[SELENIUM] Using System Chrome...")
-                self.driver = uc.Chrome(options=options, use_subprocess=True, version_main=None)
-            
-            # Set page load timeout to prevent hanging
-            self.driver.set_page_load_timeout(60)
-            
-            print("[SELENIUM] Driver initialized successfully")
+                    # System
+                    print("[SELENIUM] Using System Chrome...")
+                    self.driver = uc.Chrome(
+                        options=options, 
+                        user_data_dir=profile_dir, 
+                        use_subprocess=True,
+                        version_main=version if version else 132 # Default for system
+                    )
                 
-        except Exception as e:
-            print(f"[SELENIUM] Failed to initialize Chrome: {e}")
-            raise Exception(f"Cannot initialize Chrome: {e}")
+                # If successful
+                self.driver.set_page_load_timeout(60)
+                print(f"[SELENIUM] ✅ Driver initialized successfully (Version: {ver_str})")
+                return
+                
+            except Exception as e:
+                last_error = e
+                err_msg = str(e).lower()
+                print(f"[SELENIUM] ❌ Init failed (Version: {ver_str}): {e}")
+                
+                 # CLEANUP & RETRY STRATEGY
+                print(f"[SELENIUM] 🧹 Cleaning up stale processes and cache...")
+                
+                # 1. Kill stale chrome processes
+                try:
+                    # DISABLE Chrome Kill in Retry to protect user's unrelated browsers
+                    # subprocess.run("taskkill /F /IM chrome.exe /FI \"WINDOWTITLE eq Chrome Portable*\"", shell=True, capture_output=True)
+                    
+                    # Only kill chromedriver (Automation engine)
+                    subprocess.run("taskkill /F /IM chromedriver.exe /T", shell=True, capture_output=True) 
+                except: pass
+                
+                # 2. Delete scoped_dir / singular folders (undetected_chromedriver caches)
+                try:
+                    import shutil
+                    import glob
+                    temp_dir = os.environ.get('TEMP', '')
+                    if temp_dir:
+                        for p in glob.glob(os.path.join(temp_dir, "undetected*")):
+                            try: shutil.rmtree(p, ignore_errors=True)
+                            except: pass
+                except: pass
+                
+                # 3. Small sleep before retry
+                time.sleep(1.5)
+        
+        # If all versions fail
+        print(f"[SELENIUM] ❌ critical: Failed to initialize after all attempts.")
+        raise last_error
 
     def login(self, destination_url=None, retry_visible_on_fail=True):
         try:
@@ -293,8 +365,30 @@ class SeleniumWPClient:
                     print("[SELENIUM] → Sẽ thử login bằng username/password...")
 
 
+            # --- FAST LOGIN (Requests/REST) ---
+            # Try this BEFORE manual login to save time
+            print("[SELENIUM] ⚡ Trying Fast Login (Requests)...")
+            try:
+                if self._login_via_rest_api():
+                    print("[SELENIUM] ✅ Fast Login reported success. Verifying in browser...")
+                    
+                    self.driver.get(final_dest)
+                    time.sleep(1.5)
+                    
+                    # Verify
+                    if len(self.driver.find_elements(By.ID, "wpadminbar")) > 0:
+                        print("[SELENIUM] ✅ Fast Login VERIFIED! Dashboard accessed.")
+                        return True
+                    else:
+                        print("[SELENIUM] ⚠️ Fast Login passed but Dashboard not detected. Retrying manual...")
+                else:
+                    print("[SELENIUM] ⚠️ Fast Login failed. Switch to Manual Login...")
+            except Exception as fast_err:
+                print(f"[SELENIUM] Fast Login Error: {fast_err}")
+
+
             # --- MANUAL LOGIN ---
-            print(f"[SELENIUM] Navigating to login: {login_url}")
+            print(f"[SELENIUM] Navigating to manual login: {login_url}")
             self.driver.get(login_url)
             
             # Wait for login page to fully load
@@ -599,61 +693,63 @@ class SeleniumWPClient:
             error_msg = str(e)
             print(f"[SELENIUM] Login Failed: {error_msg}")
             
-            # Save debug info
+            # Save debug info (carefully)
             try:
-                self.driver.save_screenshot("debug_login_fail.png")
-                with open("debug_login_fail.html", "w", encoding="utf-8") as f:
-                    f.write(self.driver.page_source)
-                print("[SELENIUM] 📸 Saved debug screenshot to 'debug_login_fail.png' and HTML to 'debug_login_fail.html'")
-                print(f"[SELENIUM] Current URL: {self.driver.current_url}")
-            except Exception as debug_err:
-                print(f"[SELENIUM] Could not save debug info: {debug_err}")
+                if self.driver:
+                    self.driver.save_screenshot("debug_login_fail.png")
+                    with open("debug_login_fail.html", "w", encoding="utf-8") as f:
+                        f.write(self.driver.page_source)
+                    print("[SELENIUM] 📸 Saved debug screenshot")
+            except:
+                pass # Ignore errors during debug save (driver might be dead)
             
-            # SMART RETRY: If headless failed due to security, retry with visible browser
-            if retry_visible_on_fail and self.driver:
-                # Check if it's a security-related failure
-                is_security_issue = any(keyword in error_msg.lower() for keyword in 
-                    ['captcha', 'cloudflare', 'blocked', 'rate limit', 'verification'])
+            # SMART RETRY: If headless failed due to crash/security, retry with visible browser
+            if retry_visible_on_fail:
+                # Check for critical crash errors or security blocks
+                critical_errors = ['no such window', 'target window already closed', 'web view not found', 'chrome not reachable', 'disconnected']
+                security_errors = ['captcha', 'cloudflare', 'blocked', 'rate limit', 'verification']
                 
-                # Check if we're currently in headless mode
+                is_crash = any(err in error_msg.lower() for err in critical_errors)
+                is_security = any(err in error_msg.lower() for err in security_errors)
+                
+                # Check if we were running headless
+                is_headless = False
                 try:
-                    is_headless = self.driver.execute_script("return navigator.webdriver") or \
-                                 "--headless" in str(self.driver.capabilities)
+                    # Check options from init settings if driver is dead
+                    # For now, we assume if it crashed and we are here, we might be headless. 
+                    # But safer to just check if we passed headless=True to init_driver? 
+                    # We don't have access to that arg here easily, so we infer or just try.
+                    pass 
                 except:
-                    is_headless = True  # Assume headless if we can't check
+                    pass
                 
-                if is_security_issue and is_headless:
+                # If it's a crash OR security issue, switch to VISIBLE
+                if is_crash or is_security:
                     print("\n" + "="*60)
-                    print("🔄 PHÁT HIỆN VẤN ĐỀ BẢO MẬT!")
+                    print("🔄 PHÁT HIỆN LỖI TRÌNH DUYỆT / BẢO MẬT")
                     print("="*60)
                     print(f"Lỗi: {error_msg}")
-                    print("\n💡 GIẢI PHÁP: Tự động chuyển sang chế độ VISIBLE")
-                    print("   → Browser sẽ hiện ra để bạn có thể:")
-                    print("   → Giải CAPTCHA (nếu có)")
-                    print("   → Xem chính xác vấn đề gì")
-                    print("   → Can thiệp thủ công nếu cần")
+                    print("🚀 Tự động chuyển sang chế độ HIỆN (VISIBLE) để khắc phục...")
                     print("="*60)
                     
-                    user_choice = input("\n❓ Bạn có muốn thử lại với VISIBLE browser? (y/n): ").strip().lower()
+                    # Close current driver safely
+                    try:
+                        if self.driver: self.driver.quit()
+                    except: pass
                     
-                    if user_choice == 'y':
-                        print("\n[SELENIUM] 🔄 Đang khởi động lại với VISIBLE mode...")
-                        
-                        # Close current driver
-                        try:
-                            self.driver.quit()
-                        except:
-                            pass
-                        
-                        # Reinitialize with visible mode
-                        self.driver = None
-                        self.init_driver(headless=False)  # VISIBLE MODE
+                    # Reinitialize with visible mode
+                    self.driver = None
+                    try:
+                        print("[SELENIUM] 🔄 Đang khởi động lại Chrome (Visible Mode)...")
+                        self.init_driver(headless=False)  # FORCE VISIBLE
                         
                         # Retry login (without retry_visible to avoid infinite loop)
                         print("[SELENIUM] 🔄 Đang thử login lại...")
                         return self.login(destination_url=destination_url, retry_visible_on_fail=False)
-                    else:
-                        print("\n[SELENIUM] ❌ Người dùng từ chối retry. Dừng lại.")
+                    except Exception as retry_err:
+                        print(f"[SELENIUM] ❌ Retry thất bại: {retry_err}")
+                        # If retry fails, raise the ORIGINAL error (or the new one)
+                        raise Exception(f"Login Failed (Retry failed): {retry_err}")
             
             raise Exception(f"Login Failed: {error_msg}")
 
@@ -2201,8 +2297,7 @@ class SeleniumWPClient:
                 # Get final URL
                 print(f"[SELENIUM] Final URL: {self.driver.current_url}")
                 
-                # Get final URL
-                print(f"[SELENIUM] Final URL: {self.driver.current_url}")
+
                 
                 # Extract post ID and build public URL
                 import re

@@ -1,11 +1,11 @@
 ; ============================================
-; WprTool - Complete Installer Script v2.0.3
+; WprTool - Complete Installer Script v2.0.4
 ; ============================================
 
-#define MyAppName "WprTool"
-#define MyAppVersion "2.0.3"
+#define MyAppName "LVCMediaWeb"
+#define MyAppVersion "2.0.4"
 #define MyAppPublisher "NguyenDuyDuc"
-#define MyAppExeName "WprTool.exe"
+#define MyAppExeName "LVCMediaWeb.exe"
 #define MyAppURL "https://github.com/nguyenduyducds/WebSiteWpr"
 
 [Setup]
@@ -26,7 +26,7 @@ AllowNoIcons=yes
 
 ; Output Configuration
 OutputDir=Output
-OutputBaseFilename=WprTool_Setup_v{#MyAppVersion}
+OutputBaseFilename=LVCMediaWeb_Setup_v{#MyAppVersion}
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
@@ -47,7 +47,7 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName} {#MyAppVersion}
 
 ; Custom Icons
-SetupIconFile=app_icon.ico
+SetupIconFile=logo.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -57,13 +57,13 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; Copy entire PyInstaller output folder (includes all Python dependencies)
-Source: "dist\WprTool\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\LVCMediaWeb\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Chrome Portable (CRITICAL - Must be in root app folder, not inside _internal)
-Source: "chrome_portable\*"; DestDir: "{app}\chrome_portable"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Chrome Portable (Included in dist via spec datas)
+; Source: "chrome_portable\*"; DestDir: "{app}\chrome_portable"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; ChromeDriver (CRITICAL - Must be in root app folder)
-Source: "driver\*"; DestDir: "{app}\driver"; Flags: ignoreversion recursesubdirs createallsubdirs
+; ChromeDriver (Included in dist via spec datas)
+; Source: "driver\*"; DestDir: "{app}\driver"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Templates (HTML themes for WordPress posts)
 Source: "templates\*"; DestDir: "{app}\templates"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -116,22 +116,22 @@ Type: filesandordirs; Name: "{app}\downloaded_cars"
 procedure InitializeWizard;
 begin
   WizardForm.WelcomeLabel2.Caption := 
-    'This will install WprTool v2.0.3 - WordPress Auto Posting Tool.' + #13#10 + #13#10 +
-    '🚀 NEW in v2.0.3:' + #13#10 +
-    '• ✅ Custom App Icon (unique identity, no conflicts)' + #13#10 +
-    '• ✅ Version Display in UI (always know your version)' + #13#10 +
-    '• ✅ About Dialog (view version info and features)' + #13#10 +
-    '• ✅ Copy All Links (export titles + links easily)' + #13#10 +
-    '• ✅ Improved UX and interface polish' + #13#10 + #13#10 +
-    '📝 Previous Updates (v2.0.2):' + #13#10 +
-    '• 3 Image APIs (Unsplash + Pexels + Pixabay)' + #13#10 +
-    '• Auto Vimeo aspect ratio detection (9:16 / 16:9)' + #13#10 + #13#10 +
-    '✨ Features:' + #13#10 +
+    'This will install WprTool v2.0.4 - WordPress Auto Posting Tool.' + #13#10 + #13#10 +
+    '🚀 NEW in v2.0.4:' + #13#10 +
+    '• 🤖 AI Thumbnail Customization (test before apply!)' + #13#10 +
+    '• 📱 Auto Aspect Ratio Detection (9:16 / 16:9)' + #13#10 +
+    '• 🖼️ Before/After Preview for thumbnails' + #13#10 +
+    '• 📉 Optimized content image resolution (180px)' + #13#10 +
+    '• ⚙️ Configurable AI settings (save & reuse)' + #13#10 + #13#10 +
+    '📝 Previous Updates (v2.0.3):' + #13#10 +
+    '• Custom App Icon & Version Display' + #13#10 +
+    '• Copy All Links feature' + #13#10 +
+    '• 3 Image APIs (Unsplash + Pexels + Pixabay)' + #13#10 + #13#10 +
+    '✨ Core Features:' + #13#10 +
     '• Auto post to WordPress with video embed' + #13#10 +
     '• Batch posting from CSV/Facebook links' + #13#10 +
     '• Built-in Chrome Portable (no installation needed)' + #13#10 +
     '• SEO-optimized content generation' + #13#10 +
-    '• Pexels API for high-quality car images' + #13#10 +
     '• Vimeo upload automation with smart thumbnails' + #13#10 +
     '• Facebook-optimized thumbnails (crystal clear!)' + #13#10 + #13#10 +
     'Click Next to continue.';

@@ -8,6 +8,7 @@ import webbrowser
 from tkinter import messagebox, filedialog
 from PIL import ImageGrab, Image, ImageTk
 import io
+from model.utils import resource_path
 
 # Giả lập AppData nếu chưa có module model
 class AppData:
@@ -29,26 +30,49 @@ class GUIView(ctk.CTk):
         self.controller = controller
         self.initial_config = initial_config or {}
         
-        # --- Cấu hình màu sắc cho Light Mode ---
+        # --- Cấu hình màu sắc (GOLD THEME 🏆) ---
         self.colors = {
-            'primary': '#2563eb',       # Blue 600
-            'primary_hover': '#1d4ed8', # Blue 700
-            'success': '#059669',       # Green 600
-            'success_hover': '#047857', # Green 700
-            'warning': '#d97706',       # Orange 600
-            'danger': '#dc2626',        # Red 600
-            'bg_light': '#f9fafb',      # Gray 50 - Main background
-            'bg_card': '#ffffff',       # White - Cards
-            'bg_dark': '#f3f4f6',       # Gray 100 - Darker sections
-            'text_primary': '#111827',  # Gray 900 - Main text
-            'text_secondary': '#6b7280', # Gray 500 - Secondary text
-            'border': '#e5e7eb'         # Gray 200 - Borders
+            'primary': '#F59E0B',       # Amber 500 (Gold-Yellow) - Main Brand Color
+            'primary_hover': '#B45309', # Amber 700 (Dark Gold) - Hover State
+            'success': '#10B981',       # Emerald 500
+            'success_hover': '#059669', 
+            'warning': '#F59E0B',       # Same as primary for consistency
+            'danger': '#EF4444',        # Red 500
+            'bg_light': '#FFFBEB',      # Amber 50 (Subtle Gold Tint Background)
+            'bg_card': '#FFFFFF',       # White Cards
+            'bg_dark': '#FEF3C7',       # Amber 100 (Light Gold Accent)
+            'text_primary': '#111827',  # Gray 900
+            'text_secondary': '#4B5563', # Gray 600
+            'border': '#FDE68A'         # Amber 200 (Soft Gold Border)
         }
         
         # --- Cấu hình cửa sổ ---
-        self.title("🚀 WP Auto Tool - Professional Edition")
+        self.title("LVC MEDIA TOOL")
         self.geometry("1200x800")
         self.minsize(1000, 700)
+        
+        # --- FIX BLURRY TEXT & SMOOTH SCROLL (High DPI Awareness) 💎 ---
+        try:
+            import ctypes
+            # Awareness level: 2 = Per monitor DPI aware (Best sharpness)
+            # If fails, fallback to 1 = System DPI aware
+            try:
+                ctypes.windll.shcore.SetProcessDpiAwareness(2) 
+            except:
+                ctypes.windll.user32.SetProcessDPIAware()
+        except: pass
+        
+        # Optimize rendering
+        self.update_idletasks()
+
+        
+        # Set App Icon
+        # Set App Icon
+        logo_path = resource_path("logo.ico")
+        if os.path.exists(logo_path):
+            try:
+                self.iconbitmap(logo_path)
+            except: pass
         
         # Theme - LIGHT MODE mặc định
         ctk.set_appearance_mode("light")
@@ -82,6 +106,9 @@ class GUIView(ctk.CTk):
 
         # Khởi tạo màn hình
         self.create_login_screen()
+
+        # Handle X button
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def check_startup_update(self):
         """Check for updates silently on startup"""
@@ -148,139 +175,202 @@ class GUIView(ctk.CTk):
             self.update_window.destroy()
             messagebox.showerror("Lỗi Cập Nhật", f"Tải xuống thất bại:\n{result}") 
 
+    def on_closing(self):
+        """Handle window closing event - Force cleanup"""
+        try:
+            # 1. Run Kill Chrome logic (Silent)
+            import subprocess
+            import os
+            
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            bat_file = os.path.join(project_root, "kill_chrome.bat")
+            
+            if os.path.exists(bat_file):
+                try:
+                    # Run bat file silently (Wait for it)
+                    subprocess.run([bat_file], shell=True, capture_output=True, timeout=5)
+                    print("[EXIT] Run kill_chrome.bat success")
+                except:
+                    pass
+            else:
+                # Fallback PowerShell
+                try:
+                    target_path_escaped = project_root.replace("\\", "\\\\").replace("'", "''")
+                    ps_cmd = f"Get-WmiObject Win32_Process | Where-Object {{ ($_.Name -eq 'chrome.exe' -or $_.Name -eq 'chromedriver.exe') -and $_.ExecutablePath -like '*{target_path_escaped}*' }} | ForEach-Object {{ Stop-Process -Id $_.ProcessId -Force }}"
+                    subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], capture_output=True, timeout=5)
+                    print("[EXIT] Run Safe PowerShell success")
+                except:
+                    pass
+
+        except Exception as e:
+            print(f"[EXIT] Cleanup error: {e}")
+            
+        # 2. Destroy and Exit
+        self.destroy()
+        import sys
+        sys.exit(0) 
+
     # =========================================================================
-    # PHẦN 1: LOGIN SCREEN (Giữ nguyên vì đã ổn)
+    # PHẦN 1: LOGIN SCREEN (MODERN REDESIGN ✨)
     # =========================================================================
     def create_login_screen(self):
-        self.login_frame = ctk.CTkFrame(self, corner_radius=0, fg_color=self.colors['bg_light'])
+        # Modern Background Colors (Light Gray / Deep Dark)
+        self.login_frame = ctk.CTkFrame(self, corner_radius=0, fg_color=("#F3F4F6", "#0F172A"))
         self.login_frame.pack(fill="both", expand=True)
 
-        # Center container with shadow effect
+        # --- Fake Shadow Layer (Depth Effect) ---
+        shadow_box = ctk.CTkFrame(
+            self.login_frame,
+            corner_radius=30,
+            fg_color=("#E5E7EB", "#020617"), # Subtle shadow color
+            width=506, 
+            height=686
+        )
+        shadow_box.place(relx=0.5, rely=0.5, anchor="center")
+
+        # --- Main Card ---
         center_box = ctk.CTkFrame(
             self.login_frame, 
-            corner_radius=24, 
-            fg_color=self.colors['bg_card'],
-            border_width=2,
-            border_color=self.colors['border']
+            corner_radius=30, 
+            fg_color=("#FFFFFF", "#1E293B"), # Pure White / Slate 800
+            border_width=0,
+            width=500,
+            height=680
         )
         center_box.place(relx=0.5, rely=0.5, anchor="center")
+        center_box.pack_propagate(False) # Keep size fixed
 
-        # Header with gradient-like effect
+        # Header Section
         header_frame = ctk.CTkFrame(center_box, corner_radius=20, fg_color="transparent")
-        header_frame.pack(pady=(40, 10), padx=40)
+        header_frame.pack(pady=(50, 20), padx=40, fill="x")
+        
+        # Logo Logic
+        try:
+            from PIL import Image
+            logo_path = resource_path("logo.ico")
+            if os.path.exists(logo_path):
+                logo_pil = Image.open(logo_path)
+                logo_img = ctk.CTkImage(light_image=logo_pil, dark_image=logo_pil, size=(90, 90))
+                ctk.CTkLabel(header_frame, text="", image=logo_img).pack(pady=(0, 10))
+            else:
+                ctk.CTkLabel(header_frame, text="🚀", font=("Segoe UI Emoji", 60)).pack(pady=(0, 5))
+        except:
+             ctk.CTkLabel(header_frame, text="🚀", font=("Segoe UI Emoji", 60)).pack(pady=(0, 5))
         
         ctk.CTkLabel(
             header_frame, 
-            text="🚀", 
-            font=("Segoe UI Emoji", 56)
-        ).pack()
-        
-        ctk.CTkLabel(
-            header_frame, 
-            text="WordPress Automation", 
-            font=("Segoe UI", 28, "bold"), 
+            text="LVC Tool Web", 
+            font=("Segoe UI", 26, "bold"), 
             text_color=self.colors['primary']
-        ).pack(pady=(10, 5))
+        ).pack(pady=(5, 0))
         
         ctk.CTkLabel(
             header_frame, 
-            text="Đăng nhập để bắt đầu tự động hóa", 
+            text="Hệ thống tự động hóa WordPress chuyên nghiệp", 
             font=("Segoe UI", 13), 
-            text_color=self.colors['text_secondary']
-        ).pack()
+            text_color=("#6B7280", "#9CA3AF") # Gray-500
+        ).pack(pady=(5, 0))
 
-        # Inputs with better spacing
+        # Inputs Section
         input_frame = ctk.CTkFrame(center_box, fg_color="transparent")
-        input_frame.pack(pady=20, padx=40, fill="x")
+        input_frame.pack(pady=10, padx=50, fill="x")
         
         self.entry_site = self.create_modern_input(
             input_frame, 
-            "🌍 Site URL", 
+            "Site URL", 
             "https://yoursite.com/wp-admin", 
             self.initial_config.get("site_url", "")
         )
         
         self.entry_user = self.create_modern_input(
             input_frame, 
-            "👤 Username", 
+            "Username", 
             "admin", 
             self.initial_config.get("username", "")
         )
         
         self.entry_pass = self.create_modern_input(
             input_frame, 
-            "🔒 Password", 
+            "Password", 
             "••••••••", 
             self.initial_config.get("password", ""), 
             show="*"
         )
 
-        # Checkbox with better styling
+        # Options Section
         checkbox_frame = ctk.CTkFrame(center_box, fg_color="transparent")
-        checkbox_frame.pack(pady=15, padx=40, fill="x")
+        checkbox_frame.pack(pady=(10, 20), padx=50, fill="x")
         
         self.chk_headless = ctk.CTkCheckBox(
             checkbox_frame, 
-            text="⚡ Chạy ẩn (Headless Mode - Nhanh hơn)", 
+            text="Chạy ẩn (Headless - Nhanh hơn)", 
             font=("Segoe UI", 12),
             fg_color=self.colors['primary'],
+            checkbox_height=20,
+            checkbox_width=20,
+            corner_radius=6,
+            border_width=2,
             hover_color=self.colors['primary_hover']
         )
         self.chk_headless.pack(anchor="w")
+        if self.initial_config.get("headless", True):
+             self.chk_headless.select()
 
-        # Button with gradient-like effect
+        # Login Button
         self.btn_login = ctk.CTkButton(
             center_box, 
-            text="🚀 ĐĂNG NHẬP", 
-            height=50, 
-            width=340, 
-            font=("Segoe UI", 15, "bold"),
+            text="ĐĂNG NHẬP NGAY", 
+            height=55, 
+            width=300, 
+            font=("Segoe UI", 14, "bold"),
             fg_color=self.colors['primary'],
             hover_color=self.colors['primary_hover'],
-            corner_radius=12,
+            corner_radius=28, # Pill shape
             command=self.on_login_click
         )
-        self.btn_login.pack(pady=20, padx=40)
+        self.btn_login.pack(pady=(0, 20), padx=50, fill="x")
 
+        # Status Label
         self.lbl_status = ctk.CTkLabel(
             center_box, 
             text="", 
             font=("Segoe UI", 11), 
             text_color=self.colors['danger']
         )
-        self.lbl_status.pack(pady=(0, 30))
+        self.lbl_status.pack(pady=(0, 20))
 
     def create_modern_input(self, parent, label_text, placeholder, initial_value="", show=None):
-        # Container for each input
+        # Container
         input_container = ctk.CTkFrame(parent, fg_color="transparent")
         input_container.pack(fill="x", pady=8)
         
-        # Label
+        # Label (Uppercase, Smaller, Gray)
         ctk.CTkLabel(
             input_container, 
-            text=label_text, 
-            font=("Segoe UI", 13, "bold"), 
+            text=label_text.upper(), 
+            font=("Segoe UI", 11, "bold"), 
             anchor="w",
-            text_color=self.colors['text_primary']
-        ).pack(fill="x", pady=(0, 6))
+            text_color=("#6B7280", "#9CA3AF") # Gray-500
+        ).pack(fill="x", pady=(0, 5))
         
-        # Entry with better styling
+        # Input Field (Light Gray Background)
         entry = ctk.CTkEntry(
             input_container, 
             placeholder_text=placeholder, 
-            height=45, 
-            width=340,
-            font=("Segoe UI", 12),
-            corner_radius=10,
+            height=48, # Taller for comfort
+            font=("Segoe UI", 13),
+            corner_radius=12,
             border_width=1,
-            border_color=self.colors['border'],
+            border_color=("#E5E7EB", "#374151"), # Gray-200
+            fg_color=("#F9FAFB", "#111827"), # Gray-50 / Gray-900 background
+            text_color=("black", "white"),
+            placeholder_text_color=("#9CA3AF", "#6B7280"),
             show=show
         )
         entry.pack(fill="x")
         
         if initial_value: 
             try:
-                # Use after() to insert value asynchronously to avoid blocking
                 self.after(10, lambda e=entry, v=initial_value: self._safe_insert(e, v))
             except Exception as e:
                 print(f"[GUI] Error inserting initial value: {e}")
@@ -476,14 +566,14 @@ class GUIView(ctk.CTk):
         
         ctk.CTkLabel(
             title_frame, 
-            text="� WP Auto Tool", 
+            text="LVC Tool Web", 
             font=("Segoe UI", 22, "bold"), 
             text_color=self.colors['primary']
         ).pack(anchor="w")
         
         ctk.CTkLabel(
             title_frame, 
-            text="Professional Automation Dashboard", 
+            text="Chức năng đăng bài lên website WordPress", 
             font=("Segoe UI", 12), 
             text_color=self.colors['text_secondary']
         ).pack(anchor="w", pady=(2, 0))
@@ -570,20 +660,25 @@ class GUIView(ctk.CTk):
         self.tabview.pack(fill="both", expand=True)
 
         # Định nghĩa các Tab với icons đẹp hơn
+        # Định nghĩa các Tab với icons đẹp hơn
         self.tab_post = self.tabview.add("📝 Đăng Bài")
+        self.tab_fb_import = self.tabview.add("📱 Scan Link Đa Nền Tảng")
         self.tab_batch = self.tabview.add("📦 Hàng Chờ") 
         self.tab_upload = self.tabview.add("☁️ Upload")
         self.tab_vimeo = self.tabview.add("🎥 Vimeo")
         self.tab_images = self.tabview.add("🖼️ Ảnh")
+        self.tab_thumbnail_ai = self.tabview.add("🤖 AI Thumbnail")  # NEW TAB
         self.tab_data = self.tabview.add("📜 Logs")
         self.tab_settings = self.tabview.add("⚙️ Cài Đặt")
 
         # Xây dựng nội dung từng Tab
+        self.create_fb_import_tab_content()
         self.create_post_tab_content()
         self.create_batch_tab_content()
         self.create_upload_tab_content()
         self.create_vimeo_tab_content()
         self.create_images_tab_content()
+        self.create_thumbnail_ai_tab_content()  # NEW TAB CONTENT
         self.create_data_tab_content()
         self.create_settings_tab_content()
 
@@ -619,6 +714,81 @@ class GUIView(ctk.CTk):
             corner_radius=8,
             command=self.kill_chrome_processes
         ).pack(side="left", padx=10, pady=8)
+        
+        # Hello Kitty Loading Indicator (Small GIF in Status Bar) 🐱💕
+        self.kitty_loading_frame = ctk.CTkFrame(self.status_frame, fg_color="transparent")
+        
+        # 1. GIF Label
+        self.kitty_gif_label = ctk.CTkLabel(self.kitty_loading_frame, text="")
+        self.kitty_gif_label.pack(side="left", padx=5)
+        
+        # Load small pink kitty for loading indicator
+        try:
+            from model.animated_gif import AnimatedGIF
+            gif_path = resource_path("animaition/Hello Kitty Pink GIF.gif")
+            if os.path.exists(gif_path):
+                # Keep reference (important!)
+                self.loading_gif = AnimatedGIF(self.kitty_gif_label, gif_path, size=(40, 40))
+                self.loading_gif.play()
+            else:
+                 self.kitty_gif_label.configure(text="🐱", font=("Segoe UI Emoji", 24))
+        except: 
+             self.kitty_gif_label.configure(text="🐱", font=("Segoe UI Emoji", 24))
+        
+        # 2. Text Label
+        self.kitty_status_label = ctk.CTkLabel(
+            self.kitty_loading_frame,
+            text="Đang scan... 💕",
+            font=("Segoe UI", 12, "bold"),
+            text_color=("#FF69B4", "#FF1493")
+        )
+        self.kitty_status_label.pack(side="left")
+        
+        # Hide initially
+        self.kitty_loading_frame.pack_forget()
+        
+        # ===== CUTE GIF DECORATIONS (Top Right) 🎀 =====
+        decoration_frame = ctk.CTkFrame(self.status_frame, fg_color="transparent")
+        decoration_frame.pack(side="right", padx=5, pady=8)
+        
+        # 1. Coffee Kitty (Left) ☕
+        coffee_label = ctk.CTkLabel(decoration_frame, text="")
+        coffee_label.pack(side="left", padx=2)
+        try:
+            from model.animated_gif import AnimatedGIF
+            coffee_path = resource_path("animaition/hello kitty coffee GIF.gif")
+            if os.path.exists(coffee_path):
+                self.coffee_gif = AnimatedGIF(coffee_label, coffee_path, size=(32, 32))
+                self.coffee_gif.play()
+            else:
+                coffee_label.configure(text="☕", font=("Segoe UI Emoji", 20))
+        except: coffee_label.configure(text="☕", font=("Segoe UI Emoji", 20))
+        
+        # 2. Pink Kitty (Middle) 💕
+        pink_label = ctk.CTkLabel(decoration_frame, text="")
+        pink_label.pack(side="left", padx=2)
+        try:
+            from model.animated_gif import AnimatedGIF
+            pink_path = resource_path("animaition/Hello Kitty Pink GIF.gif")
+            if os.path.exists(pink_path):
+                self.pink_gif = AnimatedGIF(pink_label, pink_path, size=(32, 32))
+                self.pink_gif.play()
+            else:
+                pink_label.configure(text="💕", font=("Segoe UI Emoji", 20))
+        except: pink_label.configure(text="💕", font=("Segoe UI Emoji", 20))
+        
+        # 3. OMG Kitty (Right) 😱
+        omg_label = ctk.CTkLabel(decoration_frame, text="")
+        omg_label.pack(side="left", padx=2)
+        try:
+            from model.animated_gif import AnimatedGIF
+            omg_path = resource_path("animaition/Hello Kitty Omg GIF by Feliks Tomasz Konczakowski.gif")
+            if os.path.exists(omg_path):
+                self.omg_gif = AnimatedGIF(omg_label, omg_path, size=(32, 32))
+                self.omg_gif.play()
+            else:
+                omg_label.configure(text="✨", font=("Segoe UI Emoji", 20))
+        except: omg_label.configure(text="✨", font=("Segoe UI Emoji", 20))
         
         # Connection indicator
         connection_frame = ctk.CTkFrame(self.status_frame, fg_color="transparent")
@@ -658,8 +828,8 @@ class GUIView(ctk.CTk):
         grid.pack(fill="both", expand=True, padx=10, pady=5)
         
         # Configure grid weights
-        grid.columnconfigure(0, weight=3) # Left column (Main) 70%
-        grid.columnconfigure(1, weight=1) # Right column (Sidebar) 30%
+        grid.columnconfigure(0, weight=2) # Left column (Main) ~66%
+        grid.columnconfigure(1, weight=1) # Right column (Sidebar) ~33%
 
         # ================= LEFT COLUMN: MAIN CONTENT =================
         left_col = ctk.CTkFrame(grid, fg_color="transparent")
@@ -691,7 +861,7 @@ class GUIView(ctk.CTk):
 
         self.entry_video = ctk.CTkTextbox(
             vid_container,
-            height=120,
+            height=220,
             font=("Consolas", 12),
             corner_radius=10,
             border_width=2,
@@ -717,38 +887,7 @@ class GUIView(ctk.CTk):
         )
         self.textbox_content.pack(fill="both", expand=True)
 
-        # Bulk Import Section (Bototm of Left Col)
-        bulk_card = ctk.CTkFrame(left_col, fg_color=self.colors['bg_card'], corner_radius=12, border_width=1, border_color=self.colors['border'])
-        bulk_card.pack(fill="x", pady=(0, 20))
-        
-        # Header for Bulk
-        ctk.CTkLabel(bulk_card, text="🔌 Công cụ Import Facebook Hàng Loạt", font=("Segoe UI", 14, "bold"), text_color=self.colors['text_primary']).pack(anchor="w", padx=20, pady=15)
-        
-        bulk_content = ctk.CTkFrame(bulk_card, fg_color="transparent")
-        bulk_content.pack(fill="x", padx=20, pady=(0, 20))
-        
-        # Layout for Bulk: Input Left, Options Right
-        self.textbox_fb_links = ctk.CTkTextbox(bulk_content, height=150, font=("Consolas", 11))
-        self.textbox_fb_links.pack(side="left", fill="both", expand=True, padx=(0, 10))
-        self.textbox_fb_links.insert("1.0", "# Paste danh sách link FB vào đây (mỗi dòng 1 link)...\n")
-        self.textbox_fb_links.bind("<KeyRelease>", self.update_link_count_display)
-
-        bulk_actions = ctk.CTkFrame(bulk_content, fg_color="transparent")
-        bulk_actions.pack(side="right", fill="y")
-        
-        self.lbl_link_count = ctk.CTkLabel(bulk_actions, text="(0 link)", text_color="#10b981", font=("Segoe UI", 12, "bold"))
-        self.lbl_link_count.pack(anchor="e")
-        
-        self.chk_auto_title_fb = ctk.CTkCheckBox(bulk_actions, text="Auto-Title", font=("Segoe UI", 11))
-        self.chk_auto_title_fb.pack(anchor="e", pady=5)
-        self.chk_auto_title_fb.select()
-        
-        self.btn_import_fb = ctk.CTkButton(bulk_actions, text="⚡ Phân Tích & Lấy Embed", 
-                                          height=40, width=180,
-                                          fg_color="#d97706", hover_color="#b45309",
-                                          font=("Segoe UI", 12, "bold"),
-                                          command=self.import_fb_bulk)
-        self.btn_import_fb.pack(anchor="e", pady=(10, 0))
+        # Bulk Import moved to 'Facebook Scan' tab
 
 
         # ================= RIGHT COLUMN: SIDEBAR =================
@@ -852,32 +991,86 @@ class GUIView(ctk.CTk):
         
         ctk.CTkLabel(media_card, text="", height=5).pack() # Spacer
 
-        # 4. Result List (Sidebar)
-        # Re-using the result list idea but making it compact in sidebar
-        res_card = ctk.CTkFrame(right_col, fg_color=self.colors['bg_card'], corner_radius=12, border_width=1, border_color=self.colors['border'])
-        res_card.pack(fill="both", expand=True, pady=(0, 10))
-        
-        head = ctk.CTkFrame(res_card, fg_color="transparent")
-        head.pack(fill="x", padx=15, pady=10)
-        ctk.CTkLabel(head, text="📊 Kết quả (Chờ xử lý)", font=("Segoe UI", 14, "bold")).pack(side="left")
-        
-        self.chk_select_all = ctk.CTkCheckBox(head, text="All", width=50, font=("Segoe UI", 11), command=self.toggle_select_all_results)
-        self.chk_select_all.pack(side="right")
-        
-        ctk.CTkButton(head, text="➕ Thêm vào hàng chờ", 
-                     width=140, 
-                     height=28,
-                     font=("Segoe UI", 11, "bold"),
-                     fg_color=self.colors['warning'], 
-                     hover_color="#d97706",
-                     command=self.add_selected_results_to_queue).pack(side="right", padx=5)
-        
-        # Use existing name for compatibility
-        self.results_scroll = ctk.CTkScrollableFrame(res_card, fg_color="transparent") 
-        self.results_scroll.pack(fill="both", expand=True, padx=5, pady=5)
+        # Results moved to 'Facebook Scan' tab
 
 
         # Result Area
+
+
+    def create_fb_import_tab_content(self):
+        # Full Layout: Horizontal Split (Left Input, Right Results)
+        grid = ctk.CTkFrame(self.tab_fb_import, fg_color="transparent")
+        grid.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # LEFT COLUMN (Input) - 40%
+        left_col = ctk.CTkFrame(grid, width=350, corner_radius=12, fg_color=self.colors['bg_card'], border_width=1, border_color=self.colors['border'])
+        left_col.pack(side="left", fill="both", expand=False, padx=(0, 5))
+        left_col.pack_propagate(False) # Force width
+        
+        # Header
+        ctk.CTkLabel(left_col, text="Nhập link", font=("Segoe UI", 16, "bold"), text_color=self.colors['primary']).pack(pady=(15, 5))
+        ctk.CTkLabel(left_col, text="Nhập link  để phân tích", font=("Segoe UI", 12), text_color="gray").pack(pady=(0, 15))
+        
+        # Input Area (Textbox)
+        self.textbox_fb_links = ctk.CTkTextbox(left_col, font=("Consolas", 11))
+        self.textbox_fb_links.pack(fill="both", expand=True, padx=15, pady=5)
+        self.textbox_fb_links.insert("1.0", "# Paste danh sách link  vào đây (mỗi dòng 1 link)...\n")
+        self.textbox_fb_links.bind("<KeyRelease>", self.update_link_count_display)
+        
+        # Actions
+        actions = ctk.CTkFrame(left_col, fg_color="transparent")
+        actions.pack(fill="x", padx=15, pady=15)
+        
+        self.lbl_link_count = ctk.CTkLabel(actions, text="(0 link)", text_color=self.colors['success'], font=("Segoe UI", 12, "bold"))
+        self.lbl_link_count.pack(anchor="w")
+        
+        self.chk_auto_title_fb = ctk.CTkCheckBox(actions, text="Auto-Title (Đặt tiêu đề tự động)", font=("Segoe UI", 12))
+        self.chk_auto_title_fb.pack(anchor="w", pady=5)
+        self.chk_auto_title_fb.select()
+        
+        # NEW: Headless mode option
+        self.chk_headless_scan = ctk.CTkCheckBox(actions, text="⚡ Chạy ẩn (Headless - Nhanh hơn)", font=("Segoe UI", 12))
+        self.chk_headless_scan.pack(anchor="w", pady=5)
+        self.chk_headless_scan.select()  # Default ON
+        
+        # Hint
+        ctk.CTkLabel(actions, text="💡 Nếu máy chậm, hãy TẮT Headless", font=("Segoe UI", 10), text_color="gray").pack(anchor="w", pady=(0, 10))
+        
+        self.btn_import_fb = ctk.CTkButton(actions, text="🚀 PHÂN TÍCH & LẤY EMBED", 
+                                          height=50, 
+                                          fg_color=self.colors['warning'], 
+                                          hover_color="#d97706",
+                                          font=("Segoe UI", 13, "bold"),
+                                          command=self.import_fb_bulk)
+        self.btn_import_fb.pack(fill="x", pady=(10, 0))
+
+
+        # RIGHT COLUMN (Results) - Remaining space
+        right_col = ctk.CTkFrame(grid, fg_color=self.colors['bg_card'], corner_radius=12, border_width=1, border_color=self.colors['border'])
+        right_col.pack(side="right", fill="both", expand=True, padx=(5, 0))
+        
+        # Header
+        head = ctk.CTkFrame(right_col, fg_color="transparent")
+        head.pack(fill="x", padx=15, pady=15)
+        ctk.CTkLabel(head, text="📊 Kết quả Phân Tích (Chờ xử lý)", font=("Segoe UI", 16, "bold")).pack(side="left")
+        
+        # Controls
+        ctrl = ctk.CTkFrame(head, fg_color="transparent")
+        ctrl.pack(side="right")
+        
+        self.chk_select_all = ctk.CTkCheckBox(ctrl, text="Chọn Tất Cả", font=("Segoe UI", 12), command=self.toggle_select_all_results)
+        self.chk_select_all.pack(side="left", padx=10)
+        
+        ctk.CTkButton(ctrl, text="⬇ THÊM VÀO HÀNG CHỜ", 
+                     width=160, height=35,
+                     font=("Segoe UI", 12, "bold"),
+                     fg_color=self.colors['success'], 
+                     hover_color="#059669",
+                     command=self.add_selected_results_to_queue).pack(side="left")
+        
+        # List
+        self.results_scroll = ctk.CTkScrollableFrame(right_col, fg_color="transparent") 
+        self.results_scroll.pack(fill="both", expand=True, padx=5, pady=5)
 
 
     # =========================================================================
@@ -910,13 +1103,13 @@ class GUIView(ctk.CTk):
 
         # Facebook Tools Section
         ctk.CTkLabel(left_col, text="Công cụ Facebook:", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10, pady=(20, 0))
-        ctk.CTkLabel(left_col, text="💡 Nhập nhiều link FB trong tab 'Đăng Bài Lẻ'", 
+        ctk.CTkLabel(left_col, text="💡 Nhập nhiều link FB trong tab 'Facebook Scan'", 
                     font=("Segoe UI", 10), 
                     text_color="gray",
                     wraplength=300).pack(anchor="w", padx=10, pady=(5, 0))
-        ctk.CTkButton(left_col, text="📱 Mở Tab Facebook Import", 
+        ctk.CTkButton(left_col, text="📱 Mở Tab Facebook Scan", 
                      fg_color="#1877F2", 
-                     command=lambda: self.tabview.set("📝 Đăng Bài Lẻ")).pack(fill="x", padx=10, pady=5)
+                     command=lambda: self.tabview.set("📱 Facebook Scan")).pack(fill="x", padx=10, pady=5)
 
         # --- RIGHT COLUMN: QUEUE LIST ---
         right_col = ctk.CTkFrame(grid)
@@ -1094,7 +1287,21 @@ class GUIView(ctk.CTk):
                             btn = ctk.CTkButton(row, text="Login 🚀", width=80, height=24,
                                               fg_color=self.colors['primary'],
                                               command=lambda e=email, p=pwd: self.start_vimeo_session(e, p))
-                            btn.pack(side="right", padx=10, pady=2)
+                            btn.pack(side="right", padx=(5, 10), pady=2)
+                            
+                            # Copy Password
+                            btn_pass = ctk.CTkButton(row, text="Copy MK", width=60, height=24,
+                                                   fg_color="#4b5563", # Gray
+                                                   font=("Segoe UI", 11))
+                            btn_pass.configure(command=lambda t=pwd, b=btn_pass: self.copy_account_info(t, b))
+                            btn_pass.pack(side="right", padx=2, pady=2)
+                            
+                            # Copy Check (Copy TK)
+                            btn_user = ctk.CTkButton(row, text="Copy TK", width=60, height=24,
+                                                   fg_color="#4b5563", # Gray 
+                                                   font=("Segoe UI", 11))
+                            btn_user.configure(command=lambda t=email, b=btn_user: self.copy_account_info(t, b))
+                            btn_user.pack(side="right", padx=2, pady=2)
 
                             # Info (Pack SECOND to take remaining space)
                             info_text = f"{idx+1}. {email} | {pwd}"
@@ -1104,6 +1311,27 @@ class GUIView(ctk.CTk):
                 
         except Exception as e:
             print(f"Error loading accounts: {e}")
+
+    def copy_account_info(self, text, btn_widget):
+        """Helper to copy text and animate button"""
+        try:
+            self.clipboard_clear()
+            self.clipboard_append(text)
+            self.update() # Required to finalize clipboard
+            
+            orig_text = btn_widget.cget("text")
+            orig_color = btn_widget.cget("fg_color")
+            
+            btn_widget.configure(text="✅", fg_color=self.colors['success'])
+            
+            def restore():
+                try:
+                    btn_widget.configure(text=orig_text, fg_color=orig_color)
+                except: pass # Widget might be destroyed
+                
+            self.after(1000, restore)
+        except Exception as e:
+            print(f"Copy error: {e}")
 
     def start_vimeo_session(self, email, pwd):
         """Launch browser and auto-login"""
@@ -1205,6 +1433,489 @@ class GUIView(ctk.CTk):
         
         # Load initial data
         self.refresh_image_lists()
+    
+    # =========================================================================
+    # TAB 4.6: AI THUMBNAIL SETTINGS (Cài đặt AI cho Thumbnail)
+    # =========================================================================
+    def create_thumbnail_ai_tab_content(self):
+        """Tab for AI Thumbnail customization"""
+        from model.thumbnail_config import ThumbnailConfig
+        
+        # Load config
+        self.thumb_config = ThumbnailConfig()
+        
+        container = ctk.CTkScrollableFrame(self.tab_thumbnail_ai, fg_color="transparent")
+        container.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Header
+        header = ctk.CTkFrame(container, fg_color="transparent")
+        header.pack(fill="x", pady=(0, 20))
+        
+        ctk.CTkLabel(header, text="🤖 Cài Đặt AI Thumbnail", 
+                    font=("Segoe UI", 22, "bold")).pack(anchor="w")
+        ctk.CTkLabel(header, 
+                    text="Tùy chỉnh cách AI xử lý ảnh thumbnail để tối ưu cho Facebook OG Image",
+                    font=("Segoe UI", 12),
+                    text_color="gray").pack(anchor="w", pady=(5, 0))
+        
+        # === SECTION 1: OUTPUT RESOLUTION ===
+        res_card = ctk.CTkFrame(container, fg_color=self.colors['bg_card'], 
+                               corner_radius=12, border_width=1, border_color=self.colors['border'])
+        res_card.pack(fill="x", pady=(0, 15))
+        
+        ctk.CTkLabel(res_card, text="📐 Độ Phân Giải Đầu Ra", 
+                    font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=20, pady=(15, 10))
+        
+        self.resolution_var = ctk.StringVar(value=self.thumb_config.get("output_resolution", "720p"))
+        
+        res_options = ctk.CTkFrame(res_card, fg_color="transparent")
+        res_options.pack(fill="x", padx=20, pady=(0, 15))
+        
+        ctk.CTkRadioButton(res_options, text="720p (1280x720) - Khuyến nghị ✅", 
+                          variable=self.resolution_var, value="720p",
+                          font=("Segoe UI", 12)).pack(anchor="w", pady=5)
+        ctk.CTkLabel(res_options, text="   → Đủ cho Facebook, không quá xử lý, tự nhiên nhất",
+                    font=("Segoe UI", 10), text_color="gray").pack(anchor="w")
+        
+        ctk.CTkRadioButton(res_options, text="1080p (1920x1080) - Chất lượng cao", 
+                          variable=self.resolution_var, value="1080p",
+                          font=("Segoe UI", 12)).pack(anchor="w", pady=5)
+        ctk.CTkLabel(res_options, text="   → Rất nét nhưng có thể làm ảnh trông giả nếu nguồn kém",
+                    font=("Segoe UI", 10), text_color="gray").pack(anchor="w")
+        
+        # === SECTION 2: AI UPSCALE ===
+        ai_card = ctk.CTkFrame(container, fg_color=self.colors['bg_card'], 
+                              corner_radius=12, border_width=1, border_color=self.colors['border'])
+        ai_card.pack(fill="x", pady=(0, 15))
+        
+        ctk.CTkLabel(ai_card, text="🚀 AI Upscaling (Real-ESRGAN)", 
+                    font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=20, pady=(15, 10))
+        
+        self.ai_upscale_var = ctk.BooleanVar(value=self.thumb_config.get("use_ai_upscale", False))
+        
+        ctk.CTkCheckBox(ai_card, text="Bật AI Upscale cho ảnh nhỏ", 
+                       variable=self.ai_upscale_var,
+                       font=("Segoe UI", 13, "bold"),
+                       command=self.on_ai_upscale_toggle).pack(anchor="w", padx=20, pady=(0, 10))
+        
+        ctk.CTkLabel(ai_card, 
+                    text="⚠️ Chỉ dùng khi ảnh gốc quá nhỏ (< 360p). AI sẽ tăng độ phân giải mà không làm vỡ ảnh.",
+                    font=("Segoe UI", 11), text_color="orange", wraplength=700).pack(anchor="w", padx=20, pady=(0, 10))
+        
+        # AI Threshold slider
+        threshold_frame = ctk.CTkFrame(ai_card, fg_color="transparent")
+        threshold_frame.pack(fill="x", padx=20, pady=(0, 15))
+        
+        ctk.CTkLabel(threshold_frame, text="Ngưỡng kích hoạt AI (pixel):", 
+                    font=("Segoe UI", 12)).pack(anchor="w")
+        
+        self.ai_threshold_var = ctk.IntVar(value=self.thumb_config.get("ai_upscale_threshold", 360))
+        self.ai_threshold_slider = ctk.CTkSlider(threshold_frame, from_=240, to=720, 
+                                                 variable=self.ai_threshold_var,
+                                                 command=self.on_threshold_change)
+        self.ai_threshold_slider.pack(fill="x", pady=5)
+        
+        self.ai_threshold_label = ctk.CTkLabel(threshold_frame, text=f"Dùng AI khi chiều cao < {self.ai_threshold_var.get()}px",
+                                              font=("Segoe UI", 10), text_color="gray")
+        self.ai_threshold_label.pack(anchor="w")
+        
+        # === SECTION 3: FACE RESTORATION ===
+        face_card = ctk.CTkFrame(container, fg_color=self.colors['bg_card'], 
+                                corner_radius=12, border_width=1, border_color=self.colors['border'])
+        face_card.pack(fill="x", pady=(0, 15))
+        
+        ctk.CTkLabel(face_card, text="👤 Phục Hồi Khuôn Mặt (GFPGAN)", 
+                    font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=20, pady=(15, 10))
+        
+        self.face_restore_var = ctk.BooleanVar(value=self.thumb_config.get("use_face_restoration", False))
+        
+        ctk.CTkCheckBox(face_card, text="Tự động làm nét khuôn mặt trong bodycam", 
+                       variable=self.face_restore_var,
+                       font=("Segoe UI", 13, "bold")).pack(anchor="w", padx=20, pady=(0, 10))
+        
+        ctk.CTkLabel(face_card, 
+                    text="💡 Hữu ích cho video bodycam có người. AI sẽ phục hồi chi tiết khuôn mặt bị mờ.",
+                    font=("Segoe UI", 11), text_color="gray", wraplength=700).pack(anchor="w", padx=20, pady=(0, 15))
+        
+        # === SECTION 4: SHARPENING ===
+        sharp_card = ctk.CTkFrame(container, fg_color=self.colors['bg_card'], 
+                                 corner_radius=12, border_width=1, border_color=self.colors['border'])
+        sharp_card.pack(fill="x", pady=(0, 15))
+        
+        ctk.CTkLabel(sharp_card, text="✨ Làm Nét (Sharpening)", 
+                    font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=20, pady=(15, 10))
+        
+        sharp_frame = ctk.CTkFrame(sharp_card, fg_color="transparent")
+        sharp_frame.pack(fill="x", padx=20, pady=(0, 15))
+        
+        ctk.CTkLabel(sharp_frame, text="Cường độ làm nét:", 
+                    font=("Segoe UI", 12)).pack(anchor="w")
+        
+        self.sharpen_var = ctk.DoubleVar(value=self.thumb_config.get("sharpen_strength", 0.5))
+        self.sharpen_slider = ctk.CTkSlider(sharp_frame, from_=0.0, to=1.0, 
+                                           variable=self.sharpen_var,
+                                           command=self.on_sharpen_change)
+        self.sharpen_slider.pack(fill="x", pady=5)
+        
+        self.sharpen_label = ctk.CTkLabel(sharp_frame, text=self._get_sharpen_desc(0.5),
+                                         font=("Segoe UI", 10), text_color="gray")
+        self.sharpen_label.pack(anchor="w")
+        
+        # === SECTION 5: COLOR CORRECTION ===
+        color_card = ctk.CTkFrame(container, fg_color=self.colors['bg_card'], 
+                                 corner_radius=12, border_width=1, border_color=self.colors['border'])
+        color_card.pack(fill="x", pady=(0, 15))
+        
+        ctk.CTkLabel(color_card, text="🎨 Hiệu Chỉnh Màu Sắc", 
+                    font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=20, pady=(15, 10))
+        
+        self.color_correct_var = ctk.BooleanVar(value=self.thumb_config.get("color_correction", True))
+        
+        ctk.CTkCheckBox(color_card, text="Tự động khử màu cam/vàng (bodycam)", 
+                       variable=self.color_correct_var,
+                       font=("Segoe UI", 13, "bold")).pack(anchor="w", padx=20, pady=(0, 10))
+        
+        ctk.CTkLabel(color_card, 
+                    text="💡 Bodycam thường có màu cam/vàng. Bật tùy chọn này để ảnh trông tự nhiên hơn.",
+                    font=("Segoe UI", 11), text_color="gray", wraplength=700).pack(anchor="w", padx=20, pady=(0, 15))
+        
+        # === SECTION 6: OUTPUT QUALITY ===
+        quality_card = ctk.CTkFrame(container, fg_color=self.colors['bg_card'], 
+                                   corner_radius=12, border_width=1, border_color=self.colors['border'])
+        quality_card.pack(fill="x", pady=(0, 15))
+        
+        ctk.CTkLabel(quality_card, text="💾 Chất Lượng Lưu File", 
+                    font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=20, pady=(15, 10))
+        
+        quality_frame = ctk.CTkFrame(quality_card, fg_color="transparent")
+        quality_frame.pack(fill="x", padx=20, pady=(0, 15))
+        
+        ctk.CTkLabel(quality_frame, text="JPEG Quality (%):", 
+                    font=("Segoe UI", 12)).pack(anchor="w")
+        
+        self.quality_var = ctk.IntVar(value=self.thumb_config.get("output_quality", 92))
+        self.quality_slider = ctk.CTkSlider(quality_frame, from_=70, to=100, 
+                                           variable=self.quality_var,
+                                           command=self.on_quality_change)
+        self.quality_slider.pack(fill="x", pady=5)
+        
+        self.quality_label = ctk.CTkLabel(quality_frame, text=f"Quality: {self.quality_var.get()}% (Sweet spot: 92%)",
+                                         font=("Segoe UI", 10), text_color="gray")
+        self.quality_label.pack(anchor="w")
+        
+        # === PREVIEW SECTION ===
+        preview_card = ctk.CTkFrame(container, fg_color=self.colors['bg_card'], 
+                                   corner_radius=12, border_width=1, border_color=self.colors['border'])
+        preview_card.pack(fill="both", expand=True, pady=(0, 15))
+        
+        ctk.CTkLabel(preview_card, text="🖼️ Xem Trước & Test", 
+                    font=("Segoe UI", 16, "bold")).pack(anchor="w", padx=20, pady=(15, 10))
+        
+        ctk.CTkLabel(preview_card, 
+                    text="Upload ảnh mẫu để test các cài đặt AI trước khi áp dụng",
+                    font=("Segoe UI", 11), text_color="gray").pack(anchor="w", padx=20, pady=(0, 10))
+        
+        # Upload button
+        upload_frame = ctk.CTkFrame(preview_card, fg_color="transparent")
+        upload_frame.pack(fill="x", padx=20, pady=(0, 10))
+        
+        ctk.CTkButton(upload_frame, text="📂 Chọn Ảnh Test", 
+                     width=150,
+                     height=35,
+                     font=("Segoe UI", 12, "bold"),
+                     fg_color=self.colors['primary'],
+                     command=self.upload_test_thumbnail).pack(side="left", padx=5)
+        
+        self.test_image_label = ctk.CTkLabel(upload_frame, text="Chưa có ảnh", 
+                                            font=("Segoe UI", 11), text_color="gray")
+        self.test_image_label.pack(side="left", padx=10)
+        
+        # Before/After comparison
+        comparison_frame = ctk.CTkFrame(preview_card, fg_color=self.colors['bg_dark'])
+        comparison_frame.pack(fill="both", expand=True, padx=20, pady=(0, 15))
+        
+        # Before image
+        before_container = ctk.CTkFrame(comparison_frame, fg_color="transparent")
+        before_container.pack(side="left", fill="both", expand=True, padx=5, pady=10)
+        
+        ctk.CTkLabel(before_container, text="📷 Ảnh Gốc", 
+                    font=("Segoe UI", 13, "bold")).pack(pady=(0, 5))
+        
+        self.before_image_frame = ctk.CTkFrame(before_container, 
+                                              width=300, height=200,
+                                              fg_color="gray20")
+        self.before_image_frame.pack(fill="both", expand=True)
+        
+        self.before_image_label = ctk.CTkLabel(self.before_image_frame, 
+                                              text="Chưa có ảnh\n\nBấm 'Chọn Ảnh Test' để upload",
+                                              font=("Segoe UI", 11),
+                                              text_color="gray")
+        self.before_image_label.pack(expand=True)
+        
+        # After image
+        after_container = ctk.CTkFrame(comparison_frame, fg_color="transparent")
+        after_container.pack(side="right", fill="both", expand=True, padx=5, pady=10)
+        
+        ctk.CTkLabel(after_container, text="✨ Sau Khi Xử Lý", 
+                    font=("Segoe UI", 13, "bold")).pack(pady=(0, 5))
+        
+        self.after_image_frame = ctk.CTkFrame(after_container, 
+                                             width=300, height=200,
+                                             fg_color="gray20")
+        self.after_image_frame.pack(fill="both", expand=True)
+        
+        self.after_image_label = ctk.CTkLabel(self.after_image_frame, 
+                                             text="Chưa xử lý\n\nBấm 'Áp Dụng Hiệu Ứng' để test",
+                                             font=("Segoe UI", 11),
+                                             text_color="gray")
+        self.after_image_label.pack(expand=True)
+        
+        # Processing info
+        self.processing_info_label = ctk.CTkLabel(preview_card, 
+                                                 text="",
+                                                 font=("Segoe UI", 10),
+                                                 text_color=self.colors['success'])
+        self.processing_info_label.pack(padx=20, pady=(0, 10))
+        
+        # === ACTION BUTTONS ===
+        actions = ctk.CTkFrame(container, fg_color="transparent")
+        actions.pack(fill="x", pady=(20, 0))
+        
+        ctk.CTkButton(actions, text="✨ Áp Dụng Hiệu Ứng", 
+                     height=45,
+                     font=("Segoe UI", 14, "bold"),
+                     fg_color="#8b5cf6",  # Purple
+                     hover_color="#7c3aed",
+                     command=self.apply_thumbnail_effects).pack(side="left", padx=5)
+        
+        ctk.CTkButton(actions, text="💾 Lưu Cài Đặt", 
+                     height=45,
+                     font=("Segoe UI", 14, "bold"),
+                     fg_color=self.colors['success'],
+                     hover_color=self.colors['success_hover'],
+                     command=self.save_thumbnail_config).pack(side="left", padx=5)
+        
+        ctk.CTkButton(actions, text="🔄 Khôi Phục Mặc Định", 
+                     height=45,
+                     font=("Segoe UI", 14, "bold"),
+                     fg_color=self.colors['warning'],
+                     command=self.reset_thumbnail_config).pack(side="left", padx=5)
+        
+        ctk.CTkButton(actions, text="💾 Lưu Ảnh Đã Xử Lý", 
+                     height=45,
+                     font=("Segoe UI", 14, "bold"),
+                     fg_color="#10b981",
+                     command=self.save_processed_thumbnail).pack(side="left", padx=5)
+        
+        # Store test image path
+        self.test_thumbnail_path = None
+        self.processed_thumbnail_path = None
+    
+    def _get_sharpen_desc(self, value):
+        """Get description for sharpen strength"""
+        if value < 0.2:
+            return "Rất nhẹ (Gần như không làm nét)"
+        elif value < 0.4:
+            return "Nhẹ (Tự nhiên, khuyến nghị)"
+        elif value < 0.6:
+            return "Trung bình (Cân bằng)"
+        elif value < 0.8:
+            return "Mạnh (Rất nét, có thể hơi giả)"
+        else:
+            return "Rất mạnh (Cực nét, có thể quá xử lý)"
+    
+    def on_ai_upscale_toggle(self):
+        """Handle AI upscale checkbox toggle"""
+        enabled = self.ai_upscale_var.get()
+        self.ai_threshold_slider.configure(state="normal" if enabled else "disabled")
+    
+    def on_threshold_change(self, value):
+        """Update threshold label"""
+        self.ai_threshold_label.configure(text=f"Dùng AI khi chiều cao < {int(value)}px")
+    
+    def on_sharpen_change(self, value):
+        """Update sharpen label"""
+        self.sharpen_label.configure(text=self._get_sharpen_desc(value))
+    
+    def on_quality_change(self, value):
+        """Update quality label"""
+        self.quality_label.configure(text=f"Quality: {int(value)}% (Sweet spot: 92%)")
+    
+    def save_thumbnail_config(self):
+        """Save thumbnail AI configuration"""
+        try:
+            self.thumb_config.set("output_resolution", self.resolution_var.get())
+            self.thumb_config.set("use_ai_upscale", self.ai_upscale_var.get())
+            self.thumb_config.set("ai_upscale_threshold", self.ai_threshold_var.get())
+            self.thumb_config.set("use_face_restoration", self.face_restore_var.get())
+            self.thumb_config.set("sharpen_strength", self.sharpen_var.get())
+            self.thumb_config.set("color_correction", self.color_correct_var.get())
+            self.thumb_config.set("output_quality", self.quality_var.get())
+            
+            if self.thumb_config.save():
+                messagebox.showinfo("Thành Công", "✅ Đã lưu cài đặt AI Thumbnail!")
+                self.log("💾 Đã lưu cài đặt AI Thumbnail")
+            else:
+                messagebox.showerror("Lỗi", "❌ Không thể lưu cài đặt!")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"❌ Lỗi lưu cài đặt: {e}")
+    
+    def reset_thumbnail_config(self):
+        """Reset to default settings"""
+        if messagebox.askyesno("Xác Nhận", "Khôi phục về cài đặt mặc định?"):
+            self.thumb_config.reset_to_defaults()
+            
+            # Update UI
+            self.resolution_var.set(self.thumb_config.get("output_resolution"))
+            self.ai_upscale_var.set(self.thumb_config.get("use_ai_upscale"))
+            self.ai_threshold_var.set(self.thumb_config.get("ai_upscale_threshold"))
+            self.face_restore_var.set(self.thumb_config.get("use_face_restoration"))
+            self.sharpen_var.set(self.thumb_config.get("sharpen_strength"))
+            self.color_correct_var.set(self.thumb_config.get("color_correction"))
+            self.quality_var.set(self.thumb_config.get("output_quality"))
+            
+            messagebox.showinfo("Thành Công", "✅ Đã khôi phục cài đặt mặc định!")
+            self.log("🔄 Đã khôi phục cài đặt AI Thumbnail về mặc định")
+    
+    def upload_test_thumbnail(self):
+        """Upload a test thumbnail image"""
+        file_path = filedialog.askopenfilename(
+            title="Chọn ảnh test",
+            filetypes=[("Image files", "*.jpg *.jpeg *.png *.webp"), ("All files", "*.*")]
+        )
+        
+        if file_path:
+            try:
+                self.test_thumbnail_path = file_path
+                filename = os.path.basename(file_path)
+                self.test_image_label.configure(text=f"✅ {filename}")
+                
+                # Display before image
+                self._display_image(file_path, self.before_image_label, max_size=(400, 300))
+                
+                # Clear after image
+                self.after_image_label.configure(image=None, text="Chưa xử lý\n\nBấm 'Áp Dụng Hiệu Ứng' để test")
+                self.processed_thumbnail_path = None
+                self.processing_info_label.configure(text="")
+                
+                self.log(f"📂 Đã load ảnh test: {filename}")
+            except Exception as e:
+                messagebox.showerror("Lỗi", f"Không thể load ảnh: {e}")
+    
+    def _display_image(self, image_path, label_widget, max_size=(400, 300)):
+        """Display image in a label with max size"""
+        try:
+            from PIL import Image, ImageTk
+            
+            img = Image.open(image_path)
+            
+            # Calculate resize ratio
+            width_ratio = max_size[0] / img.width
+            height_ratio = max_size[1] / img.height
+            ratio = min(width_ratio, height_ratio, 1.0)  # Don't upscale
+            
+            new_width = int(img.width * ratio)
+            new_height = int(img.height * ratio)
+            
+            img_resized = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            photo = ImageTk.PhotoImage(img_resized)
+            
+            label_widget.configure(image=photo, text="")
+            label_widget.image = photo  # Keep reference
+            
+        except Exception as e:
+            print(f"Error displaying image: {e}")
+            label_widget.configure(text=f"Lỗi hiển thị:\n{str(e)}")
+    
+    def apply_thumbnail_effects(self):
+        """Apply AI effects to test thumbnail with current settings"""
+        if not self.test_thumbnail_path:
+            messagebox.showwarning("Chưa có ảnh", "Vui lòng chọn ảnh test trước!")
+            return
+        
+        try:
+            import threading
+            
+            def process():
+                try:
+                    self.after(0, lambda: self.processing_info_label.configure(
+                        text="⏳ Đang xử lý... Vui lòng đợi", text_color="orange"))
+                    
+                    from model.facebook_thumbnail_optimizer import FacebookThumbnailOptimizerUltra
+                    
+                    # Create optimizer
+                    optimizer = FacebookThumbnailOptimizerUltra()
+                    
+                    # Override settings from UI
+                    optimizer.OUTPUT_WIDTH = 1920 if self.resolution_var.get() == "1080p" else 1280
+                    optimizer.OUTPUT_HEIGHT = 1080 if self.resolution_var.get() == "1080p" else 720
+                    
+                    # Process image
+                    import time
+                    start_time = time.time()
+                    
+                    output_filename = f"test_preview_{int(time.time())}.jpg"
+                    result_path = optimizer.optimize_for_facebook(
+                        self.test_thumbnail_path,
+                        output_filename=output_filename,
+                        enhance=True
+                    )
+                    
+                    processing_time = time.time() - start_time
+                    
+                    if result_path and os.path.exists(result_path):
+                        self.processed_thumbnail_path = result_path
+                        
+                        # Display after image
+                        self.after(0, lambda: self._display_image(result_path, self.after_image_label, max_size=(400, 300)))
+                        
+                        # Show info
+                        file_size = os.path.getsize(result_path) / 1024
+                        info_text = f"✅ Xử lý xong trong {processing_time:.1f}s | Kích thước: {file_size:.0f} KB"
+                        self.after(0, lambda: self.processing_info_label.configure(
+                            text=info_text, text_color=self.colors['success']))
+                        
+                        self.after(0, lambda: self.log(f"✨ Đã xử lý ảnh test thành công"))
+                    else:
+                        self.after(0, lambda: messagebox.showerror("Lỗi", "Không thể xử lý ảnh!"))
+                        self.after(0, lambda: self.processing_info_label.configure(
+                            text="❌ Lỗi xử lý", text_color="red"))
+                        
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
+                    self.after(0, lambda: messagebox.showerror("Lỗi", f"Lỗi xử lý ảnh: {e}"))
+                    self.after(0, lambda: self.processing_info_label.configure(
+                        text=f"❌ Lỗi: {str(e)}", text_color="red"))
+            
+            # Run in thread
+            threading.Thread(target=process, daemon=True).start()
+            
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể xử lý: {e}")
+    
+    def save_processed_thumbnail(self):
+        """Save the processed thumbnail to a custom location"""
+        if not self.processed_thumbnail_path or not os.path.exists(self.processed_thumbnail_path):
+            messagebox.showwarning("Chưa có ảnh", "Vui lòng xử lý ảnh test trước!")
+            return
+        
+        try:
+            save_path = filedialog.asksaveasfilename(
+                title="Lưu ảnh đã xử lý",
+                defaultextension=".jpg",
+                filetypes=[("JPEG Image", "*.jpg"), ("All files", "*.*")],
+                initialfile=f"thumbnail_processed_{int(time.time())}.jpg"
+            )
+            
+            if save_path:
+                import shutil
+                shutil.copy2(self.processed_thumbnail_path, save_path)
+                messagebox.showinfo("Thành Công", f"✅ Đã lưu ảnh:\n{save_path}")
+                self.log(f"💾 Đã lưu ảnh đã xử lý: {os.path.basename(save_path)}")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể lưu ảnh: {e}")
+    
     
     def refresh_image_lists(self):
         """Refresh saved car images from API"""
@@ -1352,6 +2063,8 @@ class GUIView(ctk.CTk):
         hist_toolbar = ctk.CTkFrame(tab_history, height=40)
         hist_toolbar.pack(fill="x", pady=5)
         ctk.CTkButton(hist_toolbar, text="📋 Copy Tất Cả Link", command=self.copy_history_links).pack(side="right", padx=10)
+        # Export Excel Button (Green)
+        ctk.CTkButton(hist_toolbar, text="📊 Xuất Excel", command=self.export_history_to_excel, fg_color="#28a745").pack(side="right", padx=10)
         ctk.CTkButton(hist_toolbar, text="🗑️ Xóa Lịch Sử", command=self.clear_history, fg_color="red").pack(side="right", padx=10)
         
         # Use tkinter Text widget instead of CTkTextbox for better link handling
@@ -1477,21 +2190,66 @@ class GUIView(ctk.CTk):
     # =========================================================================
 
     def log(self, message):
-        """Unified logging method"""
-        # 1. Update Log tab
-        if hasattr(self, 'textbox_log'):
-            self.textbox_log.configure(state="normal")
-            timestamp = time.strftime("[%H:%M:%S] ")
-            self.textbox_log.insert("end", timestamp + str(message) + "\n")
-            self.textbox_log.see("end")
-            self.textbox_log.configure(state="disabled")
-        
-        # 2. Update Status Bar (short msg)
-        if hasattr(self, 'status_label'):
-            short_msg = str(message).split('\n')[0][:50]
-            self.status_label.configure(text=short_msg)
+        """Unified logging method - Optimized with Batching & UI Buffer 🚀"""
+        # 1. Store in buffer for periodic update (Batching)
+        if not hasattr(self, '_log_buffer'):
+            self._log_buffer = []
             
-        print(message) # Console fallback
+        # Optional: Filter out spam logs if needed (e.g. "Link OK - Status 200")
+        msg_str = str(message)
+        timestamp = time.strftime("[%H:%M:%S] ")
+        
+        # Only buffer if not redundant (simple dedup check could be added here)
+        self._log_buffer.append(timestamp + msg_str + "\n")
+        
+        # 2. Schedule flush if not already scheduled
+        if not hasattr(self, '_log_flush_scheduled') or not self._log_flush_scheduled:
+            self._log_flush_scheduled = True
+            self.after(500, self._flush_logs)  # Update UI every 500ms
+        
+        # 3. Print to console for real-time debugging (optional)
+        try:
+             print(msg_str)
+        except: pass
+
+    def _flush_logs(self):
+        """Flush log buffer to UI in one go"""
+        self._log_flush_scheduled = False
+        if not hasattr(self, '_log_buffer') or not self._log_buffer:
+            return
+            
+        try:
+             # Get messages and clear buffer
+             # Use a local copy to avoid race conditions if thread appends while we read
+             current_buffer = list(self._log_buffer)
+             self._log_buffer = []  # Clear immediately
+             
+             messages_to_write = "".join(current_buffer)
+             
+             # Update Log Tab (Efficiently)
+             if hasattr(self, 'textbox_log'):
+                 self.textbox_log.configure(state="normal")
+                 
+                 # Optimization: Truncate if too long (keep last 50KB)
+                 current_len = len(self.textbox_log.get("1.0", "end"))
+                 if current_len > 50000:
+                      self.textbox_log.delete("1.0", "200.0")
+                 
+                 self.textbox_log.insert("end", messages_to_write)
+                 self.textbox_log.see("end")
+                 self.textbox_log.configure(state="disabled")
+             
+             # Update Status Bar (Last message only)
+             # DISABLE OLD STATUS BAR UPDATE (User Request) - Because we have new Kitty Loading
+             # if hasattr(self, 'status_label') and current_buffer:
+             #     last_msg = current_buffer[-1].strip()
+             #     # Clean timestamp for status bar
+             #     if "] " in last_msg: 
+             #          last_msg = last_msg.split('] ')[-1]
+             #     self.status_label.configure(text=last_msg[:60])
+                 
+        except Exception as e:
+             print(f"Log Flush Error: {e}")
 
     def browse_csv(self):
         path = filedialog.askopenfilename(filetypes=[("CSV", "*.csv")])
@@ -1589,8 +2347,8 @@ class GUIView(ctk.CTk):
             
             # --- Layout: Image Left, Info Right ---
             # Image Placeholder/Canvas
-            img_frame = ctk.CTkFrame(card, width=100, height=100, fg_color="#1a1a1a")
-            img_frame.pack(side="left", padx=5, pady=5)
+            img_frame = ctk.CTkFrame(card, width=60, height=60, fg_color="#1a1a1a")
+            img_frame.pack(side="left", padx=5, pady=2)
             img_frame.pack_propagate(False) # Fixed size
             
             # Load Image
@@ -1598,7 +2356,7 @@ class GUIView(ctk.CTk):
                  try:
                     from PIL import Image, ImageTk
                     pil_img = Image.open(image_url)
-                    pil_img.thumbnail((100, 100))
+                    pil_img.thumbnail((60, 60))
                     ctk_img = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=pil_img.size)
                     ctk.CTkLabel(img_frame, text="", image=ctk_img).pack(expand=True)
                  except:
@@ -1608,26 +2366,26 @@ class GUIView(ctk.CTk):
 
             # Info Frame
             info_frame = ctk.CTkFrame(card, fg_color="transparent")
-            info_frame.pack(side="left", fill="both", expand=True, padx=10, pady=5)
+            info_frame.pack(side="left", fill="both", expand=True, padx=5, pady=2)
             
             # Title
-            ctk.CTkLabel(info_frame, text=f"{idx}. {title}", font=("Segoe UI", 12, "bold"), text_color="white", anchor="w").pack(fill="x")
+            ctk.CTkLabel(info_frame, text=f"{idx}. {title}", font=("Segoe UI", 11, "bold"), text_color="white", anchor="w", wraplength=350, justify="left").pack(fill="x")
             
             # AI Analysis Result
             ai_color = "#9ca3af" # default light gray for neutral/error
             if "Phát hiện" in analysis_text or "Face Detected" in analysis_text: ai_color = "#4ade80" # Screen Green (Brighter)
             elif "No Image" in analysis_text or "Failed" in analysis_text: ai_color = "#ef4444" # Red for obvious error
             
-            ctk.CTkLabel(info_frame, text=f"🧠 AI: {analysis_text}", font=("Segoe UI", 11), text_color=ai_color, anchor="w").pack(fill="x")
+            ctk.CTkLabel(info_frame, text=f"🧠 AI: {analysis_text}", font=("Segoe UI", 10), text_color=ai_color, anchor="w").pack(fill="x")
             
             # Embed Code (Entry for easy copying)
-            embed_entry = ctk.CTkEntry(info_frame, font=("Consolas", 10), height=25, text_color="white", fg_color="#374151")
+            embed_entry = ctk.CTkEntry(info_frame, font=("Consolas", 10), height=22, text_color="white", fg_color="#374151")
             embed_entry.pack(fill="x", pady=2)
             embed_entry.insert(0, embed_code)
             
             # Add to Queue Button
-            ctk.CTkButton(info_frame, text="⬇ Thêm vào Queue", 
-                         width=100, height=24, 
+            ctk.CTkButton(info_frame, text="⬇ Queue", 
+                         width=80, height=22, 
                          fg_color="#3b82f6", font=("Segoe UI", 10),
                          command=lambda c=card: self.add_single_result_to_queue(c)).pack(anchor="e", pady=2)
             
@@ -1642,37 +2400,61 @@ class GUIView(ctk.CTk):
                 if state: widget.checkbox.select()
                 else: widget.checkbox.deselect()
 
-    def add_single_result_to_queue(self, card):
+    def add_single_result_to_queue(self, card, update_ui=True):
         """Add a single card's data to the queue"""
         try:
-            data = card.data
+            if hasattr(card, 'data'):
+                data = card.data
+            else:
+                # Fallback if card is not the widget storing data directly
+                # This depends on how the card was created
+                return False
+
             # Create post data
             post_data = {
-                'title': data['title'],
-                'video_url': data['embed_code'],
-                'image_url': data['image_url'],
+                'title': data.get('title', 'Video'),
+                'video_url': data.get('embed_code', ''),
+                'image_url': data.get('image_url', ''),
                 'content': '',
                 'needs_body_content': True,
                 'theme': self.get_selected_theme_id()
             }
+            # Add to list
             self.post_queue.append(post_data)
-            self.update_queue_display()
-            self.log(f"✅ Đã thêm '{data['title']}' vào hàng chờ.")
+            
+            # Update UI only if requested
+            if update_ui:
+                self.update_queue_display()
+                self.log(f"✅ Đã thêm '{data.get('title', 'Video')[:30]}...' vào hàng chờ.")
+            return True
         except Exception as e:
             self.log(f"❌ Lỗi thêm bài: {e}")
+            return False
 
     def add_selected_results_to_queue(self):
-        """Add all checked cards to queue"""
+        """Add all checked cards to queue - Optimized for bulk adding"""
         added_count = 0
+        cards_to_add = []
+        
+        # 1. Collect all selected cards first (fast)
         for widget in self.results_scroll.winfo_children():
+            # Check for custom 'checkbox' attribute we added
             if hasattr(widget, 'checkbox') and widget.checkbox.get() == 1:
-                self.add_single_result_to_queue(widget)
+                cards_to_add.append(widget)
+        
+        if not cards_to_add:
+            self.log("⚠️ Chưa chọn video nào!")
+            return
+
+        # 2. Add to queue data structure (fast, no UI updates)
+        for card in cards_to_add:
+            if self.add_single_result_to_queue(card, update_ui=False):
                 added_count += 1
         
+        # 3. Update UI ONCE at the end (prevents freezing)
         if added_count > 0:
+            self.update_queue_display()
             self.log(f"🎉 Đã thêm {added_count} video đã chọn vào hàng chờ!")
-        else:
-            self.log("⚠️ Chưa chọn video nào!")
 
     def update_link_count_display(self, event=None):
         """Update the link count label based on textbox content"""
@@ -1709,7 +2491,7 @@ class GUIView(ctk.CTk):
             for line in lines:
                 line = line.strip()
                 if not line or line.startswith('#'): continue
-                if any(domain in line for domain in ['facebook.com', 'fb.watch', 'vimeo.com', 'youtube.com', 'youtu.be']):
+                if any(domain in line for domain in ['facebook.com', 'fb.watch', 'vimeo.com', 'youtube.com', 'youtu.be', 'tiktok.com']):
                     video_links.append(line)
             
             if not video_links:
@@ -1723,7 +2505,25 @@ class GUIView(ctk.CTk):
             for widget in self.results_scroll.winfo_children():
                 widget.destroy()
             
+            # ===== SHOW SMALL HELLO KITTY LOADING IN STATUS BAR =====
+            # User request: Small pretty Hello Kitty near Kill Chrome button
+            self.kitty_loading_frame.pack(side="left", padx=10, pady=8)
+            self.kitty_status_label.configure(text=f"Đang xử lý {len(video_links)} videos... 💕")
+            
+            # Simple status updater
+            def update_progress(current, total):
+                try:
+                    progress = int((current / total) * 100) if total > 0 else 0
+                    messages = [
+                        f"Đang phân tích {current}/{total} ({progress}%)... 💕",
+                        f"Đang lấy dữ liệu {current}/{total} ({progress}%)... ✨",
+                        f"Đang xử lý {current}/{total} ({progress}%)... 🌸"
+                    ]
+                    self.kitty_status_label.configure(text=messages[current % len(messages)])
+                except: pass
+            
             # Process in thread
+
             import threading
             import requests 
             from bs4 import BeautifulSoup
@@ -1750,53 +2550,43 @@ class GUIView(ctk.CTk):
                 return title, img_url
             
             def _analyze_face(img_path):
+                """Simplified analysis - Skip OpenCV to avoid build issues and speed up processing"""
                 try:
-                    # Import here to avoid global crash if missing
-                    try:
-                        import cv2
-                        import numpy as np
-                    except ImportError:
-                        return "OpenCV Missing"
-
-                    # Check file exists
+                    # Just check if file exists
                     if not os.path.exists(img_path):
-                        return "Image Missing"
-
-                    # Load Haar Cascade (Fastest)
-                    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+                        return "No Image"
                     
-                    # Read image with error handling (supports unicode paths better via frombuffer if needed, but imread is default)
-                    # Use standard imread for now
-                    img = cv2.imread(img_path)
+                    # Get file size for basic validation
+                    file_size = os.path.getsize(img_path)
+                    if file_size < 1024:  # Less than 1KB
+                        return "Invalid"
                     
-                    if img is None:
-                        return "Read Error"
-                        
-                    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                    faces = face_cascade.detectMultiScale(gray, 1.1, 4)
-                    
-                    if len(faces) > 0:
-                        return f"Face Detected ({len(faces)})"
-                    return "No Face"
+                    return "Ready ✓"
                     
                 except Exception as e:
-                    return f"Analysis Error: {str(e)[:20]}"
+                    return f"Error: {str(e)[:15]}"
 
             def _process_links():
                 processed_count = 0
                 shared_driver = None
                 
-                # Check for FB links to init One Shared Driver
-                has_fb = any(('facebook.com' in x or 'fb.watch' in x) for x in video_links)
+                # Check for FB/TikTok links to init One Shared Driver (Complex platforms)
+                has_complex = any(('facebook.com' in x or 'fb.watch' in x or 'tiktok.com' in x) for x in video_links)
                 
-                if has_fb:
+                if has_complex:
                     try:
                         self.log("🚀 Đang khởi động trình duyệt ẩn danh (Shared) để quét Facebook...")
                         import undetected_chromedriver as uc
                         options = uc.ChromeOptions()
                         
-                        # Re-enable Headless to avoid annoying popups
-                        options.add_argument("--headless=new") 
+                        # Check headless option from GUI
+                        use_headless = bool(self.chk_headless_scan.get()) if hasattr(self, 'chk_headless_scan') else True
+                        
+                        if use_headless:
+                            options.add_argument("--headless=new")
+                            self.log("   🔇 Chế độ: Headless (Ẩn)")
+                        else:
+                            self.log("   👁️ Chế độ: Visible (Hiện - Chậm hơn nhưng ổn định hơn)") 
                         
                         # Use Mobile User Agent
                         options.add_argument('--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1')
@@ -1809,7 +2599,7 @@ class GUIView(ctk.CTk):
                         if os.path.exists(chrome_path): options.binary_location = chrome_path
                         
                         shared_driver = uc.Chrome(options=options, version_main=None)
-                        shared_driver.set_page_load_timeout(45)
+                        shared_driver.set_page_load_timeout(10)  # Giảm từ 45s -> 10s
                     except Exception as e:
                         print(f"Failed to init shared driver: {e}")
 
@@ -1904,7 +2694,65 @@ class GUIView(ctk.CTk):
                                     title, img_remote_meta = _get_meta(link)
                                     if not img_remote: img_remote = img_remote_meta
 
-                            # 4. OTHERS
+                                    if not img_remote: img_remote = img_remote_meta
+
+                            # 4. TIKTOK (New)
+                            elif 'tiktok.com' in link:
+                                platform = "TikTok"
+                                self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] TikTok: Đang lấy dữ liệu (API)..."))
+                                
+                                # 1. Try TikTok oEmbed API (Fastest & Most Reliable)
+                                try:
+                                    oembed_url = f"https://www.tiktok.com/oembed?url={link}"
+                                    res = requests.get(oembed_url, timeout=5)
+                                    if res.status_code == 200:
+                                        data = res.json()
+                                        title = data.get('title')
+                                        img_remote = data.get('thumbnail_url')
+                                        if title: print(f"[TikTok] oEmbed success: {title[:30]}...")
+                                except Exception as e:
+                                    print(f"[TikTok] oEmbed error: {e}")
+
+                                # 2. Try yt-dlp (Fallback)
+                                if (not title or not img_remote):
+                                    self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] TikTok: Thử cách 2 (Deep Scan)..."))
+                                    try:
+                                        import yt_dlp
+                                        ydl_opts = {
+                                            'quiet': True, 
+                                            'no_warnings': True,
+                                            'extract_flat': True,
+                                            'impersonate': 'chrome',
+                                        }
+                                        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                                            info = ydl.extract_info(link, download=False)
+                                            if info:
+                                                if not title: title = info.get('title')
+                                                # Get best thumbnail
+                                                if not img_remote:
+                                                    thumbs = info.get('thumbnails', [])
+                                                    if thumbs: img_remote = thumbs[-1].get('url')
+                                                    else: img_remote = info.get('thumbnail')
+                                    except: pass
+                                
+                                # 3. Fallback to Shared Driver (Last Resort)
+                                if (not title or not img_remote) and shared_driver:
+                                    try:
+                                        shared_driver.get(link)
+                                        time.sleep(3)
+                                        if not title:
+                                            t = shared_driver.title
+                                            if t: title = t.replace("TikTok", "").replace("|", "").strip()
+                                        if not img_remote:
+                                            try:
+                                                ie = shared_driver.find_element(uc.By.XPATH, "//meta[@property='og:image']")
+                                                if ie: img_remote = ie.get_attribute("content")
+                                            except: pass
+                                    except: pass
+                                
+                                video_url_final = link # Let wp_model handle the embed block generation
+
+                            # 5. OTHERS
                             else:
                                 self.after(0, lambda i=idx: self.log(f"   🔍 [{i+1}] Đang lấy dữ liệu..."))
                                 title, img_remote = _get_meta(link)
@@ -1934,6 +2782,9 @@ class GUIView(ctk.CTk):
                             
                             processed_count += 1
                             
+                            # Update progress
+                            self.after(0, lambda c=processed_count, t=len(video_links): update_progress(c, t))
+                            
                         except Exception as e:
                             print(e)
                             continue
@@ -1943,6 +2794,13 @@ class GUIView(ctk.CTk):
                         try:
                             shared_driver.quit()
                         except: pass
+                
+                # Stop emoji animation
+                self._scanning_active = False
+                
+                # Hide status bar loading
+                self.after(0, lambda: self.kitty_loading_frame.pack_forget())
+
                 
                 self.after(0, lambda: self.log(f"🏁 Hoàn tất phân tích {processed_count} link."))
                 self.after(0, lambda: self.btn_import_fb.configure(state="normal", text="🚀 Phân Tích & Lấy Embed"))
@@ -1956,12 +2814,66 @@ class GUIView(ctk.CTk):
             self.btn_import_fb.configure(state="normal", text="🚀 Phân Tích & Lấy Embed")
 
     def get_facebook_title(self, fb_url, driver=None):
-        """Get title from Facebook video page using undetected_chromedriver to bypass detection"""
+        """Get title from Facebook video page - Fast API method (bypass yt-dlp)"""
         fetched_title = None
         self._last_fb_image = None # Reset image cache
         
-        # --- Method 1: Try yt-dlp Dictionary / Library (Python Native) ---
-        # Đây là cách TỐT NHẤT & CHUẨN NHẤT như bạn yêu cầu 
+        # --- Method 1: Facebook Fast Fetcher (BYPASS YT-DLP) ---
+        try:
+            from model.facebook_fast_fetcher import FacebookFastFetcher
+            
+            # Initialize Facebook fast fetcher (singleton pattern)
+            if not hasattr(self, '_fb_fast_fetcher'):
+                self._fb_fast_fetcher = FacebookFastFetcher()
+                print("[FB-FAST] ⚙️ Initialized Facebook Fast Fetcher (bypass yt-dlp)")
+            
+            # Get video info (skip yt-dlp by default)
+            result = self._fb_fast_fetcher.get_video_info(fb_url, skip_ytdlp=True)
+            
+            if result['success'] and result['title']:
+                fetched_title = result['title']
+                self._last_fb_image = result['thumbnail']
+                print(f"[FB] ✅ Fast Fetcher ({result['method']}): {fetched_title[:50]}...")
+                return fetched_title
+            else:
+                print(f"[FB] ⚠️ Fast Fetcher failed: {result.get('error', 'Unknown')}, trying yt-dlp...")
+                
+        except ImportError:
+            print("[FB] FacebookFastFetcher not available, trying yt-dlp...")
+        except Exception as e:
+            print(f"[FB] Fast Fetcher error: {e}, trying yt-dlp...")
+        
+        # --- Method 2: Enhanced yt-dlp (FALLBACK ONLY) ---
+        try:
+            from model.enhanced_ytdlp import EnhancedYTDLP
+            
+            # Initialize enhanced yt-dlp with optimized settings (singleton pattern)
+            if not hasattr(self, '_enhanced_ytdlp'):
+                self._enhanced_ytdlp = EnhancedYTDLP(
+                    cookies_file="facebook_cookies.txt",
+                    max_workers=5,        # Parallel workers
+                    request_delay=0.5,    # 0.5s delay between requests
+                    timeout=30            # 30s timeout (better for rate limiting)
+                )
+                print("[YTDLP+] ⚙️ Initialized with optimized settings for bulk processing")
+            
+            # Get video info with retry & cache
+            result = self._enhanced_ytdlp.get_video_info(fb_url, use_cache=True, max_retries=3)
+            
+            if result['success'] and result['title']:
+                fetched_title = result['title']
+                self._last_fb_image = result['thumbnail']
+                print(f"[FB] ✅ Enhanced yt-dlp: {fetched_title[:50]}...")
+                return fetched_title
+            else:
+                print(f"[FB] ⚠️ Enhanced yt-dlp failed: {result.get('error', 'Unknown')}")
+                
+        except ImportError:
+            print("[FB] Enhanced yt-dlp not available, trying standard yt-dlp...")
+        except Exception as e:
+            print(f"[FB] Enhanced yt-dlp error: {e}, trying fallback...")
+        
+        # --- Method 1.5: Standard yt-dlp (Fallback) ---
         try:
             import yt_dlp
             
@@ -1972,25 +2884,17 @@ class GUIView(ctk.CTk):
                 'extract_flat': False,
                 'noplaylist': True,
                 'ignoreerrors': True,
-                # FIX CHÍNH: Dùng 'chrome' để auto-pick version mới nhất khớp với curl-cffi
-                'impersonate': 'chrome', 
-                'extractor_args': {'facebook': {'impersonate': 'chrome'}},
+                'socket_timeout': 10,
             }
             
-            # --- COOKIE SUPPORT (Tính năng mới) ---
-            # Nếu có file facebook_cookies.txt, load vào để đăng nhập & lấy tin chuẩn 100%
             cookie_path = "facebook_cookies.txt"
             if os.path.exists(cookie_path):
                 ydl_opts['cookiefile'] = cookie_path
                 print(f"[FB] 🍪 Đã tìm thấy facebook_cookies.txt -> Đang sử dụng cookie!")
-            else:
-                print(f"[FB] ℹ️ Không thấy facebook_cookies.txt -> Chạy chế độ Guest (có thể bị hạn chế)")
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                # Tải metadata
                 info = ydl.extract_info(fb_url, download=False)
                 
-                # Trích xuất thông tin (info có thể None nếu lỗi)
                 if info:
                     title = info.get('title')
                     if title:
@@ -2002,7 +2906,6 @@ class GUIView(ctk.CTk):
         except ImportError:
             print("[FB] Python module 'yt_dlp' lỗi import.")
         except Exception as e:
-            # Lỗi này thường do FB đổi cấu trúc, không sao cả -> fallback
             print(f"[FB] yt-dlp chưa support video này, đang chuyển sang chạy Browser... ({e})")
 
         # --- Method 1.5: Try yt-dlp Subprocess (Fallback nếu không import được lib) ---
@@ -2017,7 +2920,7 @@ class GUIView(ctk.CTk):
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=15, startupinfo=startupinfo)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=8, startupinfo=startupinfo)  # Giảm từ 15s -> 8s
             if result.returncode == 0 and result.stdout:
                 data = json.loads(result.stdout)
                 title = data.get('title') or data.get('fulltitle')
@@ -2086,8 +2989,11 @@ class GUIView(ctk.CTk):
                 try:
                     # import undetected_chromedriver as uc # Already imported above
                     options = uc.ChromeOptions()
-                    # Re-enable Headless
-                    options.add_argument("--headless=new") 
+                    
+                    # Check headless option from GUI
+                    use_headless = bool(self.chk_headless_scan.get()) if hasattr(self, 'chk_headless_scan') else True
+                    if use_headless:
+                        options.add_argument("--headless=new") 
                     
                     # Mobile UA
                     options.add_argument('--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1')
@@ -2102,7 +3008,7 @@ class GUIView(ctk.CTk):
                     if os.path.exists(chrome_path): options.binary_location = chrome_path
                     
                     use_driver = uc.Chrome(options=options, version_main=None)
-                    use_driver.set_page_load_timeout(45)
+                    use_driver.set_page_load_timeout(10)  # Giảm từ 45s -> 10s
                     should_quit = True
                     
                     # --- LOAD COOKIES INTO DRIVER ---
@@ -2144,7 +3050,7 @@ class GUIView(ctk.CTk):
                 from selenium.webdriver.support.ui import WebDriverWait
                 from selenium.webdriver.support import expected_conditions as EC
                 
-                wait = WebDriverWait(use_driver, 15) # Chờ tối đa 15s
+                wait = WebDriverWait(use_driver, 5)  # Giảm từ 15s -> 5s
                 
                 # 1. Image Strategy (Wait for og:image)
                 try:
@@ -2188,7 +3094,7 @@ class GUIView(ctk.CTk):
                 try:
                     # Wait for title in <title> tag
                     import time
-                    time.sleep(3)
+                    time.sleep(1)  # Giảm từ 3s -> 1s
                     
                     # Try getting title from document.title
                     t = use_driver.title
@@ -2376,9 +3282,36 @@ title="{title}"></iframe>
             added_count = 0
             base_title = data.title
             
+            # --- SHARED DRIVER INIT ---
+            shared_driver = None
+            has_fb = any(('facebook.com' in x or 'fb.watch' in x) for x in video_lines)
+            if has_fb:
+                try:
+                    self.log("🚀 Đang khởi động trình duyệt ẩn danh (Shared) để quét Facebook...")
+                    import undetected_chromedriver as uc
+                    options = uc.ChromeOptions()
+                    options.add_argument("--headless=new")
+                    options.add_argument('--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1')
+                    options.add_argument("--disable-gpu")
+                    options.add_argument("--mute-audio")
+                    options.add_argument("--window-size=375,812")
+                    
+                    chrome_path = os.path.join(os.getcwd(), "chrome_portable", "chrome.exe")
+                    if os.path.exists(chrome_path): options.binary_location = chrome_path
+                    
+                    shared_driver = uc.Chrome(options=options, version_main=None)
+                    shared_driver.set_page_load_timeout(45)
+                except Exception as e:
+                    print(f"Failed to init shared driver: {e}")
+            # --------------------------
+
             self.log(f"📦 Phát hiện {len(video_lines)} dòng video. Đang thêm xử lý hàng loạt...")
             
-            for idx, vid_line in enumerate(video_lines):
+            # SPEED OPTIMIZATION: Process in parallel
+            import concurrent.futures
+            
+            def process_single_video(idx, vid_line, base_title, shared_driver):
+                """Process a single video line (runs in parallel)"""
                 try:
                     # Clone data for each post
                     import copy
@@ -2387,27 +3320,23 @@ title="{title}"></iframe>
                     
                     # Handle Title
                     if not base_title: 
-                         # If no title provided, use generic or let later steps handle it
                          current_post.title = "" 
                     else:
-                         # Append index to title to differentiate if user provided one
                          current_post.title = f"{base_title} (Part {idx+1})"
 
                     # --- Facebook Logic (Mini version for bulk) ---
                     if 'facebook.com' in vid_line or 'fb.watch' in vid_line:
                         if not vid_line.startswith('<'): # URL not Embed
-                             # Fetch title if missing
+                             # Fetch title if missing (ONLY if no base title)
                              if not current_post.title:
                                  try:
-                                     # Fast fetch attempt (Blocking UI slightly but accepting for batch)
-                                     self.update_idletasks()
-                                     ft = self.get_facebook_title(vid_line)
+                                     # Fast fetch attempt
+                                     ft = self.get_facebook_title(vid_line, driver=shared_driver)
                                      if ft and ft != "Facebook Video":
                                          current_post.title = ft
                                  except: pass
                                  
                              # Generate Embed
-                             # use_sdk defaults to False, uses Iframe (robust)
                              current_post.video_url = self.create_facebook_embed(vid_line)
                     
                     # --- YouTube Logic ---
@@ -2424,7 +3353,6 @@ title="{title}"></iframe>
                                  if match: video_id = match.group(1)
                              
                              if video_id:
-                                 # Standard standard embed width
                                  width = 560
                                  height = 315
                                  current_post.video_url = f'<iframe width="{width}" height="{height}" src="https://www.youtube.com/embed/{video_id}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="true"></iframe>'
@@ -2447,7 +3375,6 @@ title="{title}"></iframe>
                              match = re.search(r'vimeo\.com/(\d+)', vid_line)
                              if match:
                                  vid_id = match.group(1)
-                                 # Use new helper function for proper aspect ratio
                                  current_post.video_url = self.create_vimeo_embed(vid_id, current_post.title or "Vimeo Video")
                                  
                                  if not current_post.title:
@@ -2460,8 +3387,8 @@ title="{title}"></iframe>
                                               current_post.title = data.get('title', '')
                                      except: pass
                     
-                    # Add to queue
-                    cleaned_data = {
+                    # Return cleaned data
+                    return {
                         'title': current_post.title,
                         'video_url': current_post.video_url,
                         'image_url': current_post.image_url,
@@ -2469,12 +3396,39 @@ title="{title}"></iframe>
                         'needs_body_content': getattr(current_post, 'needs_body_content', True),
                         'theme': self.get_selected_theme_id()
                     }
-                    self.post_queue.append(cleaned_data)
-                    added_count += 1
                     
                 except Exception as e:
-                    print(f"Error adding line {idx}: {e}")
+                    print(f"Error processing line {idx}: {e}")
+                    return None
             
+            # Process all videos in parallel (max 8 workers for speed)
+            results = []
+            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+                futures = {
+                    executor.submit(process_single_video, idx, vid_line, base_title, shared_driver): idx
+                    for idx, vid_line in enumerate(video_lines)
+                }
+                
+                for future in concurrent.futures.as_completed(futures):
+                    try:
+                        result = future.result()
+                        if result:
+                            results.append(result)
+                            added_count += 1
+                    except Exception as e:
+                        print(f"Error in parallel processing: {e}")
+            
+            # Add all results to queue
+            self.post_queue.extend(results)
+            
+            # --- SHARED DRIVER CLEANUP ---
+            if shared_driver:
+                try:
+                    shared_driver.quit()
+                    self.log("🏁 Đã đóng trình duyệt Shared.")
+                except: pass
+            # -----------------------------
+
             self.log(f"✅ Đã thêm {added_count} bài viết vào hàng chờ!")
             self.update_queue_display()
             # Clear ALL inputs after bulk add
@@ -2677,7 +3631,7 @@ title="{title}"></iframe>
                 elif 'vimeo' in video_url: post_type = "Vimeo 🟦"
                 
                 ctk.CTkLabel(info_frame, text=f"{idx+1}. {post_type}", font=("Segoe UI", 10), text_color="gray", anchor="w").pack(fill="x")
-                ctk.CTkLabel(info_frame, text=title[:60] + "..." if len(title)>60 else title, font=("Segoe UI", 12, "bold"), anchor="w").pack(fill="x")
+                ctk.CTkLabel(info_frame, text=title[:60] + "..." if len(title)>60 else title, font=("Segoe UI", 12, "bold"), text_color="white", anchor="w").pack(fill="x")
                 ctk.CTkLabel(info_frame, text=video_url[:80]+"..." if len(video_url)>80 else video_url, font=("Consolas", 9), text_color="gray", anchor="w").pack(fill="x")
                 
                 # 3. Actions (Right)
@@ -3379,6 +4333,63 @@ title="{title}"></iframe>
         self.clipboard_append("\n".join(text_lines))
         self.log("📋 Đã copy tất cả link vào clipboard.")
 
+    def export_history_to_excel(self):
+        """Export history links to Excel (CSV format) 📊"""
+        try:
+            if not getattr(self, "published_links", []):
+                messagebox.showwarning("Cảnh báo", "Lịch sử trống! Không có gì để xuất.")
+                return
+
+            file_path = filedialog.asksaveasfilename(
+                defaultextension=".csv",
+                filetypes=[("Excel CSV", "*.csv"), ("Text File", "*.txt")],
+                title="Lưu file Excel (CSV)",
+                initialfile=f"Lich_Su_Link_{time.strftime('%Y%m%d_%H%M%S')}.csv"
+            )
+            
+            if not file_path: return
+            
+            import csv
+            # Use 'utf-8-sig' for Excel compatibility with Vietnamese characters
+            with open(file_path, "w", newline="", encoding="utf-8-sig") as f:
+                writer = csv.writer(f)
+                # Header
+                writer.writerow(["STT", "Thời Gian", "Tiêu Đề", "Link Bài Viết", "Trạng Thái", "Ảnh Thumbnail"])
+                
+                # Data
+                for i, item in enumerate(self.published_links, 1):
+                    # Check if item is dict or old format
+                    if isinstance(item, dict):
+                        time_str = item.get('timestamp', item.get('time', ''))
+                        title = item.get('title', 'No Title')
+                        link = item.get('link', item.get('url', ''))
+                        status = item.get('status', 'N/A')
+                        if status == 'success': status = "Thành công" 
+                        elif status == 'error': status = "Lỗi"
+                        elif status == 'checking': status = "Đang kiểm tra"
+                        img = item.get('image_path', '')
+                    else:
+                        # Fallback for old simple string logs
+                        time_str = ""
+                        title = "Old Item"
+                        link = str(item)
+                        status = ""
+                        img = ""
+                    
+                    writer.writerow([i, time_str, title, link, status, img])
+                    
+            self.log(f"✅ Đã xuất lịch sử ra file: {file_path}")
+            messagebox.showinfo("Thành công", f"Đã xuất {len(self.published_links)} dòng ra file Excel (CSV)!")
+            
+            # Auto open file (Windows only)
+            try:
+                os.startfile(file_path)
+            except: pass
+            
+        except Exception as e:
+            self.log(f"❌ Lỗi xuất Excel: {e}")
+            messagebox.showerror("Lỗi", f"Không thể xuất file: {e}")
+
     def clear_history(self):
         """Clear all history"""
         self.published_links = []
@@ -3925,9 +4936,9 @@ title="{title}"></iframe>
             info_frame.pack(fill="x", pady=(0, 15))
             
             info_items = [
-                ("👤 Tác giả", version_info['author']),
-                ("📅 Ngày phát hành", version_info['build_date']),
-                ("🔧 Build", version_info['version']),
+                # ("👤 Tác giả", version_info['author']),
+                # ("📅 Ngày phát hành", version_info['build_date']),
+                ("Build", version_info['version']),
             ]
             
             for label, value in info_items:
@@ -4006,60 +5017,52 @@ title="{title}"></iframe>
             messagebox.showerror("Lỗi", f"Không thể copy: {e}")
     
     def kill_chrome_processes(self):
-        """Kill all Chrome and ChromeDriver processes to free up resources"""
+        """Kill ONLY Chrome processes running from this application's folder"""
         try:
             import subprocess
             import os
             
             # Update status
-            self.status_label.configure(text="🔪 Đang kill Chrome...", text_color=self.colors['warning'])
+            self.status_label.configure(text="Cleanup Chrome...", text_color=self.colors['warning'])
             self.update()
             
-            # Method 1: Use batch file if exists
-            bat_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "kill_chrome.bat")
+            # Project root
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            
+            # Method 1: Use safe batch file
+            bat_file = os.path.join(project_root, "kill_chrome.bat")
+            
+            log_msg = ""
+            
             if os.path.exists(bat_file):
                 try:
-                    subprocess.run([bat_file], shell=True, capture_output=True, timeout=5)
-                except:
-                    pass
-            
-            # Method 2: Direct taskkill commands
-            processes = ['chrome.exe', 'chromedriver.exe', 'msedge.exe', 'msedgedriver.exe']
-            killed_count = 0
-            
-            for process in processes:
-                try:
-                    result = subprocess.run(
-                        ['taskkill', '/F', '/IM', process, '/T'],
-                        capture_output=True,
-                        text=True,
-                        timeout=3
-                    )
-                    if result.returncode == 0:
-                        killed_count += 1
-                        print(f"[KILL] Killed: {process}")
+                    # Run batch file that filters by %~dp0
+                    subprocess.run([bat_file], shell=True, capture_output=True, timeout=10)
+                    log_msg = "Run kill_chrome.bat"
                 except Exception as e:
-                    print(f"[KILL] Error killing {process}: {e}")
-            
-            # Show result
-            if killed_count > 0:
-                self.status_label.configure(
-                    text=f"✅ Đã kill {killed_count} process Chrome!", 
-                    text_color=self.colors['success']
-                )
-                messagebox.showinfo(
-                    "Thành Công",
-                    f"✅ Đã kill {killed_count} Chrome processes!\n\nMáy sẽ mượt hơn rồi đó! 🚀"
-                )
+                    log_msg = f"Bat error: {e}"
             else:
-                self.status_label.configure(
-                    text="ℹ️ Không có Chrome process nào đang chạy",
-                    text_color=self.colors['text_secondary']
-                )
-                messagebox.showinfo(
-                    "Thông Báo",
-                    "Không tìm thấy Chrome process nào đang chạy."
-                )
+                # Fallback Safe PowerShell if bat missing
+                try:
+                    target_path_escaped = project_root.replace("\\", "\\\\").replace("'", "''")
+                    ps_cmd = f"Get-WmiObject Win32_Process | Where-Object {{ ($_.Name -eq 'chrome.exe' -or $_.Name -eq 'chromedriver.exe') -and $_.ExecutablePath -like '*{target_path_escaped}*' }} | ForEach-Object {{ Stop-Process -Id $_.ProcessId -Force }}"
+                    subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], capture_output=True, timeout=10)
+                    log_msg = "Run Safe PowerShell"
+                except Exception as e:
+                    log_msg = f"PS error: {e}"
+
+            # Verify
+            print(f"[KILL] {log_msg}")
+            
+            self.status_label.configure(
+                text="✅ Đã đóng Chrome của Tool", 
+                text_color=self.colors['success']
+            )
+            
+            messagebox.showinfo(
+                "Hoàn Thành",
+                "Đã đóng các tiến trình Chrome/Driver của Tool.\n(Trình duyệt cá nhân của bạn không bị ảnh hưởng)"
+            )
             
             # Reset status after 3s
             self.after(3000, lambda: self.status_label.configure(
@@ -4067,12 +5070,9 @@ title="{title}"></iframe>
                 text_color=self.colors['success']
             ))
             
-            print(f"[KILL] Chrome cleanup completed. Killed {killed_count} processes.")
-            
         except Exception as e:
-            print(f"[KILL] Error: {e}")
-            self.status_label.configure(text="❌ Lỗi kill Chrome", text_color=self.colors['danger'])
-            messagebox.showerror("Lỗi", f"Không thể kill Chrome:\n{e}")
+            print(f"[KILL] Critical Error: {e}")
+            self.status_label.configure(text="❌ Lỗi", text_color=self.colors['danger'])
     
     def add_published_post(self, title, link):
         """Add a published post to the list for copying"""

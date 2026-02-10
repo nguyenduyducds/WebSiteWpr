@@ -7,6 +7,8 @@ datas = [
     ('kill_chrome.bat', '.'),
     ('chrome_portable', 'chrome_portable'),
     ('driver', 'driver'),
+    ('animaition', 'animaition'),  # Include Hello Kitty GIFs
+    ('logo.ico', '.'),             # Include Logo Icon
 ]
 binaries = []
 hiddenimports = [
@@ -77,6 +79,9 @@ hiddenimports = [
     'tkinter',
     'tkinter.filedialog',
     'tkinter.messagebox',
+    'scipy',
+    'scipy.signal',
+    'scipy.ndimage',
 ]
 
 # Collect all submodules and data for critical packages
@@ -119,6 +124,8 @@ datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('webdriver_manager')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
+tmp_ret = collect_all('scipy')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 
 a = Analysis(
@@ -141,7 +148,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='WprTool',
+    name='LVCMediaWeb',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -152,7 +159,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='app_icon.ico',  # Custom icon for the application
+    icon='logo.ico',  # Custom icon for the application
 )
 coll = COLLECT(
     exe,
@@ -161,6 +168,6 @@ coll = COLLECT(
     strip=False,
     upx=False,  # Disabled UPX to prevent library loading issues
     upx_exclude=[],
-    name='WprTool',
+    name='LVCMediaWeb',
 )
 

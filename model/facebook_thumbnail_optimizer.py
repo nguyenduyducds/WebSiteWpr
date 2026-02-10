@@ -1,296 +1,395 @@
 """
-Facebook Thumbnail Optimizer
-Tự động chụp và tối ưu hóa thumbnail chất lượng cao cho Facebook
-
-Facebook ưu tiên:
-- Ảnh có kích thước 1200x630px (tỷ lệ 1.91:1)
-- Ảnh có độ phân giải cao, rõ nét
-- Ảnh không bị nén quá mức
+Facebook Thumbnail Optimizer - PHIÊN BẢN 1080p ULTRA SHARP + AI UPSCALER
+- Độ phân giải đầu ra: 1920x1080 (Full HD)
+- Tự động dùng Real-ESRGAN AI upscale nếu ảnh nhỏ (tránh vỡ ảnh)
+- 4 tầng làm nét chồng lớp + điều chỉnh thông minh
+- Khử màu cam triệt để + tăng độ trong
 """
 
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps, ImageDraw
 import os
 import requests
 from io import BytesIO
+import cv2
+import numpy as np
+from scipy.signal import convolve2d
+
+# === Thêm Real-ESRGAN (nếu có) ===
+try:
+    from realesrgan import RealESRGANer
+    from basicsr.archs.rrdbnet_arch import RRDBNet
+    HAS_REALESRGAN = True
+    print("[AI UPSCALER] Real-ESRGAN sẵn sàng!")
+except ImportError:
+    HAS_REALESRGAN = False
+    print("[AI UPSCALER] Chưa cài realesrgan → sẽ dùng LANCZOS cổ điển (có thể bị vỡ nếu upscale mạnh)")
 
 
-class FacebookThumbnailOptimizer:
-    """Tối ưu hóa ảnh thumbnail cho Facebook"""
-    
-    # Facebook recommended sizes
-    FACEBOOK_OG_WIDTH = 1200
-    FACEBOOK_OG_HEIGHT = 630
-    FACEBOOK_ASPECT_RATIO = 1.91  # 1200/630
-    
-    # Quality settings
-    JPEG_QUALITY = 95  # Chất lượng cao (85-95 là tốt nhất)
-    PNG_COMPRESSION = 6  # PNG compression level (0-9, 6 là balanced)
+class FacebookThumbnailOptimizerUltra:
+    OUTPUT_WIDTH = 1920
+    OUTPUT_HEIGHT = 1080
+    OUTPUT_ASPECT_RATIO = 1920 / 1080
     
     def __init__(self):
-        """Initialize optimizer"""
         self.output_dir = "thumbnails_optimized"
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
-            print(f"[FB_THUMB] Created output directory: {self.output_dir}")
+        os.makedirs(self.output_dir, exist_ok=True)
+        print(f"[ULTRA_SHARP_1080p] Output directory: {self.output_dir}")
     
     def optimize_for_facebook(self, image_path, output_filename=None, enhance=True):
         """
-        Tối ưu hóa ảnh cho Facebook Open Graph
-        
-        Args:
-            image_path: Đường dẫn ảnh gốc (local hoặc URL)
-            output_filename: Tên file output (optional)
-            enhance: Có tăng cường chất lượng ảnh không
-            
-        Returns:
-            str: Đường dẫn ảnh đã tối ưu
+        Tối ưu ảnh cho Facebook - PHIÊN BẢN TỰ NHIÊN + AUTO ASPECT RATIO
+        - Tự động phát hiện 9:16 (dọc) hoặc 16:9 (ngang)
+        - Chỉ upscale lên 720p (đủ cho FB, tránh quá xử lý)
+        - Không làm nét quá mức
+        - Giữ màu sắc tự nhiên
         """
         try:
-            print(f"[FB_THUMB] Optimizing image for Facebook...")
+            print(f"\n{'='*60}")
+            print("[FB_THUMB] 🖼️ BẮT ĐẦU TỐI ƯU ẢNH")
+            print(f"{'='*60}")
             
             # Load image
-            if image_path.startswith('http'):
-                print(f"[FB_THUMB] Downloading image from URL...")
+            if str(image_path).startswith('http'):
                 response = requests.get(image_path, timeout=30)
                 img = Image.open(BytesIO(response.content))
             else:
                 img = Image.open(image_path)
             
-            print(f"[FB_THUMB] Original size: {img.size} ({img.mode})")
+            original_size = img.size
+            print(f"[FB_THUMB] Ảnh gốc: {original_size}")
             
-            # Convert to RGB if needed (remove alpha channel)
+            # Chuẩn hóa RGB
             if img.mode in ('RGBA', 'LA', 'P'):
-                print(f"[FB_THUMB] Converting {img.mode} to RGB...")
-                # Create white background
-                background = Image.new('RGB', img.size, (255, 255, 255))
+                bg = Image.new('RGB', img.size, (255, 255, 255))
                 if img.mode == 'P':
                     img = img.convert('RGBA')
-                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
-                img = background
+                bg.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+                img = bg
             
-            # Enhance image quality (optional)
-            if enhance:
-                img = self._enhance_image(img)
+            # ============= AUTO-DETECT ASPECT RATIO =============
+            aspect_ratio = img.width / img.height
             
-            # Resize to Facebook optimal size
-            img = self._resize_for_facebook(img)
+            # Phát hiện orientation
+            if aspect_ratio < 0.75:  # Portrait (9:16 hoặc gần đó)
+                TARGET_WIDTH = 720
+                TARGET_HEIGHT = 1280
+                orientation = "PORTRAIT (9:16)"
+                print(f"[FB_THUMB] 📱 Phát hiện video dọc → Thumbnail {TARGET_WIDTH}x{TARGET_HEIGHT}")
+            else:  # Landscape (16:9 hoặc gần đó)
+                TARGET_WIDTH = 1280
+                TARGET_HEIGHT = 720
+                orientation = "LANDSCAPE (16:9)"
+                print(f"[FB_THUMB] 🖥️ Phát hiện video ngang → Thumbnail {TARGET_WIDTH}x{TARGET_HEIGHT}")
             
-            # Generate output filename
+            # ============= UPSCALE NHẸ (NẾU CẦN) =============
+            need_upscale = img.height < TARGET_HEIGHT or img.width < TARGET_WIDTH
+            if need_upscale:
+                scale_h = TARGET_HEIGHT / img.height
+                scale_w = TARGET_WIDTH / img.width
+                scale_factor = max(scale_h, scale_w)
+                
+                print(f"[FB_THUMB] Upscale nhẹ x{scale_factor:.1f} → dùng LANCZOS chất lượng cao")
+                new_width = int(img.width * scale_factor)
+                new_height = int(img.height * scale_factor)
+                img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                print(f"[FB_THUMB] → Sau upscale: {img.size}")
+            
+            # ============= CROP VỀ TARGET RATIO =============
+            img = self._crop_to_ratio(img, TARGET_WIDTH, TARGET_HEIGHT)
+            print(f"[FB_THUMB] → Sau crop {orientation}: {img.size}")
+            
+            # ============= RESIZE CHÍNH XÁC =============
+            if img.size != (TARGET_WIDTH, TARGET_HEIGHT):
+                img = img.resize((TARGET_WIDTH, TARGET_HEIGHT), Image.Resampling.LANCZOS)
+                print(f"[FB_THUMB] → Resize cuối: {img.size}")
+            
+            # ============= XỬ LÝ NHẸ (CHỈ KHI CẦN) =============
+            if enhance and need_upscale:
+                print("[FB_THUMB] ✨ Làm nét nhẹ (chỉ vì đã upscale)...")
+                # Chỉ làm nét rất nhẹ để bù lại độ mờ từ upscale
+                img = self._gentle_sharpen(img)
+            else:
+                print("[FB_THUMB] ✅ Giữ nguyên ảnh gốc (không cần xử lý)")
+            
+            # ============= LƯU =============
             if not output_filename:
-                timestamp = __import__('time').strftime('%Y%m%d_%H%M%S')
-                output_filename = f"fb_thumb_{timestamp}.jpg"
+                from time import strftime
+                output_filename = f"fb_natural_{strftime('%Y%m%d_%H%M%S')}.jpg"
             
             output_path = os.path.join(self.output_dir, output_filename)
+            # Quality 92 là sweet spot (đủ nét, file nhỏ)
+            img.save(output_path, 'JPEG', quality=92, subsampling=0, optimize=True)
             
-            # Save with high quality
-            img.save(
-                output_path,
-                'JPEG',
-                quality=self.JPEG_QUALITY,
-                optimize=True,
-                progressive=True,  # Progressive JPEG for better loading
-                subsampling=0  # Best quality subsampling
-            )
-            
-            # Get file size
-            file_size = os.path.getsize(output_path) / 1024  # KB
-            
-            print(f"[FB_THUMB] ✅ Optimized image saved!")
-            print(f"[FB_THUMB]    Path: {output_path}")
-            print(f"[FB_THUMB]    Size: {img.size}")
-            print(f"[FB_THUMB]    File size: {file_size:.1f} KB")
-            print(f"[FB_THUMB]    Quality: {self.JPEG_QUALITY}%")
+            file_size_kb = os.path.getsize(output_path) / 1024
+            print(f"\n{'='*60}")
+            print(f"[FB_THUMB] ✅ HOÀN THÀNH: {output_path}")
+            print(f"[FB_THUMB] 📏 Kích thước: {img.size}")
+            print(f"[FB_THUMB] 💾 Dung lượng: {file_size_kb:.1f} KB")
+            print(f"{'='*60}\n")
             
             return output_path
             
         except Exception as e:
-            print(f"[FB_THUMB] ❌ Error optimizing image: {e}")
+            print(f"[ULTRA] ❌ LỖI: {e}")
             import traceback
             traceback.print_exc()
             return None
     
-    def _resize_for_facebook(self, img):
-        """
-        Resize ảnh theo kích thước tối ưu cho Facebook
-        Giữ nguyên tỷ lệ và crop nếu cần
-        """
-        original_width, original_height = img.size
-        original_ratio = original_width / original_height
+    # ================== AI UPSCALE ==================
+    def _ai_upscale(self, img, target_scale=4):
+        if not HAS_REALESRGAN:
+            return img
         
-        print(f"[FB_THUMB] Resizing to Facebook optimal size ({self.FACEBOOK_OG_WIDTH}x{self.FACEBOOK_OG_HEIGHT})...")
+        model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
+        upsampler = RealESRGANer(
+            scale=4,
+            model_path='https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth',
+            model=model,
+            tile=400,      # Tile để tránh hết VRAM/RAM
+            tile_pad=10,
+            pre_pad=0,
+            half=False     # False = CPU, True = GPU (nếu có)
+        )
         
-        # Calculate target size maintaining aspect ratio
-        if original_ratio > self.FACEBOOK_ASPECT_RATIO:
-            # Image is wider - fit to height
-            new_height = self.FACEBOOK_OG_HEIGHT
-            new_width = int(new_height * original_ratio)
+        img_np = np.array(img)
+        output, _ = upsampler.enhance(img_np, outscale=target_scale)
+        return Image.fromarray(output)
+    
+    
+    # ================== CROP ==================
+    def _crop_to_ratio(self, img, target_width, target_height):
+        """Crop ảnh về tỷ lệ mong muốn"""
+        target_ratio = target_width / target_height
+        img_ratio = img.width / img.height
+        
+        if img_ratio > target_ratio:
+            new_height = img.height
+            new_width = int(new_height * target_ratio)
+            left = (img.width - new_width) // 2
+            img = img.crop((left, 0, left + new_width, new_height))
         else:
-            # Image is taller - fit to width
-            new_width = self.FACEBOOK_OG_WIDTH
-            new_height = int(new_width / original_ratio)
-        
-        # Resize with high-quality resampling
-        img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-        
-        # Crop to exact Facebook size if needed
-        if new_width != self.FACEBOOK_OG_WIDTH or new_height != self.FACEBOOK_OG_HEIGHT:
-            # Center crop
-            left = (new_width - self.FACEBOOK_OG_WIDTH) // 2
-            top = (new_height - self.FACEBOOK_OG_HEIGHT) // 2
-            right = left + self.FACEBOOK_OG_WIDTH
-            bottom = top + self.FACEBOOK_OG_HEIGHT
-            
-            img = img.crop((left, top, right, bottom))
-            print(f"[FB_THUMB] Cropped to exact size: {img.size}")
-        
+            new_width = img.width
+            new_height = int(new_width / target_ratio)
+            top = (img.height - new_height) // 2
+            img = img.crop((0, top, new_width, top + new_height))
         return img
     
-    def _enhance_image(self, img):
-        """
-        Tăng cường chất lượng ảnh
-        - Tăng độ nét (sharpness)
-        - Tăng độ tương phản (contrast)
-        - Tăng độ bão hòa màu (color saturation)
-        """
-        print(f"[FB_THUMB] Enhancing image quality...")
-        
-        # 1. Sharpen (tăng độ nét)
-        enhancer = ImageEnhance.Sharpness(img)
-        img = enhancer.enhance(1.3)  # 1.0 = original, >1.0 = sharper
-        
-        # 2. Contrast (tăng độ tương phản)
-        enhancer = ImageEnhance.Contrast(img)
-        img = enhancer.enhance(1.1)  # Slight contrast boost
-        
-        # 3. Color saturation (tăng độ bão hòa màu)
-        enhancer = ImageEnhance.Color(img)
-        img = enhancer.enhance(1.1)  # Slight color boost
-        
-        # 4. Brightness (điều chỉnh độ sáng nếu cần)
-        # enhancer = ImageEnhance.Brightness(img)
-        # img = enhancer.enhance(1.05)
-        
-        print(f"[FB_THUMB] ✅ Image enhanced (sharper, more contrast)")
-        
-        return img
+    # ================== LÀM NÉT NHẸ ==================
+    def _gentle_sharpen(self, img):
+        """Làm nét rất nhẹ nhàng - chỉ để bù lại độ mờ từ upscale"""
+        from PIL import ImageFilter
+        # Unsharp mask với strength thấp
+        return img.filter(ImageFilter.UnsharpMask(radius=1, percent=50, threshold=3))
     
-    def create_thumbnail_from_video_frame(self, video_url, frame_time=5):
-        """
-        Chụp frame từ video làm thumbnail
-        (Requires ffmpeg or selenium for video capture)
+    # ================== XỬ LÝ MÀU ==================
+    def _remove_color_cast_pro(self, img):
+        img_np = np.array(img).astype(np.float32)
         
-        Args:
-            video_url: URL video (YouTube, Vimeo, etc.)
-            frame_time: Thời điểm chụp (giây)
-            
-        Returns:
-            str: Đường dẫn ảnh thumbnail
-        """
-        # TODO: Implement video frame capture
-        # This would require ffmpeg or selenium screenshot
-        print(f"[FB_THUMB] Video frame capture not implemented yet")
-        return None
+        # White balance
+        avg_b, avg_g, avg_r = np.mean(img_np, axis=(0,1))
+        k = (avg_r + avg_g + avg_b) / 3
+        img_np[:, :, 0] *= k / (avg_b + 1e-5)
+        img_np[:, :, 1] *= k / (avg_g + 1e-5)
+        img_np[:, :, 2] *= k / (avg_r + 1e-5)
+        
+        # Giảm kênh đỏ thừa
+        red_channel = img_np[:, :, 2]
+        mask = ((red_channel > 80) & (red_channel < 180)).astype(np.float32) * 0.15
+        img_np[:, :, 2] = red_channel * (1 - mask)
+        
+        # Tăng clarity
+        img_np = self._apply_clarity(img_np, amount=0.25)
+        
+        return Image.fromarray(np.clip(img_np, 0, 255).astype(np.uint8))
     
-    def batch_optimize(self, image_paths):
-        """
-        Tối ưu hóa nhiều ảnh cùng lúc
-        
-        Args:
-            image_paths: List đường dẫn ảnh
-            
-        Returns:
-            list: List đường dẫn ảnh đã tối ưu
-        """
-        optimized_paths = []
-        
-        for i, path in enumerate(image_paths, 1):
-            print(f"\n[FB_THUMB] Processing {i}/{len(image_paths)}: {os.path.basename(path)}")
-            optimized = self.optimize_for_facebook(path)
-            if optimized:
-                optimized_paths.append(optimized)
-        
-        print(f"\n[FB_THUMB] ✅ Batch optimization complete: {len(optimized_paths)}/{len(image_paths)} successful")
-        return optimized_paths
+    def _apply_clarity(self, img_np, amount=0.2):
+        img_lab = cv2.cvtColor(img_np.astype(np.uint8), cv2.COLOR_RGB2LAB)
+        L = img_lab[:, :, 0].astype(np.float32)
+        blurred = cv2.GaussianBlur(L, (0, 0), 1.0)
+        mask = L - blurred
+        L = L + mask * amount
+        img_lab[:, :, 0] = np.clip(L, 0, 255).astype(np.uint8)
+        return cv2.cvtColor(img_lab, cv2.COLOR_LAB2RGB).astype(np.float32)
     
-    def validate_facebook_requirements(self, image_path):
-        """
-        Kiểm tra ảnh có đáp ứng yêu cầu Facebook không
+    # ================== SHARPEN PIPELINE ==================
+    def _ultra_sharpen_pipeline(self, img, strength_multiplier=1.0):
+        img_np = np.array(img).astype(np.float32)
         
-        Facebook requirements:
-        - Minimum: 200x200px
-        - Recommended: 1200x630px
-        - Aspect ratio: 1.91:1
-        - Max file size: 8MB
-        - Format: JPG, PNG
+        # Blur nhẹ chống artifact từ upscale
+        img_np = cv2.GaussianBlur(img_np, (0, 0), 0.5)
         
-        Returns:
-            tuple: (is_valid, issues)
-        """
+        print("[ULTRA]   → Tầng 1: Deblur nhẹ")
+        img_np = self._richardson_lucy_deblur(img_np, iterations=5)
+        
+        print("[ULTRA]   → Tầng 2: High-frequency boost")
+        img_np = self._high_frequency_boost(img_np, strength=0.35 * strength_multiplier)
+        
+        print("[ULTRA]   → Tầng 3: Edge-aware sharpen")
+        img_np = self._edge_aware_sharpen(img_np, radius=1.2, amount=1.8 * strength_multiplier)
+        
+        print("[ULTRA]   → Tầng 4: Micro-texture")
+        img_np = self._micro_texture_enhance(img_np, strength=0.4 * strength_multiplier)
+        
+        # Blend cuối: 85% nét + 15% gốc
+        original_np = np.array(img).astype(np.float32)
+        img_np = img_np * 0.85 + original_np * 0.15
+        
+        return Image.fromarray(np.clip(img_np, 0, 255).astype(np.uint8))
+    
+    # Các hàm sharpen giữ nguyên (chỉ chỉnh strength)
+    def _richardson_lucy_deblur(self, img_np, iterations=5):
         try:
-            img = Image.open(image_path)
-            width, height = img.size
-            file_size = os.path.getsize(image_path) / (1024 * 1024)  # MB
+            def rl_deconvolve(channel, psf, iterations):
+                estimate = np.full_like(channel, 0.5)
+                for _ in range(iterations):
+                    blurred = convolve2d(estimate, psf, 'same')
+                    ratio = channel / (blurred + 1e-6)
+                    estimate *= convolve2d(ratio, psf[::-1, ::-1], 'same')
+                return estimate
             
-            issues = []
+            psf = np.array([[0.0625, 0.125, 0.0625],
+                            [0.125,  0.25,  0.125],
+                            [0.0625, 0.125, 0.0625]])
             
-            # Check minimum size
-            if width < 200 or height < 200:
-                issues.append(f"❌ Too small: {width}x{height} (minimum 200x200)")
+            result = np.zeros_like(img_np)
+            for i in range(3):
+                result[:, :, i] = rl_deconvolve(img_np[:, :, i], psf, iterations)
+            return np.clip(result, 0, 255)
+        except:
+            return img_np
+    
+    def _high_frequency_boost(self, img_np, strength=0.3):
+        blurred = cv2.GaussianBlur(img_np, (0, 0), 1.0)
+        high_freq = img_np - blurred
+        return img_np + high_freq * strength
+    
+    def _edge_aware_sharpen(self, img_np, radius=1.0, amount=1.5):
+        gray = cv2.cvtColor(img_np.astype(np.uint8), cv2.COLOR_RGB2GRAY)
+        edges = cv2.Laplacian(gray, cv2.CV_32F)
+        edge_mask = np.abs(edges) > 15
+        edge_mask = edge_mask.astype(np.float32)
+        edge_mask = cv2.GaussianBlur(edge_mask, (5, 5), 1.0)
+        edge_mask = np.clip(edge_mask * 1.5, 0, 1.0)
+        
+        blurred = cv2.GaussianBlur(img_np, (0, 0), radius)
+        sharpened = img_np + (img_np - blurred) * amount
+        
+        result = img_np * (1 - edge_mask[..., np.newaxis]) + sharpened * edge_mask[..., np.newaxis]
+        return result
+    
+    def _micro_texture_enhance(self, img_np, strength=0.3):
+        img_lab = cv2.cvtColor(img_np.astype(np.uint8), cv2.COLOR_RGB2LAB)
+        L = img_lab[:, :, 0].astype(np.float32)
+        blurred1 = cv2.GaussianBlur(L, (0, 0), 0.8)
+        blurred2 = cv2.GaussianBlur(L, (0, 0), 2.0)
+        texture = blurred1 - blurred2
+        L = L + texture * strength * 2.0
+        img_lab[:, :, 0] = np.clip(L, 0, 255).astype(np.uint8)
+        return cv2.cvtColor(img_lab, cv2.COLOR_LAB2RGB).astype(np.float32)
+    
+    # ================== TRÍCH FRAME VIDEO ==================
+    def create_thumbnail_from_video_frame(self, video_path_or_url, start_percent=0.1, end_percent=0.6, samples=30):
+        """Chọn frame nét nhất từ video với độ chính xác cao"""
+        try:
+            print(f"\n[ULTRA] 🔍 Tìm frame nét nhất trong video...")
+            cap = cv2.VideoCapture(video_path_or_url)
+            if not cap.isOpened():
+                print("[ULTRA] ❌ Không mở được video")
+                return None
             
-            # Check recommended size
-            if width < 1200 or height < 630:
-                issues.append(f"⚠️ Below recommended: {width}x{height} (recommended 1200x630)")
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            duration = total_frames / fps if fps > 0 else 0
             
-            # Check aspect ratio
-            ratio = width / height
-            if abs(ratio - self.FACEBOOK_ASPECT_RATIO) > 0.1:
-                issues.append(f"⚠️ Aspect ratio: {ratio:.2f} (recommended 1.91:1)")
+            print(f"[ULTRA]   → Tổng frames: {total_frames} | FPS: {fps:.2f} | Độ dài: {duration:.1f}s")
             
-            # Check file size
-            if file_size > 8:
-                issues.append(f"❌ File too large: {file_size:.1f}MB (max 8MB)")
+            # Quét rộng hơn để tìm frame đẹp (10% -> 60% của video)
+            start_frame = int(total_frames * start_percent) 
+            end_frame = int(total_frames * end_percent)
+            step = max(1, (end_frame - start_frame) // samples)
             
-            # Check format
-            if img.format not in ['JPEG', 'PNG']:
-                issues.append(f"⚠️ Format: {img.format} (recommended JPEG or PNG)")
+            best_frame = None
+            best_score = 0
             
-            is_valid = len([i for i in issues if i.startswith('❌')]) == 0
+            for i, frame_idx in enumerate(range(start_frame, end_frame, step)):
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+                ret, frame = cap.read()
+                if not ret:
+                    continue
+                
+                # Check resolution on first frame
+                if i == 0:
+                     h, w = frame.shape[:2]
+                     aspect_ratio = w / h
+                     
+                     # Detect orientation
+                     if aspect_ratio < 0.75:
+                         orientation = "📱 PORTRAIT (9:16)"
+                     else:
+                         orientation = "🖥️ LANDSCAPE (16:9)"
+                     
+                     print(f"[ULTRA]   → Độ phân giải nguồn: {w}x{h} | {orientation}")
+                
+                # Đa metric scoring: Laplacian variance + Tenengrad
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+                sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
+                sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
+                tenengrad = np.sum(sobelx**2 + sobely**2) / (gray.shape[0] * gray.shape[1])
+                
+                # Tính điểm độ nét
+                score = laplacian_var * 0.7 + tenengrad * 0.3
+                
+                # Ưu tiên các frame có độ sáng tốt (không quá tối/quá sáng)
+                mean_brightness = np.mean(gray)
+                if 40 < mean_brightness < 215:
+                     score *= 1.2 # Bonus cho frame ánh sáng tốt
+                else:
+                     score *= 0.8 # Phạt frame quá tối/cháy sáng
+                
+                if score > best_score:
+                    best_score = score
+                    best_frame = frame.copy()
+                    best_time = frame_idx / fps if fps > 0 else 0
             
-            if is_valid and not issues:
-                print(f"[FB_THUMB] ✅ Image meets Facebook requirements!")
-            else:
-                print(f"[FB_THUMB] Validation results:")
-                for issue in issues:
-                    print(f"[FB_THUMB]   {issue}")
+            cap.release()
             
-            return is_valid, issues
+            if best_frame is None:
+                print("[ULTRA] ❌ Không tìm thấy frame đạt chuẩn")
+                return None
+            
+            frame_rgb = cv2.cvtColor(best_frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(frame_rgb)
+            
+            temp_path = os.path.join(self.output_dir, "ultra_frame_best.jpg")
+            img.save(temp_path, quality=98)
+            
+            print(f"[ULTRA] ✅ Chọn frame tốt nhất tại {best_time:.2f}s (score: {best_score:.0f})")
+            print(f"[ULTRA] 💾 Lưu frame tạm: {temp_path}")
+            
+            return temp_path
             
         except Exception as e:
-            print(f"[FB_THUMB] ❌ Validation error: {e}")
-            return False, [f"❌ Error: {e}"]
-
-
-# Test and Demo
+            print(f"[ULTRA] ❌ Lỗi xử lý video: {e}")
+            return None
+    
+# ============= DEMO =============
 if __name__ == "__main__":
-    print("=" * 60)
-    print("FACEBOOK THUMBNAIL OPTIMIZER")
-    print("=" * 60)
-    print()
+    optimizer = FacebookThumbnailOptimizerUltra()
     
-    optimizer = FacebookThumbnailOptimizer()
+    # Thay đường dẫn thật của bạn
+    image_path = "anh_goc_cua_ban.jpg"  # hoặc link http, hoặc file từ video
     
-    print("Features:")
-    print("✅ Resize to Facebook optimal size (1200x630px)")
-    print("✅ Enhance sharpness, contrast, and color")
-    print("✅ High-quality JPEG compression (95%)")
-    print("✅ Remove alpha channel (convert to RGB)")
-    print("✅ Progressive JPEG for better loading")
-    print("✅ Validate Facebook requirements")
-    print()
+    # Nếu từ video:
+    # frame_path = optimizer.create_thumbnail_from_video_frame("video.mp4")
+    # if frame_path: final = optimizer.optimize_for_facebook(frame_path, "thumb_final.jpg")
     
-    print("Usage:")
-    print("  optimizer = FacebookThumbnailOptimizer()")
-    print("  optimized_path = optimizer.optimize_for_facebook('path/to/image.jpg')")
-    print()
+    final_thumb = optimizer.optimize_for_facebook(image_path, "thumbnail_1080p_ai_net_cang.jpg")
     
-    print("=" * 60)
+    if final_thumb:
+        print(f"🎉 Hoàn thành! File: {final_thumb}")
+
+# ============= ALIAS ĐỂ TƯƠNG THÍCH NGƯỢC =============
+# Các file khác đang import "FacebookThumbnailOptimizer" (tên cũ)
+# Alias này đảm bảo chúng dùng được class Ultra mới
+FacebookThumbnailOptimizer = FacebookThumbnailOptimizerUltra

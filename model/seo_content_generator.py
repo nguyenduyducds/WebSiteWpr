@@ -78,7 +78,15 @@ class SEOContentGenerator:
         # Convert URL to embed
         embed_url = self.convert_to_embed_url(video_url)
         if embed_url:
-            return f'''<div class="video-wrapper">
+        # Facebook specific iframe
+            if 'facebook.com/plugins/video.php' in embed_url:
+                # User requested specific styling: width 476, height 591, show_text=true
+                return f'''<div class="video-wrapper" style="display: flex; justify-content: center; margin: 20px 0;">
+    <iframe src="{embed_url}" width="476" height="591" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowFullScreen="true"></iframe>
+</div>'''
+            else:
+                # Standard iframe for Youtube/Vimeo
+                return f'''<div class="video-wrapper">
     <iframe src="{embed_url}" width="100%" height="100%" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
 </div>'''
         
@@ -107,7 +115,11 @@ class SEOContentGenerator:
         
         # Facebook
         elif 'facebook.com' in url:
-            return f"https://www.facebook.com/plugins/video.php?href={url}&show_text=0&width=560"
+            import urllib.parse
+            encoded_url = urllib.parse.quote(url)
+            # User requested specific format: show_text=true, width=476
+            # This format (square-ish with text) works well for both feed posts and reels
+            return f"https://www.facebook.com/plugins/video.php?height=476&href={encoded_url}&show_text=true&width=476&t=0"
         
         return url
     

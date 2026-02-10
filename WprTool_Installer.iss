@@ -47,14 +47,14 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "quicklaunchicon"; Description: "Create a &Quick Launch icon"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1; Check: not IsAdminInstallMode
 
 [Files]
-; Main executable (built with PyInstaller in OneFile mode)
-Source: "dist\WprTool.exe"; DestDir: "{app}"; Flags: ignoreversion
+; Main executable and dependencies (OneDir build)
+; This includes WprTool.exe, _internal folder (libs), chrome_portable, driver, etc.
+Source: "dist\WprTool\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Chrome Portable (CRITICAL - Include all files so app can assume it exists in CWD)
-Source: "chrome_portable\*"; DestDir: "{app}\chrome_portable"; Flags: ignoreversion recursesubdirs createallsubdirs
-
-; ChromeDriver (CRITICAL - Include driver)
-Source: "driver\*"; DestDir: "{app}\driver"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Chrome Portable & Driver are ALREADY in dist\WprTool due to spec 'datas'
+; So we don't need to copy them separately anymore
+; Source: "chrome_portable\*"; DestDir: "{app}\chrome_portable"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Source: "driver\*"; DestDir: "{app}\driver"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Config files (use template to avoid leaking credentials)
 Source: "config_template.json"; DestDir: "{app}"; DestName: "config.json"; Flags: ignoreversion onlyifdoesntexist

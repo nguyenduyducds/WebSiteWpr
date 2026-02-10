@@ -207,6 +207,13 @@ class ThemeManager:
         # 4. Convert URL to embed (Fallback)
         embed_url = self.convert_to_embed_url(video_url)
         if embed_url:
+            # Facebook specific handling
+            if 'facebook.com/plugins/video.php' in embed_url:
+                 # User requested fixed dimensions for all FB videos: width=476, height=591 (with text)
+                 return f'''<div style="display: flex; justify-content: center; margin: 20px 0;">
+    <iframe src="{embed_url}" width="476" height="591" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowFullScreen="true"></iframe>
+</div>'''
+            
             return f'''<div class="video-wrapper">
     <iframe src="{embed_url}" width="100%" height="100%" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
 </div>'''
@@ -249,7 +256,11 @@ class ThemeManager:
         
         # Facebook plugin URL
         elif 'facebook.com' in url and not url.startswith('<'):
-            return f"https://www.facebook.com/plugins/video.php?href={url}&show_text=0&width=560"
+            import urllib.parse
+            encoded_url = urllib.parse.quote(url)
+            
+            # Use standard format requested: width 476, show text true
+            return f"https://www.facebook.com/plugins/video.php?height=476&href={encoded_url}&show_text=true&width=476&t=0"
         
         return url
     

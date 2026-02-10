@@ -1,63 +1,65 @@
 @echo off
+chcp 65001 >nul
 echo ========================================
-echo        Building WprTool.exe
+echo    Building WprTool v2.0.4
 echo ========================================
 
 echo.
-echo [1/4] Installing PyInstaller...
+echo [1/5] Cleaning old builds...
+if exist "dist" (
+    echo Removing old dist folder...
+    rmdir /s /q "dist"
+)
+if exist "build" (
+    echo Removing old build folder...
+    rmdir /s /q "build"
+)
+
+echo.
+echo [2/5] Installing PyInstaller...
 pip install pyinstaller
 
 echo.
-echo [2/4] Installing required packages...
+echo [3/5] Installing required packages...
 pip install -r requirements.txt
 
 echo.
-echo [3/4] Building executable...
+echo [4/5] Building executable with PyInstaller...
+echo This may take 5-10 minutes...
 pyinstaller --clean WprTool.spec
 
 echo.
-echo [4/4] Copying additional files...
-if exist "dist\WprTool.exe" (
-    echo Creating WprTool package directory...
-    mkdir "dist\WprTool_Package" 2>nul
-    
-    echo Copying executable...
-    copy "dist\WprTool.exe" "dist\WprTool_Package\" >nul
-    
-    echo Copying sample files...
-    copy "sample_posts.csv" "dist\WprTool_Package\" >nul
-    copy "BATCH_POSTING_GUIDE.md" "dist\WprTool_Package\" >nul
-    copy "AUTO_VIDEO_POST_GUIDE.md" "dist\WprTool_Package\" >nul
-    copy "VIDEO_EMBED_GUIDE.md" "dist\WprTool_Package\" >nul
-    copy "fix_thumbnail_issue.md" "dist\WprTool_Package\" >nul
-    copy "CHANGELOG.md" "dist\WprTool_Package\" >nul
-    copy "config.json" "dist\WprTool_Package\" >nul
-    
-    echo Creating output directories...
-    mkdir "dist\WprTool_Package\thumbnails" 2>nul
-    
+echo [5/5] Verifying build...
+if exist "dist\WprTool\WprTool.exe" (
     echo.
     echo ========================================
-    echo        Build Complete!
+    echo        ✅ Build Complete!
     echo ========================================
     echo.
-    echo Executable location: dist\WprTool.exe
-    echo Package location: dist\WprTool_Package\
+    echo 📦 Build location: dist\WprTool\
+    echo 📁 Main executable: dist\WprTool\WprTool.exe
     echo.
-    echo Files included:
-    echo - WprTool.exe (Main application - Standalone)
-    echo - config.json (Configuration)
-    echo - sample_posts.csv (Sample data)
-    echo - BATCH_POSTING_GUIDE.md (Batch posting guide)
-    echo - AUTO_VIDEO_POST_GUIDE.md (Auto video guide)
-    echo - VIDEO_EMBED_GUIDE.md (Video embed troubleshooting)
-    echo - fix_thumbnail_issue.md (Thumbnail fix guide)
-    echo - thumbnails\ (Output folder)
+    echo 📊 Build includes:
+    echo   ✅ WprTool.exe (Main application)
+    echo   ✅ Chrome Portable (Bundled browser)
+    echo   ✅ ChromeDriver (Automation driver)
+    echo   ✅ All Python dependencies
+    echo   ✅ Templates folder (HTML themes)
+    echo   ✅ Model folder (AI + Config)
     echo.
-    echo Note: WprTool.exe is a standalone executable that includes
-    echo all dependencies. Chrome drivers will be downloaded automatically.
+    echo 🆕 New in v2.0.4:
+    echo   🤖 AI Thumbnail customization tab
+    echo   📱 Auto aspect ratio detection (9:16/16:9)
+    echo   🖼️ Before/After preview
+    echo   ⚙️ Configurable AI settings
+    echo   📉 Optimized content images (180px)
     echo.
-    echo Size: ~113 MB
+    echo 📏 Estimated size: ~500-700 MB
+    echo.
+    echo ⚠️ Next steps:
+    echo   1. Test: cd dist\WprTool ^&^& WprTool.exe
+    echo   2. Create installer: Open Inno Setup and compile WprTool_v2.0.1.iss
+    echo   3. Output: Output\WprTool_Setup_v2.0.4.exe
     echo.
     pause
     exit /b 0
@@ -65,8 +67,15 @@ if exist "dist\WprTool.exe" (
 
 echo.
 echo ========================================
-echo        Build Failed!
+echo        ❌ Build Failed!
 echo ========================================
+echo.
 echo Please check the error messages above.
+echo.
+echo Common issues:
+echo   - Missing dependencies: pip install -r requirements.txt
+echo   - PyInstaller not installed: pip install pyinstaller
+echo   - Spec file errors: Check WprTool.spec
+echo.
 pause
 exit /b 1

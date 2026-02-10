@@ -562,12 +562,36 @@ class BlogPost:
 <div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
 <!-- /wp:spacer -->"""
         
-        # Check if this is Facebook URL (plain URL - use WordPress oEmbed)
+        # Check if this is Facebook URL (plain URL)
         if ('facebook.com' in video_url or 'fb.watch' in video_url) and '<' not in video_url:
-            print("[WP_MODEL] Using Facebook URL with WordPress oEmbed")
-            # Use WordPress embed block - let WordPress handle it
-            return f"""<!-- wp:embed {{"url":"{video_url}","type":"video","providerNameSlug":"facebook","responsive":true}} -->
-<figure class="wp-block-embed is-type-video is-provider-facebook wp-block-embed-facebook"><div class="wp-block-embed__wrapper">
+            print("[WP_MODEL] Converting Facebook URL to explicit iframe (fixing viewability)")
+            import urllib.parse
+            encoded_url = urllib.parse.quote(video_url)
+            
+            # Use specific dimensions and format requested by user
+            # Width=476 matches standard Facebook video post width
+            # Height=591 allows space for "show_text=true" which is enabled
+            
+            iframe_code = f'<iframe src="https://www.facebook.com/plugins/video.php?height=476&href={encoded_url}&show_text=true&width=476&t=0" width="476" height="591" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowFullScreen="true"></iframe>'
+            
+            # Wrap in centering container
+            return f"""<!-- wp:html -->
+<div class="fb-video-container" style="display: flex; justify-content: center; margin: 30px 0;">
+<div style="max-width: 476px; width: 100%;">
+{iframe_code}
+</div>
+</div>
+<!-- /wp:html -->
+
+<!-- wp:spacer {{"height":"20px"}} -->
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->"""
+
+        # Check if this is TikTok URL (plain URL - use WordPress oEmbed)
+        if 'tiktok.com' in video_url and '<' not in video_url:
+            print("[WP_MODEL] Using TikTok URL with WordPress oEmbed")
+            return f"""<!-- wp:embed {{"url":"{video_url}","type":"video","providerNameSlug":"tiktok","responsive":true}} -->
+<figure class="wp-block-embed is-type-video is-provider-tiktok wp-block-embed-tiktok"><div class="wp-block-embed__wrapper">
 {video_url}
 </div></figure>
 <!-- /wp:embed -->
@@ -575,7 +599,19 @@ class BlogPost:
 <!-- wp:spacer {{"height":"20px"}} -->
 <div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
 <!-- /wp:spacer -->"""
-        
+
+        # Check if this is TikTok Blockquote Embed
+        if 'tiktok.com' in video_url and '<blockquote' in video_url:
+            print("[WP_MODEL] Using TikTok Blockquote Embed")
+            return f"""<!-- wp:html -->
+{video_url}
+<!-- /wp:html -->
+<script async src="https://www.tiktok.com/embed.js"></script>
+
+<!-- wp:spacer {{"height":"20px"}} -->
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->"""
+
         # Otherwise, use simple iframe embed with responsive wrapper (for plain URLs)
         print("[WP_MODEL] Using simple iframe embed with responsive wrapper")
         
@@ -608,7 +644,8 @@ class WordPressClient:
 # ============================================================================
 
 from model.selenium_wp import SeleniumWPClient
-from model.wp_rest_api import WordPressRESTClient
+# from model.wp_rest_api import WordPressRESTClient
+from model.wp_rest_api_fast import WordPressRESTClientFast as WordPressRESTClient
 from model.wp_rest_api_fast import WordPressRESTClientFast
 
 class WPAutoClient:
@@ -625,7 +662,7 @@ class WPAutoClient:
         self.client = None
         self.method = None  # 'rest_api' or 'selenium'
     
-    def post_article(self, blog_post, reuse_selenium_client=None):
+    def post_article(self, blog_post, reuse_selenium_client=None, reuse_fast_client=None):
         """
         Post article to WordPress - automatically selects best method
         
@@ -636,6 +673,7 @@ class WPAutoClient:
         Args:
             blog_post: BlogPost object with title, content, image_url
             reuse_selenium_client: Existing SeleniumWPClient to reuse (optional)
+            reuse_fast_client: Existing WordPressRESTClientFast to reuse (optional)
             
         Returns:
             tuple: (success: bool, result: str)
@@ -646,7 +684,11 @@ class WPAutoClient:
             print("[WP_AUTO] Attempting REST API method (AGGRESSIVE)...")
             print("[WP_AUTO] ========================================")
             
-            rest_client = WordPressRESTClient(self.site_url, self.username, self.password)
+            if reuse_fast_client:
+                print("[WP_AUTO] Reusing existing FAST client")
+                rest_client = reuse_fast_client
+            else:
+                rest_client = WordPressRESTClient(self.site_url, self.username, self.password)
             
             # Test if REST API is available - AGGRESSIVE MODE (always try)
             is_available, status_code, message = rest_client.test_api_availability(aggressive=True)

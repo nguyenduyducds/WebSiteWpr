@@ -2,14 +2,25 @@
 Version information for WprTool
 """
 
-__version__ = "2.0.3"
+__version__ = "2.0.4"
 __app_name__ = "WprTool - WordPress Auto Posting"
 __author__ = "NguyenDuyDuc"
 __copyright__ = "Copyright (C) 2026 NguyenDuyDuc"
-__build_date__ = "2026-02-05"
+__build_date__ = "2026-02-06"
 
 # Version history
 VERSION_HISTORY = {
+    "2.0.4": {
+        "date": "2026-02-06",
+        "features": [
+            "🤖 Tab AI Thumbnail với preview Before/After",
+            "📱 Tự động phát hiện aspect ratio (9:16 dọc / 16:9 ngang)",
+            "🖼️ Upload ảnh test và xem kết quả real-time",
+            "⚙️ Cài đặt AI: Resolution, Upscale, Sharpen, Color",
+            "📉 Giảm resolution ảnh content xuống 180px",
+            "💾 Lưu config AI vào JSON để tái sử dụng",
+        ]
+    },
     "2.0.3": {
         "date": "2026-02-05",
         "features": [

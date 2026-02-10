@@ -29,13 +29,14 @@ class ImageAPI:
         self.image_pool = []  # Pool of available images
         self.current_api_index = 0  # Rotate between APIs
     
-    def optimize_image_for_upload(self, image_path, max_width=1200, quality=85):
+    def optimize_image_for_upload(self, image_path, max_width=None, max_height=None, quality=85):
         """
         Optimize image before upload to reduce size and speed up upload
         
         Args:
             image_path: Path to original image
-            max_width: Maximum width (default 1200px)
+            max_width: Maximum width (optional)
+            max_height: Maximum height (optional - takes precedence for 180p logic)
             quality: JPEG quality (default 85)
             
         Returns:
@@ -52,16 +53,28 @@ class ImageAPI:
             width, height = img.size
             
             # Check if optimization needed
-            if width <= max_width and original_size < 200 * 1024:  # < 200KB
+            if max_width and width <= max_width and not max_height and original_size < 200 * 1024:
                 print(f"[IMAGE_API] Image already optimized: {width}x{height}, {original_size // 1024}KB")
                 return image_path
             
-            # Resize if too large
-            if width > max_width:
+            # Calculate new size
+            new_width, new_height = width, height
+            
+            # Resize by Height (Priority if set, e.g. 180p - GIẢM TỪ 240 XUỐNG 180)
+            if max_height and height > max_height:
+                ratio = max_height / height
+                new_width = int(width * ratio)
+                new_height = max_height
+                img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                print(f"[IMAGE_API] Resized by Height: {width}x{height} → {new_width}x{new_height}")
+                
+            # Resize by Width (if height not set or width still too big)
+            elif max_width and width > max_width:
                 ratio = max_width / width
                 new_height = int(height * ratio)
-                img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
-                print(f"[IMAGE_API] Resized: {width}x{height} → {max_width}x{new_height}")
+                new_width = max_width
+                img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                print(f"[IMAGE_API] Resized by Width: {width}x{height} → {new_width}x{new_height}")
             
             # Convert to RGB if needed (for JPEG)
             if img.mode in ('RGBA', 'P'):

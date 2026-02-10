@@ -46,3 +46,5 @@ debug_*.png
 *.png
 build_log.txt
 login_timeout.html
+chrome_profiles/
+chrome_profile/
