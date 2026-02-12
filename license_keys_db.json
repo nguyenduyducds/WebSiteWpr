@@ -1,5 +1,12 @@
 [
     {
+        "key": "LVC-FF265E6F-9C6F",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-12 11:49:43"
+    },
+    {
         "key": "LVC-DD0EB730-2ABA",
         "note": "",
         "hwid_lock": "GLOBAL",
