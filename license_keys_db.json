@@ -1,5 +1,12 @@
 [
     {
+        "key": "LVC-6FA18A39-A99F",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-28 09:30:09"
+    },
+    {
         "key": "LVC-0F39F277-7123",
         "note": "",
         "hwid_lock": "GLOBAL",
