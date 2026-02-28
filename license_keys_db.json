@@ -1,128 +1,128 @@
-[
-    {
-        "key": "LVC-E0EB6094-DCDC",
-        "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
-        "created_at": "2026-02-28 09:30:40"
-    },
-    {
-        "key": "LVC-67D901E0-4C67",
-        "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
-        "created_at": "2026-02-28 09:30:30"
-    },
-    {
-        "key": "LVC-7E78E2E6-4B68",
-        "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
-        "created_at": "2026-02-28 09:30:19"
-    },
-    {
-        "key": "LVC-6FA18A39-A99F",
-        "note": "",
-        "hwid_lock": "904FB7F2",
-        "activated_ip": "14.226.150.198",
-        "created_at": "2026-02-28 09:30:09"
-    },
-    {
-        "key": "LVC-0F39F277-7123",
-        "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
-        "created_at": "2026-02-28 09:29:56"
-    },
-    {
-        "key": "LVC-E5E2B31B-6128",
-        "note": "",
-        "hwid_lock": "66B0CE57",
-        "activated_ip": "14.226.150.198",
-        "created_at": "2026-02-28 09:28:46"
-    },
-    {
-        "key": "LVC-3FF66EAB-2B1C",
-        "note": "",
-        "hwid_lock": "C0FC46B5",
-        "activated_ip": "14.226.150.198",
-        "created_at": "2026-02-27 14:34:41"
-    },
-    {
-        "key": "LVC-6CEB4EC3-2160",
-        "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
-        "created_at": "2026-02-27 10:03:41"
-    },
-    {
-        "key": "LVC-5096DA41-EE81",
-        "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
-        "created_at": "2026-02-27 10:03:31"
-    },
-    {
-        "key": "LVC-9220F0C0-9349",
-        "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
-        "created_at": "2026-02-27 10:03:21"
-    },
-    {
-        "key": "LVC-7A46E69A-E12C",
-        "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
-        "created_at": "2026-02-27 10:03:14"
-    },
-    {
-        "key": "LVC-4366C172-28BC",
-        "note": "",
-        "hwid_lock": "8087CEB9",
-        "activated_ip": "14.167.125.216",
-        "created_at": "2026-02-27 10:03:06"
-    },
-    {
-        "key": "LVC-0D3780DD-C259",
-        "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
-        "created_at": "2026-02-27 09:58:01"
-    },
-    {
-        "key": "LVC-2578FFFF-0B6E",
-        "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
-        "created_at": "2026-02-27 09:54:31"
-    },
-    {
-        "key": "LVC-9CD421EE-9A4E",
-        "note": "",
-        "hwid_lock": "D669E13E",
-        "activated_ip": "171.234.8.126",
-        "created_at": "2026-02-27 09:45:01"
-    },
-    {
-        "key": "LVC-71D4F18A-A96C",
-        "note": "",
-        "hwid_lock": "1938A310",
-        "activated_ip": "14.226.150.198",
-        "created_at": "2026-02-26 15:53:26"
-    },
-    {
-        "key": "LVC-112A61E3-3BCB",
-        "note": "",
-        "hwid_lock": "AFC3C797",
-        "activated_ip": "14.226.150.198",
-        "created_at": "2026-02-26 14:16:27"
-    },
-    {
-        "key": "LVC-BF5089D3-5081",
-        "note": "",
-        "hwid_lock": "47B06F1A",
-        "activated_ip": "14.236.116.25",
-        "created_at": "2026-02-25 10:35:52"
-    }
+[
+    {
+        "key": "LVC-E0EB6094-DCDC",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-28 09:30:40"
+    },
+    {
+        "key": "LVC-67D901E0-4C67",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-28 09:30:30"
+    },
+    {
+        "key": "LVC-7E78E2E6-4B68",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-28 09:30:19"
+    },
+    {
+        "key": "LVC-6FA18A39-A99F",
+        "note": "",
+        "hwid_lock": "904FB7F2",
+        "activated_ip": "14.226.150.198",
+        "created_at": "2026-02-28 09:30:09"
+    },
+    {
+        "key": "LVC-0F39F277-7123",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-28 09:29:56"
+    },
+    {
+        "key": "LVC-E5E2B31B-6128",
+        "note": "",
+        "hwid_lock": "66B0CE57",
+        "activated_ip": "14.226.150.198",
+        "created_at": "2026-02-28 09:28:46"
+    },
+    {
+        "key": "LVC-3FF66EAB-2B1C",
+        "note": "",
+        "hwid_lock": "C0FC46B5",
+        "activated_ip": "14.226.150.198",
+        "created_at": "2026-02-27 14:34:41"
+    },
+    {
+        "key": "LVC-6CEB4EC3-2160",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-27 10:03:41"
+    },
+    {
+        "key": "LVC-5096DA41-EE81",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-27 10:03:31"
+    },
+    {
+        "key": "LVC-9220F0C0-9349",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-27 10:03:21"
+    },
+    {
+        "key": "LVC-7A46E69A-E12C",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-27 10:03:14"
+    },
+    {
+        "key": "LVC-4366C172-28BC",
+        "note": "",
+        "hwid_lock": "8087CEB9",
+        "activated_ip": "14.167.125.216",
+        "created_at": "2026-02-27 10:03:06"
+    },
+    {
+        "key": "LVC-0D3780DD-C259",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-27 09:58:01"
+    },
+    {
+        "key": "LVC-2578FFFF-0B6E",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-27 09:54:31"
+    },
+    {
+        "key": "LVC-9CD421EE-9A4E",
+        "note": "",
+        "hwid_lock": "D669E13E",
+        "activated_ip": "171.234.8.126",
+        "created_at": "2026-02-27 09:45:01"
+    },
+    {
+        "key": "LVC-71D4F18A-A96C",
+        "note": "",
+        "hwid_lock": "1938A310",
+        "activated_ip": "14.226.150.198",
+        "created_at": "2026-02-26 15:53:26"
+    },
+    {
+        "key": "LVC-112A61E3-3BCB",
+        "note": "",
+        "hwid_lock": "AFC3C797",
+        "activated_ip": "14.226.150.198",
+        "created_at": "2026-02-26 14:16:27"
+    },
+    {
+        "key": "LVC-BF5089D3-5081",
+        "note": "",
+        "hwid_lock": "47B06F1A",
+        "activated_ip": "14.236.116.25",
+        "created_at": "2026-02-25 10:35:52"
+    }
 ]
