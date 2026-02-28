@@ -1,5 +1,19 @@
 [
     {
+        "key": "LVC-67D901E0-4C67",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-28 09:30:30"
+    },
+    {
+        "key": "LVC-7E78E2E6-4B68",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-02-28 09:30:19"
+    },
+    {
         "key": "LVC-6FA18A39-A99F",
         "note": "",
         "hwid_lock": "GLOBAL",
@@ -16,8 +30,8 @@
     {
         "key": "LVC-E5E2B31B-6128",
         "note": "",
-        "hwid_lock": "66B0CE57",
-        "activated_ip": "14.226.150.198",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
         "created_at": "2026-02-28 09:28:46"
     },
     {
