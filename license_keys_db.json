@@ -1,5 +1,145 @@
 [
     {
+        "key": "LVC-8DBCDE1F-3862",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-2AE49B70-97DD",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-18F4B5EA-53D7",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-7E3EFCDB-277D",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-CBF6B2FE-BB13",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-C2BD38DD-28D6",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-27EB0816-1E2B",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-A4848143-9A99",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-F5F4A54C-2473",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-AF01E7FF-C080",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-347A9108-B3A0",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-212D7D41-2299",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-413D98B6-8B07",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-85E0456D-F01B",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-80CA6EF1-A156",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-C7A753D2-9ADD",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-7420F1F8-77EC",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-6F5E798F-12B4",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-2C3B87BD-53B3",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
+        "key": "LVC-154FD4C0-A535",
+        "note": "",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
+        "created_at": "2026-03-14 09:18:44"
+    },
+    {
         "key": "LVC-F17FA1D7-A986",
         "note": "",
         "hwid_lock": "C0FC46B5",
@@ -15,7 +155,7 @@
     },
     {
         "key": "LVC-4D5A4393-9C68",
-        "note": "anh Ho\u00e0ng",
+        "note": "anh Hoàng",
         "hwid_lock": "GLOBAL",
         "activated_ip": null,
         "created_at": "2026-03-04 14:00:39"
