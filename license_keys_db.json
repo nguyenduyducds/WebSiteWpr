@@ -155,7 +155,7 @@
     },
     {
         "key": "LVC-4D5A4393-9C68",
-        "note": "anh Ho\u00e0ng",
+        "note": "anh Hoàng",
         "hwid_lock": "GLOBAL",
         "activated_ip": null,
         "created_at": "2026-03-04 14:00:39"
@@ -163,8 +163,8 @@
     {
         "key": "LVC-E0EB6094-DCDC",
         "note": "",
-        "hwid_lock": "5F79290E",
-        "activated_ip": "14.167.126.130",
+        "hwid_lock": "GLOBAL",
+        "activated_ip": null,
         "created_at": "2026-02-28 09:30:40"
     },
     {
