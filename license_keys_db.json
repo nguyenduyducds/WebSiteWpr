@@ -142,8 +142,8 @@
     {
         "key": "LVC-2C3B87BD-53B3",
         "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
+        "hwid_lock": "1655DB49",
+        "activated_ip": "113.165.50.44",
         "created_at": "2026-03-14 09:18:44"
     },
     {
