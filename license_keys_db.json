@@ -128,8 +128,8 @@
     {
         "key": "LVC-7420F1F8-77EC",
         "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
+        "hwid_lock": "00A688A4",
+        "activated_ip": "113.165.50.44",
         "created_at": "2026-03-14 09:18:44"
     },
     {
