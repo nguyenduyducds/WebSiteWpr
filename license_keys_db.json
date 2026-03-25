@@ -121,8 +121,8 @@
     {
         "key": "LVC-C7A753D2-9ADD",
         "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
+        "hwid_lock": "17E7C611",
+        "activated_ip": "113.165.50.44",
         "created_at": "2026-03-14 09:18:44"
     },
     {
