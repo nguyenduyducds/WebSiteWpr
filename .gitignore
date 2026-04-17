@@ -1,0 +1,85 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Build Artifacts
+build/
+build_nuitka/
+build_nuitka_admin/
+*.build/
+*.dist/
+*.onefile-build/
+*.exe
+*.dll
+*.spec
+
+# Release & Distribution
+LVC_Release/
+Customer_*/
+
+# Sensitive Files
+github_config.py
+license.key
+cookies_*.pkl
+
+# Markdown Documentation (Excluded per request)
+*.md
+
+# Large Binary Assets & Drivers
+chrome_portable/
+animaition/
+animation/
+driver/
+thumbnails/
+temp/
+*.zip
+*.rar
+*.7z
+*.mp4
+*.mov
+*.avi
+*.mkv
+chromedriver.exe
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs & Temp
+*.log
+*.tmp
+*.bak
+*.old
+log*.txt
+
+# Chrome Profiles & Runtime Data
+chrome_profiles/
+downloaded_cars/
+dist/
+temp_analysis/
+.wp_key
+
+# Sensitive Auth Data
+model/antigravity_auths/
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Generated / Downloaded Assets
+saved_car_images/
+downloaded_featured/
+thumbnails_ultra_sharp/
+thumbnails_optimized/
+Output/

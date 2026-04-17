@@ -1,0 +1,10 @@
+{
+  "output_resolution": "1080p",
+  "use_ai_upscale": false,
+  "ai_upscale_threshold": 360,
+  "use_face_restoration": true,
+  "sharpen_strength": 0.580973952434881,
+  "color_correction": true,
+  "output_quality": 100,
+  "content_image_height": 180
+}

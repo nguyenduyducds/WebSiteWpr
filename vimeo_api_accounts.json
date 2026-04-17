@@ -1,0 +1,35 @@
+{
+    "accounts": [
+        {
+            "name": "Account 1",
+            "access_token": "bbae08872f2a3151647e76729ad004c5",
+            "client_id": "c98b7960179d9b0a7057603f1c8a88def562250e",
+            "client_secret": "pftWGNTTxptr8taF5t4MHzYPn8ure2h4WMdmZXCE3jl5FlnEinSvmC50krQNaBfkZ0/UAgbslYDvfXRvcUvnPCGRER6KNhGI2BBfIENuxx3LQHUufpawR/BoUwY/jwRL",
+            "enabled": true
+        },
+        {
+            "name": "Account 2",
+            "access_token": "YOUR_TOKEN_2_HERE",
+            "client_id": "YOUR_CLIENT_ID_2_HERE",
+            "client_secret": "YOUR_CLIENT_SECRET_2_HERE",
+            "enabled": false
+        },
+        {
+            "name": "Account 3",
+            "access_token": "YOUR_TOKEN_3_HERE",
+            "client_id": "YOUR_CLIENT_ID_3_HERE",
+            "client_secret": "YOUR_CLIENT_SECRET_3_HERE",
+            "enabled": false
+        }
+    ],
+    "instructions": {
+        "note": "Tạo nhiều Vimeo accounts (free) để có nhiều quota",
+        "step_1": "Tạo account Vimeo mới (dùng email khác)",
+        "step_2": "Tạo app tại https://developer.vimeo.com/apps",
+        "step_3": "Generate access token với scopes: upload, edit, video_files",
+        "step_4": "Thêm vào danh sách accounts ở trên",
+        "step_5": "Set enabled: true để kích hoạt",
+        "quota": "Mỗi account free = 500 MB/tuần",
+        "example": "3 accounts = 1500 MB/tuần = ~6 GB/tháng"
+    }
+}

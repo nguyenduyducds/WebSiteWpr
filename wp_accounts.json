@@ -1,0 +1,36 @@
+{
+  "accounts": [
+    {
+      "name": "bodycam",
+      "site_url": "https://bodycam.vansonnguyen.com/wp-admin/",
+      "username": "bodycam",
+      "password": "gAAAAABpsOHB-xp1mzN34watTCdm3jDoiOM95_s0raDruGzWdIVpdxE2dDXVJiNF8jSqietW1UonLwALqnRnxp0j_S2n_CIw8w==",
+      "is_headless": true,
+      "last_used": "2026-04-07 15:44:33"
+    },
+    {
+      "name": "web test tool",
+      "site_url": "Spotlight.tfvp.org/wp-admin",
+      "username": "admin79",
+      "password": "gAAAAABpsOTGuzJHR-bVBEt1XTlJTPQz2WkiTJTBSBU_e-zlDTzdMZuYY9IuS8Ntp3ENYys5Mjddr_plXdYmAd3HkWpLUNenONQ6IYelLzgCxNDBmhZNg9M=",
+      "is_headless": true,
+      "last_used": "2026-04-09 15:58:53"
+    },
+    {
+      "name": "dũng",
+      "site_url": "https://dungfilme.thocahouse.vn/wp-admin/",
+      "username": "admin79",
+      "password": "gAAAAABpwzn6kG-qeeG8J48vvyPdRcP2XW6htLGWNdXzAzLSXxmygBI7BtKRTRI2VHcbNzKVOSLSrUvCu76ZVxpui0cHGMteLw==",
+      "is_headless": true,
+      "last_used": "2026-03-25 08:27:25"
+    },
+    {
+      "name": "Pịa Le On",
+      "site_url": "shelterus.nataviguides.com/wp-admin",
+      "username": "admin79",
+      "password": "gAAAAABp13KmcWWMoDqI3Wke563bM-7q3232ncpUYtO-ebpvS7pg_JNdpnC4z9c9eusKezsMhz-XQIqrir7NY6HimzsJdwQrTBQad6aY9ggZF97eQx0vZMo=",
+      "is_headless": true,
+      "last_used": "2026-04-09 16:34:34"
+    }
+  ]
+}

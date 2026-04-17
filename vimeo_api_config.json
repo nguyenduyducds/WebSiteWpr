@@ -1,0 +1,13 @@
+{
+    "access_token": "bbae08872f2a3151647e386e9872f3db",
+    "client_id": "c98b7960179d9b0a7057603f1c8a88def562250e",
+    "client_secret": "pftWGNTTxptr8taF5t4MHzYPn8ure2h4WMdmZXCE3jl5FlnEinSvmC50krQNaBfkZ0/UAgbslYDvfXRvcUvnPCGRER6KNhGI2BBfIENuxx3LQHUufpawR/BoUwY/jwRL",
+    "instructions": {
+        "step_1": "Go to https://developer.vimeo.com/apps",
+        "step_2": "Create new app or select existing app",
+        "step_3": "Go to 'Authentication' tab",
+        "step_4": "Generate Access Token with scopes: upload, edit, video_files, private",
+        "step_5": "Copy Client ID, Client Secret, and Access Token",
+        "step_6": "Paste them above and save this file"
+    }
+}
