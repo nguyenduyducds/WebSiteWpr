@@ -23,8 +23,8 @@
     {
         "key": "LVC-CA552881-09F5",
         "note": "",
-        "hwid_lock": "GLOBAL",
-        "activated_ip": null,
+        "hwid_lock": "0DB99494",
+        "activated_ip": "14.233.105.250",
         "created_at": "2026-04-15 09:17:43"
     },
     {
